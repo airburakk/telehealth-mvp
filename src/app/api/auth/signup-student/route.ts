@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { hashPassword, createSession } from "@/lib/auth";
 import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { createDoctorAccount, studentTitleFor } from "@/lib/doctor-signup";
-import { BRANCH_LABELS } from "@/lib/procedures";
+import { isDoctorBranch } from "@/lib/doctor-branches";
 import { isEmailConfigured, sendEmail } from "@/lib/email";
 import { signupEmailBlocked } from "@/lib/signup-email-gate";
 import { hashVerifyToken } from "@/lib/email-verification";
@@ -29,7 +29,6 @@ import { hasReachedAge, MIN_STUDENT_AGE } from "@/lib/student-age";
 //
 // v6.212 (belge 07 §A.1, 👤 03.09.2026): 18 yaş altı öğrenci KABUL EDİLMEZ — doğum tarihi beyanı yalnız
 // burada hesaplanır, SAKLANMAZ ve loglanmaz (KVKK minimizasyonu; envanterde yeni veri kategorisi yok).
-const BRANCH_SET = new Set(Object.values(BRANCH_LABELS));
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEPARTMENTS = new Set<StudentDepartment>(["tip", "dis-hekimligi"]);
 
@@ -56,7 +55,7 @@ export async function POST(req: Request) {
   if (name.length < 2) return NextResponse.json({ error: "Ad soyad girin." }, { status: 400 });
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Geçerli bir e-posta girin." }, { status: 400 });
   if (password.length < 8) return NextResponse.json({ error: "Parola en az 8 karakter olmalı." }, { status: 400 });
-  if (!BRANCH_SET.has(branch)) return NextResponse.json({ error: "İlgilendiğiniz branşı seçin." }, { status: 400 });
+  if (!isDoctorBranch(branch)) return NextResponse.json({ error: "İlgilendiğiniz branşı seçin." }, { status: 400 });
   // Kapalı liste (2026-08-30): üniversite şehri de listeden seçilir (TR 81 il + KKTC + yurt dışı —
   // rosterde KKTC/AZ/MK kampüsleri var, salt-81 liste onları bloke ederdi; bkz. lib/cities.ts).
   if (!isAllowedCity(city)) return NextResponse.json({ error: "Üniversitenizin şehrini listeden seçin." }, { status: 400 });

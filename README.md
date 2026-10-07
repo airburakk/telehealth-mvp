@@ -167,9 +167,9 @@ içinde `SESSION_SECRET` tanımlı olmalıdır.
 çözücü `lib/doctorium-tiers` (`VERIFIED | STUDENT | TRIAL | LOCKED | NONE`; öncelik optOut > diploma > öğrenci > deneme) +
 istek-önbellekli `lib/doctorium-audience currentDoctoriumAudience()`; pazarlama yüzeyleri (sponsor kartı · anket · puan · ödül)
 YALNIZ VERIFIED (`audienceFlags`; `api/survey/respond`, `api/rewards/redeem`, `api/sponsor/click`, `api/doctor/sponsor-consent`
-derin savunmalı). **Deneme (30 gün):** `/doctorium/kayit` parolasız 4 alan (ad soyad · e-posta · branş · şehir) →
-`POST /api/auth/signup-trial` (bayrak `DOCTORIUM_TRIAL_ENABLED="1"`, 🔴 İKİ Vercel projesine AYRI girilir) → e-posta giriş
-bağlantısı `GET /api/auth/verify-login-link` (sha256 özet, 20 dk, atomik tek kullanım; `lib/login-link`) · her yeni doktor
+derin savunmalı). **Deneme (30 gün):** `/doctorium/kayit` kullanıcı parolasıyla kayıt (ad soyad · e-posta · parola · branş · şehir) →
+`POST /api/auth/signup-trial` (bayrak `DOCTORIUM_TRIAL_ENABLED="1"`, 🔴 İKİ Vercel projesine AYRI girilir) → e-posta doğrulaması `GET /api/auth/verify-email` ve ardından e-posta+parola girişi. Eski parolasız hesapların giriş
+bağlantısı `GET /api/auth/verify-login-link` uyumluluk için korunur (sha256 özet, 20 dk, atomik tek kullanım; `lib/login-link`) · her yeni doktor
 hesabı `trialWindow` damgası alır (`Doctor.trialStartedAt/trialEndsAt/trialAlertsSent`, migration `20260905060000`) · Header
 `DENEME · N GÜN` rozeti (`/api/auth/me` `trial`) · süre sonu kilit `/doktor/baslangic?from=doctorium&trial=ended` (hesabı kapatma
 dâhil) · `trial-sweep` cron 10:20 TR (7/3/1 hatırlatma · bitti · +60 g imha bildirimi · +90 g fail-closed imha, klinik bağ/bekleyen

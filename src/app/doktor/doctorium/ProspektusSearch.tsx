@@ -3,18 +3,7 @@
 import { useState } from "react";
 import { AlertTriangle, ChevronDown, Loader2, Pill, Search } from "lucide-react";
 
-interface Result {
-  id: string | null;
-  brand: string | null;
-  generic: string | null;
-  manufacturer: string | null;
-  effectiveTime: string | null;
-  indications: string | null;
-  dosage: string | null;
-  warnings: string | null;
-  contraindications: string | null;
-  adverse: string | null;
-}
+import { labelSourceUrl, type LabelResult as Result } from "@/lib/prospektus-label";
 
 // Dijital prospektüs arama (v6.50). Kaynak openFDA = ABD ürün bilgisi; TİTCK'nın makine-okunur
 // kaynağı YOK → "FDA (ABD)" uyarısı kaldırılamaz biçimde her sonuçta durur ve metin ÇEVRİLMEZ.
@@ -92,7 +81,7 @@ export function ProspektusSearch() {
       {rows && rows.length > 0 && (
         <ul className="mt-3 grid gap-3">
           {rows.map((r, i) => (
-            <li key={r.id ?? i} className="rounded-xl border border-[var(--c-hairline)] p-3.5">
+            <li key={r.id ?? i} className="min-w-0 rounded-xl border border-[var(--c-hairline)] p-3.5">
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <span className="text-sm font-semibold text-[var(--c-ink)]">{r.brand ?? r.generic ?? "—"}</span>
                 {r.generic && r.brand && <span className="text-[11px] text-[var(--c-ink-3)]">({r.generic})</span>}
@@ -101,19 +90,27 @@ export function ProspektusSearch() {
                 </span>
               </div>
               {r.manufacturer && <p className="mt-0.5 text-[11px] text-[var(--c-ink-3)]">{r.manufacturer}</p>}
+              {r.sourceUrl && r.sourceUrl === labelSourceUrl(r.id) ? (
+                <a href={r.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-[var(--c-accent)] underline">
+                  Kaynak etiket verisi (openFDA, yeni sekme)
+                </a>
+              ) : <p className="mt-2 text-xs text-[var(--c-ink-3)]">Bu sonuç için kaynak bağlantısı doğrulanamadı.</p>}
+              <p className="mt-2 text-[11px] text-[var(--c-ink-3)]">Aşağıda kaynağın döndürdüğü seçili bölümler gösterilir; etiketin diğer bölümleri kaynak bağlantısındadır.</p>
               <dl className="mt-2 grid gap-2">
                 {([
                   ["Endikasyon (indications)", r.indications],
                   ["Doz (dosage)", r.dosage],
                   ["Kontrendikasyon", r.contraindications],
+                  ["Kutu uyarısı (boxed warning)", r.boxedWarnings],
                   ["Uyarılar", r.warnings],
+                  ["Uyarılar ve önlemler", r.cautions],
                   ["Yan etkiler", r.adverse],
                 ] as [string, string | null][])
                   .filter(([, v]) => !!v)
                   .map(([k, v]) => (
                     <div key={k}>
                       <dt className="text-[10px] font-semibold uppercase tracking-wide text-[var(--c-ink-3)]">{k}</dt>
-                      <dd className="mt-0.5 text-xs leading-relaxed text-[var(--c-ink-2)]">{v}</dd>
+                      <dd className="mt-0.5 min-w-0 text-xs leading-relaxed text-[var(--c-ink-2)]"><LabelSection name={k} text={v!} /></dd>
                     </div>
                   ))}
               </dl>
@@ -122,5 +119,26 @@ export function ProspektusSearch() {
         </ul>
       )}
     </section>
+  );
+}
+
+function LabelSection({ name, text }: { name: string; text: string }) {
+  const cutoff = 600;
+  const long = text.length > cutoff;
+  const boundary = text.lastIndexOf(" ", cutoff);
+  const preview = text.slice(0, boundary > 300 ? boundary : cutoff);
+  const style = "whitespace-pre-wrap [overflow-wrap:anywhere]";
+  if (!long) return <p className={style}>{text}</p>;
+  return (
+    <details className="group">
+      <summary className="cursor-pointer rounded text-[var(--c-accent)] focus-visible:outline-2 focus-visible:outline-offset-2" aria-label={`${name}: tam bölüm metnini aç veya kapat`}>
+        Önizleme — tam bölüm metnini aç / kapat
+      </summary>
+      <p className={`${style} mt-1 group-open:hidden`}>{preview}…</p>
+      <div className="mt-1 hidden group-open:block">
+        <p className="mb-1 text-[11px] text-[var(--c-ink-3)]">Kaynağın döndürdüğü bu bölümün tüm metni</p>
+        <p className={style}>{text}</p>
+      </div>
+    </details>
   );
 }

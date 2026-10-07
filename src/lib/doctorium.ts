@@ -20,6 +20,8 @@ import { BRANCHES, BRANCH_LABEL_ALIASES } from "./triage";
 // `export {...} from` satırıyla ÇAKIŞMAZ (o yalnız re-export kaydı, yerel binding yaratmaz).
 import { SECTOR_CATEGORIES } from "./doctorium-labels";
 import { normalizeTrialPhasePrefix } from "./trial-phase";
+import { academicWhere, ACADEMIC_PAGE_SIZE } from "./academic-search";
+import { ictihatWhere, ICTIHAT_PAGE_SIZE } from "./ictihat-search";
 
 export const DOCTORIUM_NAME = "Doctorium";
 
@@ -1121,6 +1123,32 @@ export function parseViewPrefs(raw: string | null | undefined): DoctoriumViewPre
 /** Modül sekmesi listesinin tavanı (moduleFeed varsayılan `limit`). Sayfa bu sabite bakarak arama
  *  sayacında "N+" yazar (v6.203, QA A3) — tavana dayanan liste tam sayı gibi sunulmasın. */
 export const MODULE_FEED_LIMIT = 40;
+
+/** Bounded archive search. No total-count scan or schema change; timeout is
+ * transaction-local and never changes the connection's global settings. */
+export async function academicFeedPage(branches: string[], query: string, page: number, createdSince?: Date) {
+  const rows = await db.$transaction(async tx => {
+    await tx.$executeRaw`SET LOCAL statement_timeout = '2500ms'`;
+    return tx.newsArticle.findMany({
+      where: academicWhere(branches, query, createdSince),
+      orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * ACADEMIC_PAGE_SIZE,
+      take: ACADEMIC_PAGE_SIZE + 1,
+      select: ROW_SELECT,
+    });
+  }, { maxWait: 2000, timeout: 5000 });
+  return { items: rows.slice(0, ACADEMIC_PAGE_SIZE).map(toFeedItem), hasNext: rows.length > ACADEMIC_PAGE_SIZE };
+}
+
+export async function ictihatFeedPage(query: string, page: number, patterns?: string[], createdSince?: Date) {
+  const rows = await db.$transaction(async tx => {
+    await tx.$executeRaw`SET LOCAL statement_timeout = '2500ms'`;
+    return tx.newsArticle.findMany({ where: ictihatWhere(query, patterns, createdSince),
+      orderBy: [{ publishedAt: "desc" }, { id: "desc" }], skip: (page - 1) * ICTIHAT_PAGE_SIZE,
+      take: ICTIHAT_PAGE_SIZE + 1, select: ROW_SELECT });
+  }, { maxWait: 2000, timeout: 5000 });
+  return { items: rows.slice(0, ICTIHAT_PAGE_SIZE).map(toFeedItem), hasNext: rows.length > ICTIHAT_PAGE_SIZE };
+}
 
 export async function moduleFeed(
   module: "akademik" | "mevzuat" | "sektorel" | "ilac",

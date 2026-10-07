@@ -3,14 +3,13 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { encryptField } from "@/lib/crypto";
 import { DOCTOR_TITLES } from "@/lib/doctor-signup";
-import { BRANCH_LABELS } from "@/lib/procedures";
+import { isDoctorBranch } from "@/lib/doctor-branches";
 import { LANGUAGES } from "@/lib/constants";
 import { isAllowedCity } from "@/lib/cities";
 
 export const dynamic = "force-dynamic";
 
 const TITLE_SET = new Set<string>(DOCTOR_TITLES);
-const BRANCH_SET = new Set(Object.values(BRANCH_LABELS));
 const LANG_SET = new Set(LANGUAGES);
 
 // POST /api/doctor/complete-profile — OAuth (Google/Apple) ile açılan doktor hesabının eksik
@@ -46,7 +45,7 @@ export async function POST(req: Request) {
 
   if (name.length < 2) return NextResponse.json({ error: "Ad soyad girin." }, { status: 400 });
   if (!TITLE_SET.has(title)) return NextResponse.json({ error: "Geçerli bir ünvan seçin." }, { status: 400 });
-  if (!BRANCH_SET.has(branch)) return NextResponse.json({ error: "Geçerli bir branş seçin." }, { status: 400 });
+  if (!isDoctorBranch(branch)) return NextResponse.json({ error: "Geçerli bir branş seçin." }, { status: 400 });
   // Kapalı liste (2026-08-30) — doğrulama api/auth/signup ile BİREBİR kalır (üstteki not).
   if (!isAllowedCity(city)) return NextResponse.json({ error: "Şehri listeden seçin." }, { status: 400 });
 

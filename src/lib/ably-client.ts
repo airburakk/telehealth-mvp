@@ -13,12 +13,14 @@ export function connectAblySignal(
 ): { close: () => void; live: () => boolean } {
   let client: Ably.Realtime | null = null;
   let connected = false;
+  let subscriptionReady = false;
+  let closed = false;
   try {
     client = new Ably.Realtime({
       authUrl: `/api/realtime/ably-token?channel=${encodeURIComponent(channelId)}`,
     });
     const conn = client.connection;
-    conn.on("connected", () => { connected = true; });
+    conn.on("connected", () => { if (!closed) connected = true; });
     conn.on("failed", () => { connected = false; });
     conn.on("disconnected", () => { connected = false; });
     conn.on("suspended", () => { connected = false; });
@@ -28,14 +30,26 @@ export function connectAblySignal(
       const m = msg.data as SignalMsg;
       // Sunucu her iki tarafın mesajını da kanala yayınlar → kendi tarafının mesajını atla
       // (DB poll'ün sender!=me süzmesiyle aynı semantik). Dedup id ile çağıranda yapılır.
-      if (m && m.sender !== selfSide) onMessage(m);
+      if (!closed && m && m.sender !== selfSide) onMessage(m);
+    }).then(() => {
+      if (!closed) subscriptionReady = true;
+    }).catch(() => {
+      // subscribe asenkrondur: kapanış/auth reddi senkron try/catch’e düşmez.
+      subscriptionReady = false;
+      connected = false;
     });
   } catch {
     connected = false;
   }
   return {
-    close: () => { try { client?.close(); } catch {} },
-    live: () => connected,
+    close: () => {
+      if (closed) return;
+      closed = true;
+      connected = false;
+      subscriptionReady = false;
+      try { client?.close(); } catch {}
+    },
+    live: () => !closed && connected && subscriptionReady,
   };
 }
 
@@ -47,22 +61,38 @@ export function connectLiveNudge(
 ): { close: () => void; live: () => boolean } {
   let client: Ably.Realtime | null = null;
   let connected = false;
+  let subscriptionReady = false;
+  let closed = false;
   try {
     client = new Ably.Realtime({
       authUrl: `/api/realtime/ably-token?channel=${encodeURIComponent(channelName)}`,
     });
     const conn = client.connection;
-    conn.on("connected", () => { connected = true; });
+    conn.on("connected", () => { if (!closed) connected = true; });
     conn.on("failed", () => { connected = false; });
     conn.on("disconnected", () => { connected = false; });
     conn.on("suspended", () => { connected = false; });
     conn.on("closed", () => { connected = false; });
-    client.channels.get(channelName).subscribe("nudge", () => onNudge());
+    client.channels.get(channelName).subscribe("nudge", () => {
+      if (!closed) onNudge();
+    }).then(() => {
+      if (!closed) subscriptionReady = true;
+    }).catch(() => {
+      // Yalnız kendi abonelik Promise reddini yönet; global hataları susturma.
+      subscriptionReady = false;
+      connected = false;
+    });
   } catch {
     connected = false;
   }
   return {
-    close: () => { try { client?.close(); } catch {} },
-    live: () => connected,
+    close: () => {
+      if (closed) return;
+      closed = true;
+      connected = false;
+      subscriptionReady = false;
+      try { client?.close(); } catch {}
+    },
+    live: () => !closed && connected && subscriptionReady,
   };
 }

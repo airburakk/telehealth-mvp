@@ -108,15 +108,15 @@ export function GateEmailForm({
   }
 
   const inputCls =
-    "w-full rounded-[13px] border border-[var(--aura-hairline)] bg-[var(--aura-surface)] px-4 py-3 text-[15px] text-[var(--aura-ink)] outline-none placeholder:text-[var(--aura-micro)] focus:border-[var(--aura-accent)]/60";
+      "w-full rounded-[13px] border border-[var(--aura-hairline)] bg-[var(--aura-surface)] px-4 py-3 text-[15px] text-[var(--aura-ink)] outline-none placeholder:text-[var(--aura-micro)] focus:border-[var(--aura-accent)]/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--aura-accent)]";
 
   return (
     <div className="mt-3 space-y-3 text-left">
       {oauthMsg && (
-        <div className="rounded-[13px] bg-amber-500/10 px-4 py-2.5 text-[13px] text-amber-300 ring-1 ring-amber-400/25">{oauthMsg}</div>
+        <div role="status" className="rounded-[13px] bg-amber-500/10 px-4 py-2.5 text-[13px] text-[var(--aura-ink)] ring-1 ring-amber-400/25">{oauthMsg}</div>
       )}
       {verifyMsg && (
-        <div className={`rounded-[13px] px-4 py-2.5 text-[13px] ring-1 ${sp.get("verify") === "invalid" ? "bg-amber-500/10 text-amber-300 ring-amber-400/25" : "bg-emerald-500/10 text-emerald-300 ring-emerald-400/25"}`}>
+        <div role={sp.get("verify") === "invalid" ? "alert" : "status"} className={`rounded-[13px] px-4 py-2.5 text-[13px] ring-1 ${sp.get("verify") === "invalid" ? "bg-amber-500/10 text-[var(--aura-ink)] ring-amber-400/25" : "bg-emerald-500/10 text-[var(--aura-ink)] ring-emerald-400/25"}`}>
           {verifyMsg}
         </div>
       )}
@@ -138,10 +138,10 @@ export function GateEmailForm({
           </Link>
         </div>
         {error && (
-          <div className="rounded-[13px] bg-red-500/10 px-4 py-2.5 text-[13px] text-red-300 ring-1 ring-red-400/25">{error}</div>
+          <div role="alert" className="rounded-[13px] bg-red-500/10 px-4 py-2.5 text-[13px] text-[var(--aura-ink)] ring-1 ring-red-400/25">{error}</div>
         )}
         {needsVerify && (
-          <div className="rounded-[13px] bg-amber-500/10 px-4 py-2.5 text-[13px] text-amber-300 ring-1 ring-amber-400/25">
+          <div className="rounded-[13px] bg-amber-500/10 px-4 py-2.5 text-[13px] text-[var(--aura-ink)] ring-1 ring-amber-400/25">
             {resendMsg ? (
               resendMsg
             ) : (

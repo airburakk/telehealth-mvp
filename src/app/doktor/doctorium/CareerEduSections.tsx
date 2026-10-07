@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { TusSourceNote } from "./tus/TusSourceNote";
+import { StudentPlanningGuides } from "./CareerEvidence";
 import type { ReactNode } from "react";
 import { ArrowRight, CalendarDays, ExternalLink, Info } from "lucide-react";
 import { TUS_EXAM_PERIODS, TUS_OFFICIAL_LINKS, TUS_SECTIONS, tusSectionHref } from "@/lib/tus";
@@ -160,7 +162,7 @@ export async function EduOpportunitiesPanel({ className = "", kind = null, defau
       </ul>
       <p className="mt-3 text-[11px] leading-relaxed text-[var(--c-ink-3)]">
         Başvuru daima kurumun kendi sayfasında yapılır; tarih ve şartlar kurum duyurularıyla değişebilir. Bu liste ilan değil, süreç bilgisidir.
-        {canFollow && <> Takip ettiğiniz fırsatın son başvurusu 7, 3 ve 1 gün kala bildirim ve e-postayla hatırlatılır; tarihli fırsatların hepsi Takvim&apos;inizde görünür.</>}
+        {canFollow && <> Son başvuru tarihi olan onaylı fırsatların hepsi takipten bağımsız Takvim&apos;inizde görünür; takibi bırakmak bu tarihleri kaldırmaz. Takip edilenler günlük kontrolde 7/3/1 gün eşiklerine göre bildirim için değerlendirilir; geç takipte yalnız uygun kalan eşikler kullanılır. E-posta için doğrulanmış adres ve çalışan e-posta kanalı gerekir.</>}
       </p>
     </AuraPanel>
   );
@@ -229,6 +231,7 @@ export function TusKpiStrip({ last }: { last: TusPeriodSummaryWithSource }) {
           </div>
         ))}
       </dl>
+      <TusSourceNote period={last} />
     </>
   );
 }
@@ -300,6 +303,7 @@ export function StudentCareerHub({ kind = null, defaultKind = null }: { kind?: E
         Bu bölüm iş ilanı içermez; staj, değişim ve burs süreçlerini anlatır. Başvuru daima resmî kaynakta yapılır.
       </p>
       <EduOpportunitiesPanel kind={kind} defaultKind={defaultKind} />
+      <StudentPlanningGuides />
     </div>
   );
 }

@@ -7,9 +7,8 @@
 //      Etkinliğin tarih aralığı + BİLDİRİ son günü + ERKEN KAYIT son günü ayrı işaretler
 //      (deadline'lar etkinliğin kendisinden aylar önce olabilir — kendi günlerine düşer).
 //   2) CalendarEntry TABLOSU — nöbet/icap/kişisel kayıtların evi (şema hazır; migration
-//      `20260820010000_takvim_calendar_entry`). ⚠️ Birleşim aşağıda BİLİNÇLİ KAPALI:
-//      dev ortamında migration + `prisma generate` henüz koşulmadı (paralel oturum v6.124
-//      ara durumu); tablo/client hazır olunca işaretli bloğu açmak yeterli.
+//      `20260820010000_takvim_calendar_entry`). Birleşim aşağıda açıktır;
+//      yalnız hesabın kendi kayıtları okunur.
 //
 // TARİH DİLİ: gün anahtarları UTC ("YYYY-MM-DD") — MedicalCongress tarihleri UTC-fmt'li
 // (etkinlik detayı toLocaleDateString(timeZone:"UTC") basar); takvim aynı eksende kalır,
@@ -54,8 +53,17 @@ export function parseMonth(raw?: string | null): { year: number; month: number }
   const m = raw && /^\d{4}-\d{2}$/.test(raw) ? raw : new Date().toISOString().slice(0, 7);
   const [y, mo] = m.split("-").map(Number);
   // Ay 1-12 dışına taşan elle-yazılmış URL bugüne düşer (bozuk link boş takvim açmasın).
-  if (mo < 1 || mo > 12) return parseMonth(null);
+  if (mo < 1 || mo > 12 || y < 100 || y > 9999) return parseMonth(null);
   return { year: y, month: mo };
+}
+
+/** A real day inside the displayed month; reject normalized dates such as Feb31. */
+export function parseCalendarDay(raw: unknown, year: number, month: number): string | null {
+  if (typeof raw !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const date = new Date(`${raw}T00:00:00Z`);
+  if (!Number.isFinite(date.getTime()) || dayKey(date) !== raw) return null;
+  const { start, end } = monthWindow(year, month);
+  return date >= start && date < end ? raw : null;
 }
 
 /** Ay penceresi [ilk gün 00:00, sonraki ay ilk günü) — UTC. */
@@ -129,7 +137,7 @@ export async function doctorCalendarMonth(
   if (opts.includeTus) items.push(...tusCalendarItems(dayKey(start), dayKey(end)));
   if (opts.includeEdu) {
     const edu = await db.eduOpportunity.findMany({
-      where: { approvedAt: { not: null }, deadline: { gte: start, lte: end } },
+      where: { approvedAt: { not: null }, deadline: { gte: start, lt: end } },
       select: { id: true, title: true, deadline: true },
     });
     for (const o of edu) {

@@ -2,8 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import { hidesFooter } from "@/lib/chrome-routes";
-import { AppAuraFooter } from "@/components/aura/aura-footer";
-import { DoctoriumFooter } from "@/components/aura/doctorium-footer";
+import dynamic from "next/dynamic";
+
+const AppAuraFooter = dynamic(() => import("@/components/aura/aura-footer").then((m) => m.AppAuraFooter));
+const DoctoriumFooter = dynamic(() => import("@/components/aura/doctorium-footer").then((m) => m.DoctoriumFooter));
 
 // Global alt bilgi — uygulama (giriş yapılmış) yüzeylerinin footer'ı.
 //

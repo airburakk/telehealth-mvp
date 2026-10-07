@@ -48,7 +48,7 @@ export const TRIAL_EMAIL_FOOTER =
 export const TRIAL_STEPS: readonly { title: string; body: string }[] = [
   {
     title: "1 · Hesabınızı oluşturun",
-    body: "Ad soyad, e-posta, branş ve şehir — parola yok; giriş bağlantısı e-postanıza gelir. Google ya da Apple ile de girebilirsiniz.",
+    body: "Ad soyad, e-posta, parola, branş ve şehir — e-postanızı doğrulayın, ardından belirlediğiniz parola ile giriş yapın. Google ya da Apple ile de girebilirsiniz.",
   },
   {
     title: "2 · 30 gün tam erişim",

@@ -66,11 +66,11 @@ export function SeckiPage({ view }: { view: SeckiView | null }) {
   return (
     <div lang="tr" style={V3_LIGHT} className="flex min-h-dvh flex-col bg-[var(--dl-bg)] text-[var(--dl-ink)]">
       <header className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 pt-6">
-        <Link href="/doctorium" aria-label="Doctorium ana sayfa" className={`inline-flex items-center gap-2.5 ${LINK_FOCUS}`}>
+        <Link prefetch={false} href="/doctorium" aria-label="Doctorium ana sayfa" className={`inline-flex items-center gap-2.5 ${LINK_FOCUS}`}>
           <AuraMark size={28} tone="emerald" />
           <DoctoriumWordV3 className="text-[24px] leading-none" />
         </Link>
-        <Link
+        <Link prefetch={false}
           href={LANDING_ROUTES.signup}
           className={`rounded-full border border-[var(--dl-line)] px-3.5 py-1.5 text-[13px] font-medium text-[var(--dl-ink)] transition-colors hover:border-[var(--dl-emerald)] hover:text-[var(--dl-emerald)] ${LINK_FOCUS}`}
         >
@@ -117,19 +117,19 @@ export function SeckiPage({ view }: { view: SeckiView | null }) {
           </h2>
           <p className="mt-2 text-[14.5px] leading-relaxed text-[var(--dl-body)]">{c.about.body}</p>
           <div className="mt-4 flex flex-wrap gap-2.5">
-            <Link
+            <Link prefetch={false}
               href={LANDING_ROUTES.signup}
               className={`rounded-full bg-[var(--dl-emerald)] px-4 py-2 text-[13.5px] font-semibold text-white transition-opacity hover:opacity-90 ${LINK_FOCUS}`}
             >
               {c.about.doctor}
             </Link>
-            <Link
+            <Link prefetch={false}
               href={LANDING_ROUTES.student}
               className={`rounded-full bg-[var(--dl-emerald)] px-4 py-2 text-[13.5px] font-semibold text-white transition-opacity hover:opacity-90 ${LINK_FOCUS}`}
             >
               {c.about.student}
             </Link>
-            <Link
+            <Link prefetch={false}
               href="/doctorium"
               className={`rounded-full border border-[var(--dl-line)] px-4 py-2 text-[13.5px] font-medium text-[var(--dl-ink)] transition-colors hover:border-[var(--dl-emerald)] hover:text-[var(--dl-emerald)] ${LINK_FOCUS}`}
             >
@@ -140,7 +140,7 @@ export function SeckiPage({ view }: { view: SeckiView | null }) {
 
         <p className="mt-6 text-[12.5px] leading-relaxed text-[var(--dl-muted)]">
           {c.note}{" "}
-          <Link href="/doctorium/icerik-politikasi" className={`underline underline-offset-2 hover:text-[var(--dl-emerald)] ${LINK_FOCUS}`}>
+          <Link prefetch={false} href="/doctorium/icerik-politikasi" className={`underline underline-offset-2 hover:text-[var(--dl-emerald)] ${LINK_FOCUS}`}>
             {c.policyLink}
           </Link>
         </p>

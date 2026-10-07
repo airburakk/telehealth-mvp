@@ -30,6 +30,7 @@ export function verifyTokenMatches(row: { emailVerifyTokenHash: string | null; e
 export async function issueVerificationEmail(
   user: { id: string; email: string; name: string },
   origin: string,
+  brand: "AURA" | "Doctorium" = "AURA",
 ): Promise<void> {
   try {
     const token = randomBytes(32).toString("hex");
@@ -40,14 +41,14 @@ export async function issueVerificationEmail(
     const link = `${origin}/api/auth/verify-email?uid=${encodeURIComponent(user.id)}&token=${token}`;
     await sendEmail({
       to: user.email,
-      subject: "E-posta adresinizi doğrulayın — AURA",
+      subject: `E-posta adresinizi doğrulayın — ${brand}`,
       text:
         `Merhaba ${user.name},\n\n` +
-        `AURA hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın:\n${link}\n\n` +
+        `${brand} hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın:\n${link}\n\n` +
         `Bağlantı 24 saat geçerlidir. Bu kaydı siz başlatmadıysanız bu e-postayı yok sayabilirsiniz.`,
       html:
         `<p>Merhaba ${escapeHtml(user.name)},</p>` +
-        `<p>AURA hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın:</p>` +
+        `<p>${brand} hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın:</p>` +
         `<p><a href="${link}" style="display:inline-block;background:var(--c-accent);color:var(--c-bg);padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">E-postamı doğrula</a></p>` +
         `<p style="font-size:12px;color:#64748b">Bağlantı 24 saat geçerlidir. Düğme çalışmazsa: <br>${link}</p>` +
         `<p style="font-size:12px;color:#64748b">Bu kaydı siz başlatmadıysanız bu e-postayı yok sayabilirsiniz.</p>`,

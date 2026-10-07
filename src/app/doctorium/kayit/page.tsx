@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { isGoogleConfigured, isAppleConfigured } from "@/lib/oauth";
-import { BRANCH_LABELS } from "@/lib/procedures";
+import { DOCTOR_BRANCH_OPTIONS } from "@/lib/doctor-branches";
 import { DoctorSignupForm } from "@/components/DoctorSignupForm";
 import { DoctoriumSignupShell } from "@/components/aura/doctorium-signup-shell";
 import { TrialSignupForm } from "@/components/TrialSignupForm";
@@ -25,13 +25,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/doctorium/kayit" },
 };
 
-// Üç katman (2026-09-05): DOCTORIUM_TRIAL_ENABLED=1 iken PAROLASIZ deneme formu (ad soyad · e-posta · branş ·
-// şehir → giriş bağlantısı); `?klasik=1` parolalı eski formu açar (e-posta kanalı dormant uyarısının kaçış
-// yolu — kamuya bağlantı VERİLMEZ, parolasız yol kullanıcı kararıdır). Bayrak kapalıyken eski form aynen.
+// Üç katman (2026-09-05): DOCTORIUM_TRIAL_ENABLED=1 iken parolalı deneme formu (ad soyad · e-posta · parola · branş ·
+// şehir → e-posta doğrulaması); `?klasik=1` parolalı eski formu açar (e-posta kanalı dormant uyarısının kaçış
+// yolu — kamuya bağlantı VERİLMEZ, standart yol deneme formudur). Bayrak kapalıyken eski form aynen.
 export default async function DoctoriumSignupPage({ searchParams }: { searchParams: Promise<{ klasik?: string }> }) {
   const sp = await searchParams;
   const trial = isTrialEnabled() && sp.klasik !== "1";
-  const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));
+  const branches = DOCTOR_BRANCH_OPTIONS;
   return (
     <DoctoriumSignupShell>
       {/* Suspense YOK (2026-08-28 denetimi): bkz. src/app/kayit/page.tsx aynı not — sayfa zaten

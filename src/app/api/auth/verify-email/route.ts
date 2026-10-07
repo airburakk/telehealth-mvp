@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { db } from "@/lib/db";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { verifyTokenMatches } from "@/lib/email-verification";
@@ -25,7 +26,7 @@ export async function GET(req: Request) {
     where: { id: uid },
     select: { id: true, role: true, emailVerifiedAt: true, emailVerifyTokenHash: true, emailVerifySentAt: true },
   });
-  const loginPath = user?.role === "PATIENT" ? "/giris" : "/kurumsal-giris"; // doktor girişi kurumsal ekranda
+  const loginPath = user?.role === "PATIENT" ? "/giris" : user?.role === "DOCTOR" && IS_DOCTORIUM_DEPLOY ? "/doctorium/giris" : "/kurumsal-giris"; // doktor girişi kurumsal ekranda
 
   if (!user) return back("/giris", "invalid");
   if (user.emailVerifiedAt) return back(loginPath, "already");

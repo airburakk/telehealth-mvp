@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
+import { SaveButton } from "../SaveButton";
 import {
   articleById, ensureClinicalSummary, ensureRegulationSummary,
   KIND_LABEL, branchLabel, categoryLabel, todayModuleCounts,
@@ -26,6 +29,11 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
   const { id } = await params;
   const item = await articleById(id);
   if (!item) notFound();
+  // Use the same session-owned doctor identity as the feed/saved list. Staff have no save control.
+  const doctorId = user.role === "DOCTOR" ? (await currentDoctoriumAudience())?.doctorId : null;
+  const initialSaved = doctorId
+    ? !!(await db.savedArticle.findUnique({ where: { doctorId_articleId: { doctorId, articleId: id } }, select: { id: true } }))
+    : null;
 
   // Akademik yayın → 2 dk klinik özet · mevzuat/sektörel/ilaç → doktor özeti + aksiyon maddeleri.
   // İkisi de TEMBEL: ilk açılışta bir kez üretilir, sonra DB'den okunur.
@@ -79,7 +87,7 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
 
       <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1">
         {item.branchSlugs.map((s) => (
-          <span key={s} className="aura-mono rounded-full px-2 py-0.5 text-[10px] font-semibold"
+          <span key={s} className="doctorium-branch-badge aura-mono rounded-full px-2 py-0.5 text-[10px] font-semibold"
             style={{ color: branchColor(branchLabel(s)), background: `${branchColor(branchLabel(s))}1f` }}>
             {branchLabel(s)}
           </span>
@@ -95,7 +103,10 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         </span>
       </div>
 
-      <h1 className="aura-display mt-2 text-2xl font-medium leading-snug tracking-tight text-[var(--c-ink)]">{item.title}</h1>
+      <div className="mt-2 flex items-start justify-between gap-3">
+        <h1 className="aura-display min-w-0 flex-1 [overflow-wrap:anywhere] text-2xl font-medium leading-snug tracking-tight text-[var(--c-ink)]">{item.title}</h1>
+        {initialSaved !== null && <SaveButton articleId={id} initialSaved={initialSaved} />}
+      </div>
       {item.titleOriginal && <p className="mt-1 text-sm italic text-[var(--c-ink-3)]">{item.titleOriginal}</p>}
       {item.authors && <p className="mt-2 text-xs text-[var(--c-ink-2)]">{item.authors}</p>}
 

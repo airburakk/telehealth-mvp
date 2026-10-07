@@ -22,5 +22,6 @@ export const V3_LIGHT = {
   // [data-audience="student"], 👤 2026-09-06): METİN aksanı #ea580c (kalın/büyük etiketlerde okunur; 16px düğme
   // metni olarak KULLANILMAZ — AA altı), DOLGU #fb923c (düğme zemini + mürekkep metin, STUDENT lockup'ı, not çizgisi).
   "--dl-coral": "#ea580c",
+  "--dl-coral-ink": "#9a3412",
   "--dl-coral-fill": "#fb923c",
 } as CSSProperties;

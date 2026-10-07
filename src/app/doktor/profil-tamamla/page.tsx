@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { BRANCH_LABELS } from "@/lib/procedures";
+import { DOCTOR_BRANCH_OPTIONS } from "@/lib/doctor-branches";
 import { CompleteProfileForm } from "./CompleteProfileForm";
 import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { hasDoctoriumAccess } from "@/lib/doctor-activation";
@@ -46,7 +46,7 @@ export default async function CompleteProfilePage({
   // Kimlik zaten tam → ara sayfanın işi yok; hedefe geç (from korunur).
   if (doctor.branch.trim() && doctor.city.trim()) redirect(nextHref);
 
-  const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));
+  const branches = DOCTOR_BRANCH_OPTIONS;
   return (
     <div className="grid min-h-[calc(100vh-8rem)] place-items-center bg-[var(--c-bg)] px-5 py-10">
       <CompleteProfileForm

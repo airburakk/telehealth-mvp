@@ -28,6 +28,7 @@ import { isNonHumanAcademic, lccNonMedicine } from "./academic-journals";
 import { BRANCHES } from "./triage";
 import { translateTitlesTr } from "./translate-news";
 import { normalizeAbstractText } from "./abstract-text";
+import { reportArticleMetadataQuality } from "./article-metadata-quality";
 
 const UA = "Mozilla/5.0 (compatible; AuraHealth/1.0; +https://telehealth-mvp-roan.vercel.app)";
 const LABEL_TO_SLUG: Record<string, string> = Object.fromEntries(BRANCHES.map((b) => [b.label, b.key]));
@@ -163,6 +164,11 @@ async function epmcBranch(mesh: string, slug: string, opts: AcademicIngestOpts):
     if (Number.isNaN(when.getTime())) continue;
     const doi = r.doi ?? null;
     const pmid = r.pmid ?? (r.source === "MED" ? r.id : null);
+    reportArticleMetadataQuality({
+      source: "europepmc", externalId: `${r.source}:${r.id}`, title: r.title, doi,
+      url: doi ? `https://doi.org/${doi}` : `https://europepmc.org/article/${r.source}/${r.id}`,
+      publishedAt: when, publishedAtBasis: "first-publication",
+    });
     if (await mergeIfKnown(doi, pmid, [slug])) continue;
     const isNew = await upsertArticle("europepmc", `${r.source}:${r.id}`, [slug], {
       kind: kindFromTypes(r.pubTypeList?.pubType ?? []),
@@ -235,6 +241,11 @@ async function doajBranch(mesh: string, slug: string, opts: AcademicIngestOpts):
         : null;
     if (!when || Number.isNaN(when.getTime()) || when < cutoff) continue;
     const doi = b.identifier?.find((i) => i.type?.toLowerCase() === "doi")?.id ?? null;
+    reportArticleMetadataQuality({
+      source: "doaj", externalId: r.id, title: b.title, doi,
+      url: doi ? `https://doi.org/${doi}` : (b.link?.find((l) => l.type === "fulltext")?.url ?? `https://doaj.org/article/${r.id}`),
+      publishedAt: when, publishedAtBasis: b.year ? "year-month" : "source-created-date",
+    });
     if (await mergeIfKnown(doi, null, [slug])) continue;
     const fulltext = b.link?.find((l) => l.type === "fulltext")?.url;
     const names = (b.author ?? []).map((a) => a.name).filter(Boolean) as string[];

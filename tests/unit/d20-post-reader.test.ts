@@ -1,0 +1,24 @@
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const m=vi.hoisted(()=>({auth:vi.fn(),user:{findUnique:vi.fn()},doctor:{findUnique:vi.fn(),update:vi.fn()},dailyDigest:{findMany:vi.fn()},verify:vi.fn(),audit:vi.fn()}));
+vi.mock("@/lib/auth",()=>({getCurrentUser:m.auth}));
+vi.mock("@/lib/db",()=>({db:m}));
+vi.mock("@/lib/audit",()=>({recordAccess:m.audit}));
+vi.mock("@/lib/doctorium",()=>({todayModuleCounts:async()=>({})}));
+vi.mock("@/lib/daily-digest",()=>({DIGEST_NAME:"Doctorium Post",formatTrDate:(s:string)=>s,verifyDigestUnsubToken:m.verify}));
+vi.mock("@/app/doktor/doctorium/DoctoriumSidebar",()=>({DoctoriumShell:({children}:{children:React.ReactNode})=>children}));
+vi.mock("next/link",()=>({default:({children,href}:{children:React.ReactNode;href:string})=>React.createElement("a",{href},children)}));
+vi.mock("next/navigation",()=>({redirect:()=>{throw new Error("redirect")}}));
+import Page from "@/app/doktor/doctorium/ozet/page";
+import { POST as unsubscribe, GET as confirmation } from "@/app/api/digest/unsubscribe/route";
+import { POST as preference } from "@/app/api/doctor/digest/route";
+const edition={day:"2030-06-01",itemCount:1,createdAt:new Date(),itemsJson:JSON.stringify({sections:[{key:"akademik",label:"Academic",items:[{id:"own-article",title:"<script>synthetic</script>",sourceName:"Fixture",summary:"Stored summary",kind:"makale",url:null,publishedAt:"2030-06-01"}]}],overflow:0})};
+beforeEach(()=>{vi.resetAllMocks();vi.stubGlobal("React",React);m.auth.mockResolvedValue({id:"own-user",role:"DOCTOR"});m.user.findUnique.mockResolvedValue({doctorId:"own-doctor"});m.doctor.findUnique.mockResolvedValue({id:"own-doctor",digestChannel:"app"});m.verify.mockResolvedValue(true);m.dailyDigest.findMany.mockResolvedValue([edition]);});
+const read=async(d?:string)=>renderToStaticMarkup(await Page({searchParams:Promise.resolve({d})}));
+describe("D20 reader and opt-out local mocks",()=>{
+ it("reads only own stored edition; historical content remains while closed; HTML escaped",async()=>{m.doctor.findUnique.mockResolvedValue({digestChannel:null});const html=await read();expect(html).toContain("Stored summary");expect(html).toContain("&lt;script&gt;");expect(m.dailyDigest.findMany.mock.calls[0][0]).toMatchObject({where:{doctorId:"own-doctor"},take:7});expect(html).toContain("/doktor/doctorium/own-article")});
+ it("missing and corrupt editions get distinct error instead of promise of tomorrow",async()=>{expect(await read("2030-05-01")).toContain("son yedi baskı");m.dailyDigest.findMany.mockResolvedValue([{...edition,itemsJson:'{}'}]);expect(await read()).toContain("Bu baskı okunamadı");m.dailyDigest.findMany.mockResolvedValue([]);const html=await read();expect(html).toContain("Henüz baskınız yok");expect(html).not.toContain("bir sonraki sabah burada olacak")});
+ it("GET never changes subscription; POST fully stops own token account and repeat is write-idempotent",async()=>{const req=new Request("http://localhost/api/digest/unsubscribe?d=own-doctor&t=fixture");expect((await confirmation(req)).status).toBe(200);expect(m.doctor.update).not.toHaveBeenCalled();expect((await unsubscribe(req)).status).toBe(200);expect(m.doctor.update).toHaveBeenCalledWith({where:{id:"own-doctor"},data:{digestChannel:null}});m.doctor.findUnique.mockResolvedValue({id:"own-doctor",digestChannel:null});await unsubscribe(req);expect(m.doctor.update).toHaveBeenCalledOnce();m.verify.mockResolvedValue(false);expect((await unsubscribe(req)).status).toBe(403);expect(m.doctor.update).toHaveBeenCalledOnce()});
+ it("preference ignores supplied foreign identity and validates three-state channel",async()=>{for(const channel of [null,"app","email"]){const r=await preference(new Request("http://localhost",{method:"POST",body:JSON.stringify({doctorId:"foreign",channel})}));expect(r.status).toBe(200);expect(m.doctor.update).toHaveBeenLastCalledWith({where:{id:"own-doctor"},data:{digestChannel:channel}})}expect((await preference(new Request("http://localhost",{method:"POST",body:'{"channel":"email-only"}'}))).status).toBe(400);m.auth.mockResolvedValue({id:"student",role:"PATIENT"});expect((await preference(new Request("http://localhost",{method:"POST",body:'{}'}))).status).toBe(401)});
+});

@@ -237,7 +237,7 @@ export function NotificationBell({ lang = "Türkçe", patientLangFallback = fals
       )}
 
       {open && (
-        <div dir={dir} lang={LANG_BCP47[effLang]} className={`absolute z-50 w-80 overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-xl ${variant === "menu-item" ? "end-0 top-full mt-1" : "right-0 top-11"}`}>
+        <div dir={dir} lang={LANG_BCP47[effLang]} className={`z-50 overflow-hidden rounded-3xl border border-[var(--c-hairline)] bg-[var(--c-panel)] shadow-xl ${variant === "menu-item" ? "relative mt-1 w-full" : "absolute right-0 top-11 w-80 max-w-[calc(100vw-2rem)]"}`}>
           <div className="flex items-center justify-between border-b border-[var(--c-hairline)] px-4 py-2.5">
             <span className="aura-mono text-[11px] uppercase tracking-[0.2em] text-[var(--c-ink-2)]">{t("Bildirimler")}</span>
             {loading && <span className="text-[10px] text-[var(--c-ink-3)]">{t("yenileniyor…")}</span>}

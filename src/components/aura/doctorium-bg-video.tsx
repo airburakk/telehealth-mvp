@@ -2,133 +2,85 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AiVideoNoticeBadge } from "@/components/AiVideoNotice";
+import { heroMotionAllowed, heroVideoEligible, type HeroConnection } from "@/lib/doctorium-hero-media";
 
-// /doctorium arka plan videosu — v2 hero sözleşmesinin taşıması: IO ile yalnız
-// görünürken oynat · arka plan sekmesinde mount-play reddedilir → visibilitychange'te
-// yeniden dene · Save-Data/reduced-motion'da video HİÇ MOUNT EDİLMEZ (yalnız statik
-// poster gösterilir — DOM'da <source> bile yok, "preload=none" güvencesinden daha
-// güçlü: hiçbir istek gitmez). `overlay` = üstteki okunurluk skrimi: koyu bölümde
-// koyu gradient, açık bölümde beyaz perde — çağıran bölümün temasına göre verilir.
-// Kapsayıcı bölümde `relative isolate` ŞART (-z-10 katmanları bölüm köküne gömülür).
-// Film geçmişi (film8→film13, sahne-anchor tuzakları dahil): git geçmişi.
-//
-// film14 (2026-08-27, kullanıcı onaylı marka filmi — VO+müzik dahil, 44.15sn): film13'ün
-// yerini aldı. Önceki sahne-anchor hack'i (belirli bir zaman aralığında objectPosition
-// değiştirme) film13'e ÖZGÜYDÜ, film14'te yok — kaldırıldı.
-//
-// 2026-09-04 (kullanıcı kararı): mobil kısıtı kaldırıldı — poster (filmin açılış karesi,
-// "Doctorium" yazısı+slogan içerir) donuk zemin olarak mobilde tek başına kötü duruyordu;
-// video akışta bu kare hızla geçip ürüne akar. Mobilde de aynı 720p kaynak açılır (ayrı
-// mobil dosya YOK — tek kaynak, Save-Data/reduced-motion güvencesi hâlâ geçerli). 480p+sesli
-// deneme (2.15MB) telefonda kalite olarak yetersiz bulundu, 720p+sesli (4.7MB) kalıcı kaldı.
-// Mobilde "hiç oynamıyor" sorunu ayrı bir kökten çıkmıştı — Next.js dev server'ın
-// allowedDevOrigins kısıtı LAN IP'sinden gelen HMR bağlantısını reddediyordu (next.config.ts),
-// video koduyla ilgisi yoktu. Sesi aç/kapa düğmesi bu turda bir kez kaldırılıp (kullanıcı:
-// "orası sade olsun"), video mobilde de dinlenir hâle gelince GERİ istendi — `muted` artık
-// `soundOn` state'ine bağlı.
+const POSTER = "/assets/video/p-doctorium-film14-still-v2.webp";
+const FILM = "/assets/video/v-doctorium-film14-720.mp4";
+const FOCAL = "50% 38%";
+type Connection = HeroConnection & EventTarget;
+
+// Film14 and the existing overlay/brand remain unchanged. The text-free poster
+// comes from 15s in that film; the mobile default has no video/source element.
 export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [showVideo, setShowVideo] = useState(false);
+  const [policy, setPolicy] = useState({ motionAllowed: false, desktop: false, inView: false, tabVisible: false });
+  const [requested, setRequested] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
+  const [pausedByUser, setPausedByUser] = useState(false);
+  const eligible = heroVideoEligible({ ...policy, requested });
+  const showVideo = policy.motionAllowed && loaded;
 
-  // Karar: reduced-motion ya da save-data → video hiç mount edilmez (mobil kısıtı kalktı).
   useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const saveData =
-      "connection" in navigator &&
-      (navigator as { connection?: { saveData?: boolean } }).connection?.saveData === true;
-    if (reduceMotion || saveData) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/prerender'da matchMedia yok → ilk render güvenli varsayılanla, gerçek değer mount'ta bir kez okunur (deps [], cascading yok).
-    setShowVideo(true);
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const connection = (navigator as Navigator & { connection?: Connection }).connection;
+    let inView = false;
+    const update = () => setPolicy({ motionAllowed: heroMotionAllowed(motion.matches, connection), desktop: desktop.matches, inView, tabVisible: document.visibilityState === "visible" });
+    const observer = new IntersectionObserver(([entry]) => { inView = entry?.isIntersecting ?? false; update(); }, { threshold: 0.1 });
+    if (rootRef.current) observer.observe(rootRef.current);
+    motion.addEventListener("change", update);
+    desktop.addEventListener("change", update);
+    connection?.addEventListener("change", update);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      observer.disconnect();
+      motion.removeEventListener("change", update);
+      desktop.removeEventListener("change", update);
+      connection?.removeEventListener("change", update);
+      document.removeEventListener("visibilitychange", update);
+    };
   }, []);
 
   useEffect(() => {
+    if (eligible && !loaded) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- attach the media source only after browser visibility and preference checks
+      setLoaded(true);
+    }
     const video = videoRef.current;
-    if (!video || !showVideo) return;
-
-    let inView = false;
-    const io = new IntersectionObserver(
-      (entries) => {
-        inView = entries[0]?.isIntersecting ?? false;
-        if (inView) void video.play().catch(() => {});
-        else video.pause();
-      },
-      { threshold: 0.1 },
-    );
-    io.observe(video);
-    const onVis = () => {
-      if (document.visibilityState === "visible" && inView) void video.play().catch(() => {});
-    };
-    document.addEventListener("visibilitychange", onVis);
-
-    return () => {
-      io.disconnect();
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, [showVideo]);
+    if (!video) return;
+    if (eligible && !pausedByUser) void video.play().catch(() => {});
+    else video.pause();
+  }, [eligible, loaded, pausedByUser, showVideo]);
 
   return (
     <>
+      <div ref={rootRef} aria-hidden className="pointer-events-none absolute inset-0" />
       {showVideo ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          muted={!soundOn}
-          loop
-          playsInline
-          preload="auto"
-          poster={POSTER}
-          aria-hidden
-          className="absolute inset-0 -z-10 h-full w-full object-cover"
-          style={{ objectPosition: FOCAL }}
-        >
-          <source src="/assets/video/v-doctorium-film14-720.mp4" type="video/mp4" />
+        <video ref={videoRef} muted={!soundOn} loop playsInline preload="none" poster={POSTER} aria-hidden className="absolute inset-0 -z-10 h-full w-full object-cover" style={{ objectPosition: FOCAL }}>
+          <source src={FILM} type="video/mp4" />
         </video>
       ) : (
-        // eslint-disable-next-line @next/next/no-img-element -- absolute fill zemin görseli; video poster'ıyla birebir aynı statik asset
-        <img
-          src={POSTER}
-          alt=""
-          aria-hidden
-          className="absolute inset-0 -z-10 h-full w-full object-cover"
-          style={{ objectPosition: FOCAL }}
-        />
+        // eslint-disable-next-line @next/next/no-img-element -- decorative absolute background, also the video poster
+        <img src={POSTER} alt="" aria-hidden fetchPriority="high" width={1280} height={720} className="absolute inset-0 -z-10 h-full w-full object-cover" style={{ objectPosition: FOCAL }} />
       )}
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: overlay }} />
-      {/* Ses aç/kapa — YALNIZ video mount edildiyse (poster hâlinde oynatılacak ses yok).
-          Sağ-alt köşede AI rozetinin üstünde: bottom-12 = rozetin (bottom-3 + ~22px) üstünden
-          ~14px boşluk. Görünür metin etiketin kendisidir → ayrıca aria-label VERİLMEZ
-          (aria-label görünür adı ezer; ikisi birebir tutulmazsa "label in name" kırılır). */}
-      {showVideo && (
-        <button
-          type="button"
-          onClick={() => setSoundOn((on) => !on)}
-          aria-pressed={soundOn}
-          className="absolute bottom-12 right-3 z-10 flex items-center gap-2 rounded-full border border-white/15 bg-black/55 px-3.5 py-2 text-[12px] font-medium text-white backdrop-blur-sm transition hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-        >
-          {soundOn ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none" />
-              <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-              <path d="M18.5 5.5a9 9 0 0 1 0 13" />
-            </svg>
+      {policy.motionAllowed && (
+        <div className="absolute bottom-12 right-3 z-10 flex flex-wrap justify-end gap-2">
+          {!showVideo ? (
+            <button type="button" onClick={() => setRequested(true)} className={CONTROL}>Tanıtım videosunu oynat</button>
           ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none" />
-              <line x1="23" y1="9" x2="17" y2="15" />
-              <line x1="17" y1="9" x2="23" y2="15" />
-            </svg>
+            <>
+              <button type="button" onClick={() => setPausedByUser((value) => !value)} aria-pressed={pausedByUser} className={CONTROL}>{pausedByUser ? "Videoyu oynat" : "Videoyu duraklat"}</button>
+              <button type="button" onClick={() => setSoundOn((value) => !value)} aria-pressed={soundOn} className={CONTROL}>{soundOn ? "Sesi kapat" : "Sesi aç"}</button>
+            </>
           )}
-          {soundOn ? "Sesi kapat" : "Sesi aç"}
-        </button>
+        </div>
       )}
-      {/* Seffaflik beyani (kullanici karari 2026-08-18). Doctorium yuzeyi tek dil TR. */}
       <AiVideoNoticeBadge lang="tr" />
     </>
   );
 }
 
-const POSTER = "/assets/video/p-doctorium-film14.jpg";
-// Küre/wordmark odağı posterde dikeyde ~%38 (üst-orta) — mobilde dar/uzun kırpmada
-// odağın alta kaymaması için hem video hem poster-fallback aynı object-position'ı kullanır.
-const FOCAL = "50% 38%";
+const CONTROL = "rounded-full border border-white/15 bg-black/55 px-3.5 py-2 text-[12px] font-medium text-white backdrop-blur-sm transition hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70";

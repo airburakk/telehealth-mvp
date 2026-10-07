@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { hashPassword, createSession } from "@/lib/auth";
 import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { createDoctorAccount } from "@/lib/doctor-signup";
-import { BRANCH_LABELS } from "@/lib/procedures";
+import { isDoctorBranch } from "@/lib/doctor-branches";
 import { LANGUAGES } from "@/lib/constants";
 import { isAllowedCity } from "@/lib/cities";
 import { isEmailConfigured } from "@/lib/email";
@@ -14,7 +14,6 @@ import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
 // M5 — Doktor e-posta kaydı. Hesap oluşturulur (verified:false, inaktif) → oturum açılır →
 // proxy /onam (KVKK) → /doktor → onboarding kapısı (FHIR uzmanlık + işlem + diploma; MMSS ihtiyari).
 const TITLES = new Set(["Dr.", "Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."]); // "Dr." 2026-09-05 — lib/doctor-signup DOCTOR_TITLES ile birebir
-const BRANCH_SET = new Set(Object.values(BRANCH_LABELS));
 const LANG_SET = new Set(LANGUAGES);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -54,7 +53,7 @@ export async function POST(req: Request) {
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Geçerli bir e-posta girin." }, { status: 400 });
   if (password.length < 8) return NextResponse.json({ error: "Parola en az 8 karakter olmalı." }, { status: 400 });
   if (!TITLES.has(title)) return NextResponse.json({ error: "Geçerli bir ünvan seçin." }, { status: 400 });
-  if (!BRANCH_SET.has(branch)) return NextResponse.json({ error: "Geçerli bir branş seçin." }, { status: 400 });
+  if (!isDoctorBranch(branch)) return NextResponse.json({ error: "Geçerli bir branş seçin." }, { status: 400 });
   // Kapalı liste (2026-08-30): form CitySelect gönderir; serbest metin curl'la da yazılamasın —
   // kaynak kirliliği ("İstanbul"/"Istanbul") /admin/uyeler dağılımını yanıltıyordu.
   if (!isAllowedCity(city)) return NextResponse.json({ error: "Şehri listeden seçin." }, { status: 400 });

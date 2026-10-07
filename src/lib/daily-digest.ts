@@ -211,8 +211,8 @@ export async function runDailyDigests(): Promise<DigestRunResult> {
   res.checked = subscribers.length;
   if (!subscribers.length) return res;
 
-  const day = trDayString();
   const now = Date.now();
+  const day = trDayString(new Date(now));
 
   for (const d of subscribers) {
     try {
@@ -288,6 +288,8 @@ export async function runDailyDigests(): Promise<DigestRunResult> {
             });
           } else if (sent.simulated) {
             res.emailSimulated++;
+          } else {
+            res.failed++; // Sağlayıcı reddi de başarısız kanal girişimidir.
           }
         }
       }

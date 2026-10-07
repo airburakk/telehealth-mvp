@@ -46,34 +46,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Geçersiz modül." }, { status: 400 });
   }
 
-  const current = await db.doctor.findUnique({ where: { id: doctorId }, select: { doctoriumViewPrefs: true } });
-  let prefs: Record<string, unknown> = {};
-  try {
-    const v = current?.doctoriumViewPrefs ? JSON.parse(current.doctoriumViewPrefs) : {};
-    if (v && typeof v === "object") prefs = v;
-  } catch {
-    /* bozuk kayıt — sıfırdan kurulur, diğer modüller de bu yazımda sıfırlanır (nadir durum) */
-  }
-
-  if (moduleKey === "sektorel") {
-    prefs.sektorel = { s: normSource(b.source), d: normRange(b.range), c: normCategory(b.category) };
-  } else if (moduleKey === "ilac") {
-    prefs.ilac = { d: normRange(b.range) };
-  } else if (moduleKey === "tus") {
-    // Faz B1→B3 (2026-09-05): doktorun Kariyer sekmesinde TUS bölümü — içerik süzgeci değil, yalnız görünürlük anahtarı.
-    prefs.tus = { show: b.show === true };
-  } else if (moduleKey === "kariyer") {
-    // Öğrenci Kariyer açılış tercihleri (2026-09-06): tür ∈ EDU_KINDS | null · bölüm ∈ TUS_SECTIONS · branş onaylı dönemlerin listesinden | null.
-    const branchKeys = new Set(tusBranches(approvedTusSummaries()).map((x) => x.branch));
-    prefs.kariyer = {
-      tur: (EDU_KINDS as readonly string[]).includes(b.tur) ? b.tur : null,
-      tusBolum: TUS_SECTIONS.some((x) => x.key === b.tusBolum) ? b.tusBolum : "veriler",
-      tusBrans: typeof b.tusBrans === "string" && branchKeys.has(b.tusBrans) ? b.tusBrans : null,
-    };
-  } else {
-    prefs.mevzuat = { d: normRange(b.range), c: normCategory(b.category) };
-  }
-
-  await db.doctor.update({ where: { id: doctorId }, data: { doctoriumViewPrefs: JSON.stringify(prefs) } });
+  // Serialize the read/merge/write for this account so distinct module updates cannot overwrite each other.
+  await db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "Doctor" WHERE "id" = ${doctorId} FOR UPDATE`;
+    const current = await tx.doctor.findUnique({ where: { id: doctorId }, select: { doctoriumViewPrefs: true } });
+    let prefs: Record<string, unknown> = {};
+    try {
+      const v = current?.doctoriumViewPrefs ? JSON.parse(current.doctoriumViewPrefs) : {};
+      if (v && typeof v === "object") prefs = v;
+    } catch {
+      /* bozuk kayıt — sıfırdan kurulur, diğer modüller de bu yazımda sıfırlanır (nadir durum) */
+    }
+  
+    if (moduleKey === "sektorel") {
+      prefs.sektorel = { s: normSource(b.source), d: normRange(b.range), c: normCategory(b.category) };
+    } else if (moduleKey === "ilac") {
+      prefs.ilac = { d: normRange(b.range) };
+    } else if (moduleKey === "tus") {
+      // Faz B1→B3 (2026-09-05): doktorun Kariyer sekmesinde TUS bölümü — içerik süzgeci değil, yalnız görünürlük anahtarı.
+      prefs.tus = { show: b.show === true };
+    } else if (moduleKey === "kariyer") {
+      // Öğrenci Kariyer açılış tercihleri (2026-09-06): tür ∈ EDU_KINDS | null · bölüm ∈ TUS_SECTIONS · branş onaylı dönemlerin listesinden | null.
+      const branchKeys = new Set(tusBranches(approvedTusSummaries()).map((x) => x.branch));
+      prefs.kariyer = {
+        tur: (EDU_KINDS as readonly string[]).includes(b.tur) ? b.tur : null,
+        tusBolum: TUS_SECTIONS.some((x) => x.key === b.tusBolum) ? b.tusBolum : "veriler",
+        tusBrans: typeof b.tusBrans === "string" && branchKeys.has(b.tusBrans) ? b.tusBrans : null,
+      };
+    } else {
+      prefs.mevzuat = { d: normRange(b.range), c: normCategory(b.category) };
+    }
+  
+    await tx.doctor.update({ where: { id: doctorId }, data: { doctoriumViewPrefs: JSON.stringify(prefs) } });
+  
+  });
   return NextResponse.json({ ok: true });
 }

@@ -20,6 +20,11 @@
  * açarsan/koyultursan bu tonları YENİDEN ÖLÇ — nötr değişikliği asla tek başına kalmaz.
  * Ölçüm ekseni: metin×yüzey matrisi, en zor yüzey surface-2. */
 .theme-light {
+  /* Content-kind text: retain each hue while meeting small-text contrast on light surfaces. */
+  --doctorium-kind-makale: #047857;
+  --doctorium-kind-lansman: #0e7490;
+  --doctorium-kind-ictihat: #be123c;
+  --doctorium-kind-mevzuat: #92400e;
   --c-bg: #EEF2F1;
   --c-bg-deep: #E0E7E6;
   /* Krom katmanı (2026-08-14, Doctorium Faz 1): Header + SiteFooter + Doctorium bandı — içerik
@@ -59,6 +64,10 @@
   color-scheme: light;
 }
 .theme-dark {
+  --doctorium-kind-makale: #34d399;
+  --doctorium-kind-lansman: #22d3ee;
+  --doctorium-kind-ictihat: #fb7185;
+  --doctorium-kind-mevzuat: #fbbf24;
   --c-bg: #0d0e10;
   --c-bg-deep: #101113;
   --c-chrome: #08090b; /* krom katmanı — bkz. theme-light'taki açıklama */
@@ -1157,10 +1166,10 @@ body {
     transform: scale(1.8);
   }
   .aura-sphere-img {
-    background-image: url("/brand/aura-sphere-still-v2.png") !important;
+    background-image: var(--sphere-still, url("/brand/aura-sphere-still-160-v3.webp")) !important;
   }
   .aura-sphere.em .aura-sphere-img {
-    background-image: url("/brand/doctorium-sphere-still-v2.png") !important;
+    background-image: var(--sphere-still, url("/brand/doctorium-sphere-still-160-v3.webp")) !important;
   }
 }
 
@@ -1345,3 +1354,14 @@ body[data-brand="doctorium"] {
   --c-cta-strong: #065f46;
   --c-cta-ink: #ffffff;
 }
+
+/* D28: küçük önizleme metni; marka/dolgu renkleri korunur. */
+.student-readable-preview .text-\[var\(--c-accent\)\] { color: var(--c-accent-stronger); }
+
+/* D28: açık tema küçük metinleri; logo, dolgu, önceki tür token'ları değişmez. */
+.theme-light .doctorium-scope .text-\[var\(--c-accent\)\]:not(header *) { color: var(--c-accent-stronger); }
+.theme-light .doctorium-scope .doctorium-shelf-bg .shelf-tab-off .shelf-no { opacity: 1; }
+.theme-light .doctorium-scope .doctorium-shelf-bg .shelf-tab-on { color: color-mix(in srgb, var(--tab-light) 80%, #000); }
+.theme-light .doctorium-scope .doctorium-module-eyebrow,
+.theme-light .doctorium-scope .doctorium-source-stamp,
+.theme-light .doctorium-scope .doctorium-branch-badge { color: var(--c-ink-2) !important; }

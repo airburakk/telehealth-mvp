@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BRANCH_LABELS } from "@/lib/procedures";
+import { DOCTOR_BRANCH_OPTIONS } from "@/lib/doctor-branches";
 import { StudentGateForm } from "@/components/StudentGateForm";
 import { DoctoriumSignupShell } from "@/components/aura/doctorium-signup-shell";
 import { StudentScopeCard } from "@/components/aura/student-scope-card";
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export default function DoctoriumStudentPage() {
-  const branches = Object.values(BRANCH_LABELS).sort((a, b) => a.localeCompare(b, "tr"));
+  const branches = DOCTOR_BRANCH_OPTIONS;
   return (
     <DoctoriumSignupShell>
       <StudentGateForm branches={branches} brand="doctorium" />

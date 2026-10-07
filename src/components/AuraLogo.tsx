@@ -46,8 +46,8 @@ export type AuraTone = keyof typeof TONES;
 // disk %95.5-99'da şeffafa erir) → CSS background/mask'a gerek kalmadı, kenar AA'sı dosyada.
 // Üretim: tek seferlik Pillow geçişi (bu oturum); eski adlar cache kırmak için -v2'ye taşındı.
 const SPHERE = {
-  brand: { s160: "/brand/aura-sphere-160-v2.webp", s240: "/brand/aura-sphere-240-v2.webp" },
-  emerald: { s160: "/brand/doctorium-sphere-160-v2.webp", s240: "/brand/doctorium-sphere-240-v2.webp" },
+  brand: { s96: "/brand/aura-sphere-96-v3.webp", s160: "/brand/aura-sphere-160-v2.webp", s240: "/brand/aura-sphere-240-v2.webp", still160: "/brand/aura-sphere-still-160-v3.webp", still240: "/brand/aura-sphere-still-240-v3.webp" },
+  emerald: { s96: "/brand/doctorium-sphere-96-v3.webp", s160: "/brand/doctorium-sphere-160-v2.webp", s240: "/brand/doctorium-sphere-240-v2.webp", still160: "/brand/doctorium-sphere-still-160-v3.webp", still240: "/brand/doctorium-sphere-still-240-v3.webp" },
 } as const;
 
 function AuraSymbol({
@@ -61,7 +61,9 @@ function AuraSymbol({
   className?: string;
   tone?: AuraTone;
 }) {
-  const src = size > 80 ? SPHERE[tone].s240 : SPHERE[tone].s160;
+  // 96px preserves 2x detail up to 48 CSS px; larger marks retain their sources.
+  const src = size <= 48 ? SPHERE[tone].s96 : size > 80 ? SPHERE[tone].s240 : SPHERE[tone].s160;
+  const still = size > 80 ? SPHERE[tone].still240 : SPHERE[tone].still160;
   const cls = ["aura-sphere", tone === "emerald" ? "em" : "", spin ? "aura-sphere-fast" : "", className]
     .filter(Boolean)
     .join(" ");
@@ -69,7 +71,7 @@ function AuraSymbol({
     // Erişilebilir ad TONE'a bağlı (ayrışma 2026-08-24): zümrüt küre Doctorium'un sembolüdür —
     // ekran okuyucu Doctorium yüzeyinde "AURA" duymamalı (görsel ayrışma aria'da da geçerli).
     <span role="img" aria-label={tone === "emerald" ? "Doctorium" : "AURA"} className={cls} style={{ width: size, height: size }}>
-      <span aria-hidden className="aura-sphere-img" style={{ backgroundImage: `url(${src})` }} />
+      <span aria-hidden className="aura-sphere-img" style={{ backgroundImage: `url(${src})`, "--sphere-still": `url(${still})` } as React.CSSProperties} />
     </span>
   );
 }
