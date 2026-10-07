@@ -22,6 +22,7 @@ const STATUS_TONE: Record<PlanStatus, string> = {
   PLANNED: "border-[var(--c-hairline)] text-[var(--c-ink-3)]",
   DRAFT: "border-[var(--c-accent)]/40 text-[var(--c-accent)]",
   APPROVED: "border-[var(--c-success)]/40 text-[var(--c-success)]",
+  PUBLISHING: "border-[var(--c-warn,#d97706)]/50 text-[var(--c-warn,#d97706)]",
   PUBLISHED: "border-[var(--c-success)]/40 text-[var(--c-success)]",
   SKIPPED: "border-[var(--c-hairline)] text-[var(--c-ink-3)]",
   FAILED: "border-[var(--c-danger)]/40 text-[var(--c-danger)]",
@@ -106,7 +107,7 @@ export default async function ContentCalendarPage({ searchParams }: { searchPara
                 </div>
                 {item ? (
                   <Link href={`/admin/icerik-takvimi/${item.id}`} className="shrink-0 text-xs font-semibold text-[var(--c-accent)] hover:underline">
-                    {item.status === "APPROVED" || item.status === "PUBLISHED" ? "Görüntüle" : "Düzenle"}
+                    {item.status === "APPROVED" || item.status === "PUBLISHING" || item.status === "PUBLISHED" || item.status === "FAILED" ? "Görüntüle" : "Düzenle"}
                   </Link>
                 ) : (
                   <OpenSlotButton seriesKey={series.key} slotDay={slotDay} />
@@ -133,7 +134,7 @@ export default async function ContentCalendarPage({ searchParams }: { searchPara
       </AuraPanel>
 
       <p className="mt-6 text-xs leading-relaxed text-[var(--c-ink-3)]">
-        Onaylanan içerik şimdilik YAYINLANMAZ: yayın hattı (n8n) ayrı bir adımdır. Onaydan sonra içerik değiştirilirse onay düşer; yayın hattı yalnız onay mührüyle birebir eşleşen içeriği yayınlar.
+        Otomatik yayın hattı (n8n) henüz kurulu değil: onaylı içeriği yuva sayfasından elle paylaşıp işaretleyin. Onaydan sonra içerik değiştirilirse onay düşer; yayın (elle ya da otomatik) yalnız onay mührüyle birebir eşleşen içeriği yayınlandı sayar.
       </p>
     </div>
   );

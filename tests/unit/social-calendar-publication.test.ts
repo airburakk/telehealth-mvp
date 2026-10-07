@@ -2,7 +2,19 @@
 // bilgisi, boşluk, uzunluk, javascript:/data: yasak) · kayıtlı JSON'un güvenli okunması (bozuk → null; geçersiz bağlantı sessizce düşer) ·
 // elle yayın yardımcı metinleri (altyazı + etiket, dosya adları).
 import { describe, expect, it } from "vitest";
-import { CHANNEL_LABEL, MAX_ERROR_LEN, MAX_URL_LEN, PUBLISH_CHANNELS, buildCaptionText, normalizeChannels, parsePublication, slideFileName, zipFileName } from "@/lib/social-calendar/publication";
+import {
+  CHANNEL_LABEL,
+  MAX_ERROR_LEN,
+  MAX_URL_LEN,
+  PUBLISH_CHANNELS,
+  buildCaptionText,
+  cleanErrorText,
+  normalizeChannels,
+  normalizeFailures,
+  parsePublication,
+  slideFileName,
+  zipFileName,
+} from "@/lib/social-calendar/publication";
 
 describe("normalizeChannels", () => {
   it("geçerli: kanal + isteğe bağlı https bağlantı; bağlantı normalleşir, boş bağlantı atılır", () => {
@@ -88,5 +100,44 @@ describe("elle yayın yardımcıları", () => {
   });
   it("zipFileName", () => {
     expect(zipFileName("karar-masasi", "2026-10-07")).toBe("karar-masasi-2026-10-07.zip");
+  });
+});
+
+describe("cleanErrorText / normalizeFailures (v6.334)", () => {
+  it("cleanErrorText: denetim karakterleri atılır, tek satıra iner, ≤ 300; boş/yalnız boşluk → 'Bilinmeyen hata'", () => {
+    expect(cleanErrorText("Instagram 400:\n\t  kapsayıcı\u0000 hazır değil")).toBe("Instagram 400: kapsayıcı hazır değil");
+    expect(cleanErrorText("x".repeat(900))).toHaveLength(MAX_ERROR_LEN);
+    for (const bos of ["", "  \n\t ", "\u0000\u0007"]) expect(cleanErrorText(bos), JSON.stringify(bos)).toBe("Bilinmeyen hata");
+  });
+  it("normalizeFailures: yok/null → boş liste (kısmi başarısızlık İSTEĞE BAĞLI)", () => {
+    for (const v of [undefined, null]) expect(normalizeFailures(v)).toEqual({ ok: true, failures: [] });
+    expect(normalizeFailures([])).toEqual({ ok: true, failures: [] });
+  });
+  it("normalizeFailures: geçerli → kanal + temizlenmiş hata; hata metni yoksa 'Bilinmeyen hata'", () => {
+    expect(normalizeFailures([{ channel: "linkedin", error: " 429\n oran sınırı " }, { channel: "x" }])).toEqual({
+      ok: true,
+      failures: [{ channel: "linkedin", error: "429 oran sınırı" }, { channel: "x", error: "Bilinmeyen hata" }],
+    });
+  });
+  it("normalizeFailures: dizi-dışı, nesne-dışı eleman, bilinmeyen kanal, tekrarlı kanal, kanal sayısı aşımı reddedilir", () => {
+    expect(normalizeFailures("kötü").ok).toBe(false);
+    expect(normalizeFailures({}).ok).toBe(false);
+    for (const bad of ["x", 5, null, []]) expect(normalizeFailures([bad]).ok).toBe(false);
+    expect(normalizeFailures([{ channel: "tiktok", error: "x" }])).toMatchObject({ ok: false, error: "Başarısız kanal bilinmiyor." });
+    expect(normalizeFailures([{ channel: "x", error: "a" }, { channel: "x", error: "b" }])).toMatchObject({ ok: false });
+    expect(normalizeFailures([...PUBLISH_CHANNELS, "instagram"].map((channel) => ({ channel, error: "e" }))).ok).toBe(false);
+  });
+});
+
+describe("parsePublication — kısmi başarısızlık ve YAYINLANIYOR kaydı (v6.334)", () => {
+  const AT = "2026-10-07T08:05:00.000Z";
+  it("failures okunur (kanal beyaz listesi + temizlenmiş hata); geçersiz elemanlar sessizce düşer; boş liste alanı EKLEMEZ", () => {
+    const r = parsePublication(JSON.stringify({ v: 1, manual: false, channels: [{ channel: "instagram" }], at: AT, failures: [{ channel: "linkedin", error: "429\n x" }, { channel: "tiktok", error: "?" }, "x", { channel: "facebook" }] }));
+    expect(r?.failures).toEqual([{ channel: "linkedin", error: "429 x" }, { channel: "facebook", error: "Bilinmeyen hata" }]);
+    expect(parsePublication(JSON.stringify({ v: 1, manual: false, channels: [], at: AT, failures: [] }))).not.toHaveProperty("failures");
+    expect(parsePublication(JSON.stringify({ v: 1, manual: false, channels: [], at: AT, failures: "kötü" }))).not.toHaveProperty("failures");
+  });
+  it("YAYINLANIYOR kaydı (yalnız alınma anı; kanal yok, hata yok) geçerli okunur", () => {
+    expect(parsePublication(JSON.stringify({ v: 1, manual: false, channels: [], at: AT }))).toEqual({ v: 1, manual: false, channels: [], at: AT });
   });
 });

@@ -6,6 +6,8 @@
 //  • ONAYIN DÜŞMESİ: onaylı içerik düzenlenirse/kaynağı değişirse DRAFT'a iner, `approved*` temizlenir (LegalTranslationApproval.textHash ilkesi) ve
 //    audit'e UNAPPROVE yazılır. Yayın hattı (Faz 3) yalnız `isApprovedIntact` olanı yayınlar: onaydan sonra içerik 1 bayt değişmişse YAYINLANMAZ.
 //  • ONAY KARARI HER ZAMAN YENİDEN HESAPLANIR: `gateReport` yalnız ekranda gösterilen son rapordur; approve() kapıları taze kaynak metniyle koşar.
+//  • YAYINLANIYOR KİLİDİ (v6.334): otomasyon içeriği `claimForPublish` ile ALIR (APPROVED → PUBLISHING, atomik CAS) → EN FAZLA BİR KEZ yayın; takılı kalırsa
+//    belirsizliği İNSAN çözer (`markPublished` elle / `retryPublish`). Makine çağrıları oturumsuzdur: `actor: null` → denetim/etiket "otomasyon".
 //  • GET'te YAZMA YOK: yuva satırı yalnız "Yuvayı aç" ile oluşur (openSlot).
 //  • İçerik PHI DEĞİL (kamuya açık karar/etkinlik metadata'sı + editör metni) → şifresiz; audit'e içerik YAZILMAZ, yalnız rubrik·gün·hash öneki.
 import { db } from "../db";
@@ -15,7 +17,7 @@ import { evaluateGates, type GateReport } from "./gates";
 import { buildKararDraft, pickKararCandidates, type KararCandidate, type PickContext, type PickResult } from "./karar";
 import { LIMITS } from "./limits";
 import { applyEditorNote, noteFromPayload, normalizePayload, parsePayload, payloadHash, type PlanPayload } from "./payload";
-import { MAX_ERROR_LEN, normalizeChannels, parsePublication, type Publication } from "./publication";
+import { cleanErrorText, normalizeChannels, normalizeFailures, parsePublication, type Publication } from "./publication";
 import { renderRubrik } from "./render-client";
 import { isDayString, seriesByKey, slotMatchesSeries, slotsOfWeek, type SeriesDef, type SeriesKey } from "./series";
 import { skeletonPayload } from "./skeleton";
@@ -272,13 +274,22 @@ export async function computeCandidates(input: { id: string }): Promise<{ view: 
 // ── Yazma işlemleri ──────────────────────────────────────────────────────────────────────────────────
 
 type Actor = { actor: SessionUser; ip?: string | null; userAgent?: string | null };
+/** Makine (otomasyon) çağrıları oturumsuzdur: `actor: null` → denetim kaydı + etiket "otomasyon". `Actor` buna atanabilir. */
+type MachineActor = { actor: SessionUser | null; ip?: string | null; userAgent?: string | null };
 
 /** Onay mührü alanlarını temizleme yaması (onay düştüğünde). */
 const CLEAR_APPROVAL = { approvedAt: null, approvedById: null, approvedBy: null, approvedHash: null } as const;
 
-type PlanAuditAction = "CONTENT_PLAN_APPROVE" | "CONTENT_PLAN_UNAPPROVE" | "CONTENT_PLAN_SKIP" | "CONTENT_PLAN_PUBLISH" | "CONTENT_PLAN_PUBLISH_FAIL" | "CONTENT_PLAN_RETRY";
+type PlanAuditAction =
+  | "CONTENT_PLAN_APPROVE"
+  | "CONTENT_PLAN_UNAPPROVE"
+  | "CONTENT_PLAN_SKIP"
+  | "CONTENT_PLAN_CLAIM"
+  | "CONTENT_PLAN_PUBLISH"
+  | "CONTENT_PLAN_PUBLISH_FAIL"
+  | "CONTENT_PLAN_RETRY";
 
-async function auditPlan(a: Actor, action: PlanAuditAction, row: Row, detail: string): Promise<void> {
+async function auditPlan(a: MachineActor, action: PlanAuditAction, row: Row, detail: string): Promise<void> {
   await recordAccess({
     actor: a.actor,
     action,
@@ -438,58 +449,125 @@ export async function restore(input: { id: string; expectedVersion: string } & A
 
 // ── Yayın durumu (v6.332, 2026-10-06) ────────────────────────────────────────────────────────────────
 
-const actorLabel = (a: Actor): string => a.actor.name?.trim() || a.actor.email;
+const actorLabel = (a: MachineActor): string => (a.actor ? a.actor.name?.trim() || a.actor.email : "otomasyon");
 
-/** Hata notu: denetim karakterleri atılır, tek satıra indirilir, ≤ MAX_ERROR_LEN (otomasyonun ham hata metni kayda taşmasın). */
-function cleanError(s: string): string {
-  const flat = Array.from(s)
-    .map((ch) => (ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127 ? " " : ch))
-    .join("")
-    .replace(/\s+/g, " ")
-    .trim();
-  return flat.slice(0, MAX_ERROR_LEN) || "Bilinmeyen hata";
+/** Yayına hazır içerik (makine yüzeyi): yalnız APPROVED + onay mührü sağlam. `version` sonuç bildiriminin CAS belirtecidir. */
+export interface DueItem {
+  id: string;
+  version: string;
+  seriesKey: SeriesKey;
+  slotDay: string;
+  payload: PlanPayload;
+  approvedHash: string;
+}
+
+export interface DueSnapshot {
+  gun: string;
+  items: DueItem[];
+  /** APPROVED ama yayına VERİLMEYEN (onay mührü bozuk) — izleme/alarm için. */
+  atlanan: { id: string; seriesKey: string; neden: "muhur-bozuk" }[];
+  /** O günün tüm yuvaları (yalnız durum) — sabah kontrolü/izleme. */
+  slotlar: { id: string; seriesKey: string; status: PlanStatus }[];
 }
 
 /**
- * Yayınlandı olarak işaretle: APPROVED → PUBLISHED (TERMİNAL — yayınlanmış içerik değiştirilemez, geri alınamaz).
- * `manual` (varsayılan true): editör içeriği elle paylaşıp kanal/bağlantıyı bildirdi; `manual:false`: otomasyon (Faz 3).
+ * O günün yayına hazır içeriği — YALNIZ OKUMA (durum DEĞİŞMEZ): KURU prova (çiz + arşivle, yayın yok) ve izleme için.
+ * Yalnız APPROVED + onay mührü sağlam olan verilir; mühür bozuksa `atlanan`a düşer ("yayınlanan = onaylanan").
+ */
+export async function dueForDay(gun: string): Promise<DueSnapshot> {
+  if (!isDayString(gun)) throw new PlanError("Geçersiz gün (YYYY-AA-GG bekleniyor).");
+  const rows = (await db.contentPlanItem.findMany({ where: { slotDay: gun } })).sort((a, b) => a.seriesKey.localeCompare(b.seriesKey));
+  const items: DueItem[] = [];
+  const atlanan: DueSnapshot["atlanan"] = [];
+  for (const r of rows) {
+    if (r.status !== "APPROVED") continue;
+    const payload = parsePayload(r.payload);
+    if (!payload || !r.approvedHash || !sealMatches(r)) {
+      atlanan.push({ id: r.id, seriesKey: r.seriesKey, neden: "muhur-bozuk" });
+      continue;
+    }
+    items.push({ id: r.id, version: r.updatedAt.toISOString(), seriesKey: r.seriesKey as SeriesKey, slotDay: r.slotDay, payload, approvedHash: r.approvedHash });
+  }
+  return { gun, items, atlanan, slotlar: rows.map((r) => ({ id: r.id, seriesKey: r.seriesKey, status: isPlanStatus(r.status) ? r.status : "PLANNED" })) };
+}
+
+/**
+ * Yayın için AL (kilitle): o günün hazır içeriklerinin HER BİRİ APPROVED → YAYINLANIYOR (tek atomik CAS). Başka koşu önce aldıysa ya da içerik
+ * değiştiyse o öğe SESSİZCE atlanır (hata DEĞİL) → en fazla BİR KEZ yayın. Dönen `version` YENİDİR (sonuç bildirimi bunu ister).
+ * Yalnız BUGÜN (TR) alınır: yanlış hesaplanmış bir gün parametresi geleceğin içeriğini erken yayına sokmasın (`dueForDay` her gün için serbest).
+ */
+export async function claimForPublish(input: { gun: string; bugun: string } & MachineActor): Promise<DueSnapshot> {
+  if (!isDayString(input.gun)) throw new PlanError("Geçersiz gün (YYYY-AA-GG bekleniyor).");
+  if (input.gun !== input.bugun) throw new PlanError(`Yalnız bugünün (${input.bugun}) içeriği alınabilir; istenen: ${input.gun}.`);
+  const snap = await dueForDay(input.gun);
+  const claimed: DueItem[] = [];
+  for (const it of snap.items) {
+    const pub: Publication = { v: 1, manual: false, channels: [], at: new Date().toISOString() };
+    const r = await db.contentPlanItem.updateMany({
+      where: { id: it.id, updatedAt: new Date(it.version), status: "APPROVED" },
+      data: { status: nextStatus("APPROVED", "claim") ?? "PUBLISHING", publishedRefs: JSON.stringify(pub) },
+    });
+    if (r.count === 0) continue; // başka koşu önce aldı / içerik değişti → bu öğe bizim DEĞİL
+    const row = await mustGet(it.id);
+    await auditPlan(input, "CONTENT_PLAN_CLAIM", row, "yayın için alındı");
+    claimed.push({ ...it, version: row.updatedAt.toISOString() });
+  }
+  return { ...snap, items: claimed };
+}
+
+/**
+ * Yayınlandı olarak işaretle: APPROVED | PUBLISHING → PUBLISHED (TERMİNAL — yayınlanmış içerik değiştirilemez, geri alınamaz).
+ * `manual` (varsayılan true): editör içeriği elle paylaşıp kanal/bağlantıyı bildirdi (APPROVED'dan, ya da takılı YAYINLANIYOR'dan); `manual:false`: otomasyon —
+ * YALNIZ ALDIĞI (YAYINLANIYOR) içerik için; kısmi başarıda `failures` (başarısız kanallar) kaydedilir.
  * Onay mührü sağlam değilse REDDEDİLİR: "yayınlanan = onaylanan" garantisi bu işaretin anlamıdır.
  */
-export async function markPublished(input: { id: string; expectedVersion: string; channels: unknown; manual?: boolean } & Actor): Promise<PlanItemView> {
+export async function markPublished(
+  input: { id: string; expectedVersion: string; channels: unknown; failures?: unknown; manual?: boolean } & MachineActor,
+): Promise<PlanItemView> {
   const row = await mustGet(input.id);
-  if (nextStatus(row.status as PlanStatus, "publish-ok") === null) throw new PlanError("Yalnız onaylı içerik yayınlandı olarak işaretlenebilir.", 409);
+  if (nextStatus(row.status as PlanStatus, "publish-ok") === null) throw new PlanError("Yalnız onaylı ya da yayınlanmakta olan içerik yayınlandı olarak işaretlenebilir.", 409);
+  const manual = input.manual !== false;
+  if (!manual && row.status !== "PUBLISHING") throw new PlanError("Otomasyon yalnız ALDIĞI (YAYINLANIYOR) içerik için sonuç bildirebilir.", 409);
   const version = parseVersion(input.expectedVersion);
   const ch = normalizeChannels(input.channels);
   if (!ch.ok) throw new PlanError(ch.error);
-  if (!isApprovedIntact(row)) throw new PlanError("İçerik onay mührüyle eşleşmiyor — yeniden onaylayın; yayınlandı olarak işaretlenemez.", 409);
+  const fl = normalizeFailures(input.failures);
+  if (!fl.ok) throw new PlanError(fl.error);
+  if (fl.failures.some((f) => ch.channels.some((c) => c.channel === f.channel))) throw new PlanError("Aynı kanal hem başarılı hem başarısız bildirilemez.");
+  if (!sealMatches(row)) throw new PlanError("İçerik onay mührüyle eşleşmiyor — yayınlandı olarak işaretlenemez; yeniden hazırlanıp onaylanmalı.", 409);
 
-  const manual = input.manual !== false;
   const now = new Date();
   const pub: Publication = { v: 1, manual, channels: ch.channels, by: actorLabel(input), at: now.toISOString() };
-  const view = await casUpdate(row, version, ["APPROVED"], { status: "PUBLISHED", publishedAt: now, publishedRefs: JSON.stringify(pub) });
-  await auditPlan(input, "CONTENT_PLAN_PUBLISH", row, `${manual ? "elle" : "otomatik"}·${ch.channels.map((c) => c.channel).join(",")}`);
+  if (fl.failures.length) pub.failures = fl.failures;
+  const view = await casUpdate(row, version, ["APPROVED", "PUBLISHING"], { status: "PUBLISHED", publishedAt: now, publishedRefs: JSON.stringify(pub) });
+  const detay = `${manual ? "elle" : "otomatik"}·${ch.channels.map((c) => c.channel).join(",")}${fl.failures.length ? `·başarısız:${fl.failures.map((f) => f.channel).join(",")}` : ""}`;
+  await auditPlan(input, "CONTENT_PLAN_PUBLISH", row, detay);
   return view;
 }
 
-/** Yayın denemesi başarısız (otomasyon, Faz 3): APPROVED → FAILED; onay mührü KORUNUR (yeniden denenebilir), hata notu `publishedRefs`'e yazılır. */
-export async function markPublishFailed(input: { id: string; expectedVersion: string; error: string } & Actor): Promise<PlanItemView> {
+/** Yayın denemesi başarısız (otomasyon): YAYINLANIYOR → FAILED; onay mührü KORUNUR (yeniden denenebilir), hata notu `publishedRefs`'e yazılır. */
+export async function markPublishFailed(input: { id: string; expectedVersion: string; error: string } & MachineActor): Promise<PlanItemView> {
   const row = await mustGet(input.id);
-  if (nextStatus(row.status as PlanStatus, "publish-fail") === null) throw new PlanError("Yalnız onaylı içerik için yayın hatası bildirilebilir.", 409);
+  if (nextStatus(row.status as PlanStatus, "publish-fail") === null) throw new PlanError("Yalnız ALINMIŞ (YAYINLANIYOR) içerik için yayın hatası bildirilebilir.", 409);
   const version = parseVersion(input.expectedVersion);
-  const pub: Publication = { v: 1, manual: false, channels: [], at: new Date().toISOString(), error: cleanError(input.error) };
-  const view = await casUpdate(row, version, ["APPROVED"], { status: "FAILED", publishedRefs: JSON.stringify(pub) });
+  const pub: Publication = { v: 1, manual: false, channels: [], at: new Date().toISOString(), error: cleanErrorText(input.error) };
+  const view = await casUpdate(row, version, ["PUBLISHING"], { status: "FAILED", publishedRefs: JSON.stringify(pub) });
   await auditPlan(input, "CONTENT_PLAN_PUBLISH_FAIL", row, "yayın hatası");
   return view;
 }
 
-/** Hatalı yayını yeniden dene: FAILED → APPROVED (hata notu temizlenir). Mühür içerikle eşleşmiyorsa reddedilir. */
+/**
+ * Yeniden dene (İNSAN): FAILED → APPROVED (hata notu temizlenir) ya da takılı YAYINLANIYOR → APPROVED ("yayınlanmadığını kanalda doğruladım").
+ * Mühür içerikle eşleşmiyorsa reddedilir.
+ */
 export async function retryPublish(input: { id: string; expectedVersion: string } & Actor): Promise<PlanItemView> {
   const row = await mustGet(input.id);
-  if (nextStatus(row.status as PlanStatus, "retry") === null) throw new PlanError("Yeniden denenecek yayın hatası yok.", 409);
+  if (nextStatus(row.status as PlanStatus, "retry") === null) throw new PlanError("Yeniden denenecek yayın hatası ya da takılı yayın yok.", 409);
   const version = parseVersion(input.expectedVersion);
   if (!sealMatches(row)) throw new PlanError("İçerik onay mührüyle eşleşmiyor — yeniden denenemez; yuvayı atlayıp yeniden hazırlayın.", 409);
-  const view = await casUpdate(row, version, ["FAILED"], { status: "APPROVED", publishedRefs: null });
-  await auditPlan(input, "CONTENT_PLAN_RETRY", row, "yeniden denenecek");
+  const takili = row.status === "PUBLISHING";
+  const view = await casUpdate(row, version, ["FAILED", "PUBLISHING"], { status: "APPROVED", publishedRefs: null });
+  await auditPlan(input, "CONTENT_PLAN_RETRY", row, takili ? "takılı yayın: yayınlanmadı" : "yeniden denenecek");
   return view;
 }
 

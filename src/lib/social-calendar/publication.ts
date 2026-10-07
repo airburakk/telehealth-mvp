@@ -1,8 +1,9 @@
 // İçerik takvimi — YAYIN KAYDI sözleşmesi (v6.332, 2026-10-06). SAF; DB/Node `crypto`'ya dokunmaz → istemci bileşeni de içe aktarabilir.
 //
 // `ContentPlanItem.publishedRefs` düz String'tir (JSON, projede enum/JSON kolonu kullanılmaz). Tek biçim:
-//   { v: 1, manual: boolean, channels: [{ channel, url? }], by?: string, at: ISO, error?: string }
-// PUBLISHED'da kanallar + bağlantılar (elle yayın: manual=true, `by` = işaretleyen yönetici; otomasyon: manual=false); FAILED'da `error`.
+//   { v: 1, manual: boolean, channels: [{ channel, url? }], by?: string, at: ISO, error?: string, failures?: [{ channel, error }] }
+// PUBLISHED'da kanallar + bağlantılar (elle yayın: manual=true, `by` = işaretleyen yönetici; otomasyon: manual=false; kısmi başarıda `failures` = başarısız
+// kanallar); YAYINLANIYOR'da yalnız `at` (alınma anı; channels boş); FAILED'da `error`.
 // Bu alan YALNIZCA durum kaydıdır — içerik/PHI değil. Bağlantılar yalnız https:// kabul edilir (javascript:/data: gibi şemalar asla saklanmaz).
 
 export const PUBLISH_CHANNELS = ["instagram", "linkedin", "facebook", "x", "diger"] as const;
@@ -24,6 +25,12 @@ export interface PublishedChannel {
   url?: string;
 }
 
+/** Kısmi başarıda başarısız kanal + kısa hata notu (çok kanallı otomasyon: biri düşerse diğerleri YAYINLANMIŞ kalır, kayıt dürüst tutulur). */
+export interface PublishFailure {
+  channel: PublishChannel;
+  error: string;
+}
+
 export interface Publication {
   v: 1;
   /** true → editör içeriği elle paylaşıp işaretledi; false → otomasyon yayınladı/denedi. */
@@ -35,6 +42,8 @@ export interface Publication {
   at: string;
   /** FAILED'da son hata notu (≤ 300). */
   error?: string;
+  /** PUBLISHED'da (otomasyon, kısmi başarı) başarısız kanallar. */
+  failures?: PublishFailure[];
 }
 
 const isChannel = (v: unknown): v is PublishChannel => typeof v === "string" && (PUBLISH_CHANNELS as readonly string[]).includes(v);
@@ -81,6 +90,35 @@ export function normalizeChannels(input: unknown): ChannelsResult {
   return { ok: true, channels: out };
 }
 
+/** Hata notu: denetim karakterleri atılır, tek satıra indirilir, ≤ MAX_ERROR_LEN (otomasyonun ham hata metni kayda taşmasın); boşsa "Bilinmeyen hata". */
+export function cleanErrorText(s: string): string {
+  const flat = Array.from(String(s ?? ""))
+    .map((ch) => (ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127 ? " " : ch))
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+  return flat.slice(0, MAX_ERROR_LEN) || "Bilinmeyen hata";
+}
+
+export type FailuresResult = { ok: true; failures: PublishFailure[] } | { ok: false; error: string };
+
+/** Kısmi başarıda başarısız kanallar (isteğe bağlı: yok/null → boş liste). Bilinmeyen/tekrarlı kanal reddedilir; hata notu temizlenir. */
+export function normalizeFailures(input: unknown): FailuresResult {
+  if (input === undefined || input === null) return { ok: true, failures: [] };
+  if (!Array.isArray(input) || input.length > PUBLISH_CHANNELS.length) return { ok: false, error: "Başarısız kanal listesi geçersiz." };
+  const out: PublishFailure[] = [];
+  const seen = new Set<string>();
+  for (const raw of input) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return { ok: false, error: "Başarısız kanal biçimi geçersiz." };
+    const r = raw as Record<string, unknown>;
+    if (!isChannel(r.channel)) return { ok: false, error: "Başarısız kanal bilinmiyor." };
+    if (seen.has(r.channel)) return { ok: false, error: `${CHANNEL_LABEL[r.channel]} iki kez başarısız olarak bildirilmiş.` };
+    seen.add(r.channel);
+    out.push({ channel: r.channel, error: cleanErrorText(typeof r.error === "string" ? r.error : "") });
+  }
+  return { ok: true, failures: out };
+}
+
 /** Kayıtlı JSON'dan güvenli okuma (bozuk/eski biçim → null; sayfa çökmez). Kanal/bağlantı yeniden doğrulanır: geçersiz bağlantı SESSİZCE düşer. */
 export function parsePublication(json: string | null | undefined): Publication | null {
   if (!json) return null;
@@ -104,6 +142,15 @@ export function parsePublication(json: string | null | undefined): Publication |
     const pub: Publication = { v: 1, manual: r.manual === true, channels, at: r.at };
     if (typeof r.by === "string" && r.by) pub.by = r.by.slice(0, 120);
     if (typeof r.error === "string" && r.error) pub.error = r.error.slice(0, MAX_ERROR_LEN);
+    if (Array.isArray(r.failures)) {
+      const failures: PublishFailure[] = [];
+      for (const raw of r.failures) {
+        if (!raw || typeof raw !== "object") continue;
+        const f = raw as Record<string, unknown>;
+        if (isChannel(f.channel)) failures.push({ channel: f.channel, error: cleanErrorText(typeof f.error === "string" ? f.error : "") });
+      }
+      if (failures.length) pub.failures = failures;
+    }
     return pub;
   } catch {
     return null;

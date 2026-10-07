@@ -142,3 +142,48 @@ describe("PublishPanel — meşgul ve kaydedilmemiş durum", () => {
     expect(render({}, { dirty: false })).not.toContain("KAYITLI hâldir");
   });
 });
+
+describe("PublishPanel — YAYINLANIYOR (otomasyon aldı, v6.334)", () => {
+  const AT = "2026-10-07T08:05:00.000Z";
+  const publishing = (extra: Partial<PlanItemView> = {}) =>
+    render({ status: "PUBLISHING", approvedIntact: false, publication: { v: 1, manual: false, channels: [], at: AT }, ...extra });
+
+  it("bilgi + alınma zamanı; İNSAN çözümü: 'elle işaretle…' ve 'Yayınlanmadı — yeniden dene'; yardımcılar KALIR; hata/mühür uyarısı ÇIKMAZ", () => {
+    const html = publishing();
+    expect(html).toContain("yayınlanıyor (otomasyon)");
+    expect(html).toContain("Otomasyon bu içeriği yayına aldı");
+    expect(html).toContain("alındı:");
+    expect(html).toContain("Elle yayınlandı olarak işaretle…");
+    expect(html).toContain("Yayınlanmadı — yeniden dene");
+    expect(html).toContain("PNG’leri indir (ZIP)");
+    expect(html).toContain("Altyazıyı + etiketleri kopyala");
+    expect(html).not.toContain("Yayın denemesi başarısız");
+    expect(html).not.toContain("onay mührüyle eşleşmiyor"); // approvedIntact yalnız APPROVED'da hesaplanır
+    expect(html).not.toContain("Otomatik yayın hattı henüz kurulu değil"); // APPROVED'a özgü açıklama
+  });
+
+  it("FAILED'ın etiketi 'Yeniden dene' kalır (PUBLISHING'e özgü etiket FAILED'da YOK); PUBLISHING'de yalın 'Yeniden dene' düğmesi YOK", () => {
+    const failed = render({ status: "FAILED", publication: { v: 1, manual: false, channels: [], at: AT, error: "x" } });
+    expect(failed).toContain("Yeniden dene");
+    expect(failed).not.toContain("Yayınlanmadı — yeniden dene");
+    expect(publishing().replace("Yayınlanmadı — yeniden dene", "")).not.toContain("Yeniden dene");
+  });
+
+  it("SlotEditor'da başka işlem sürerken (busy) tüm düğmeler devre dışı", () => {
+    const html = render({ status: "PUBLISHING", approvedIntact: false, publication: { v: 1, manual: false, channels: [], at: AT } }, { busy: "retry" });
+    const buttons = html.match(/<button[^>]*>/g) ?? [];
+    expect(buttons.length).toBeGreaterThanOrEqual(4);
+    for (const b of buttons) expect(b).toContain('disabled=""');
+  });
+
+  it("PUBLISHED (otomasyon, kısmi başarı): başarısız kanal + hata KAÇIŞLI gösterilir (HTML enjekte edilemez)", () => {
+    const html = render({
+      status: "PUBLISHED",
+      publication: { v: 1, manual: false, channels: [{ channel: "instagram", url: "https://www.instagram.com/p/X/" }], failures: [{ channel: "linkedin", error: "429 <i>oran</i> sınırı" }], by: "otomasyon", at: AT },
+    });
+    expect(html).toContain("Otomatik yayınlandı");
+    expect(html).toContain("LinkedIn: yayınlanamadı");
+    expect(html).toContain("429 &lt;i&gt;oran&lt;/i&gt; sınırı");
+    expect(html).not.toContain("<i>");
+  });
+});

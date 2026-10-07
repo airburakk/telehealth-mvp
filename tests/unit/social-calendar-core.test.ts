@@ -93,11 +93,13 @@ describe("series — gün aritmetiği (UTC takvim günü)", () => {
 // ── Durum makinesi ───────────────────────────────────────────────────────────────────────────────────
 
 describe("status — geçiş tablosu", () => {
-  const ALL_EVENTS: PlanEvent[] = ["pick", "save", "approve", "unapprove", "skip", "restore", "publish-ok", "publish-fail", "retry"];
+  const ALL_EVENTS: PlanEvent[] = ["pick", "save", "approve", "unapprove", "skip", "restore", "claim", "publish-ok", "publish-fail", "retry"];
   const TABLE: Record<PlanStatus, Partial<Record<PlanEvent, PlanStatus>>> = {
     PLANNED: { pick: "DRAFT", save: "DRAFT", skip: "SKIPPED" },
     DRAFT: { pick: "DRAFT", save: "DRAFT", approve: "APPROVED", skip: "SKIPPED" },
-    APPROVED: { pick: "DRAFT", save: "DRAFT", unapprove: "DRAFT", skip: "SKIPPED", "publish-ok": "PUBLISHED", "publish-fail": "FAILED" },
+    APPROVED: { pick: "DRAFT", save: "DRAFT", unapprove: "DRAFT", skip: "SKIPPED", claim: "PUBLISHING", "publish-ok": "PUBLISHED" },
+    // YAYINLANIYOR: otomasyon aldı. Yalnız sonuç (ok/hata) ya da İNSAN çözümü (retry) çıkar; düzenleme/atlama/onay-kaldırma YOK.
+    PUBLISHING: { "publish-ok": "PUBLISHED", "publish-fail": "FAILED", retry: "APPROVED" },
     PUBLISHED: {},
     SKIPPED: { restore: "PLANNED" }, // taslak yoksa; taslak varsa DRAFT (aşağıda ayrıca)
     FAILED: { skip: "SKIPPED", retry: "APPROVED" },
@@ -119,6 +121,15 @@ describe("status — geçiş tablosu", () => {
     expect(isEditable("APPROVED")).toBe(true);
     expect(isEditable("PUBLISHED")).toBe(false);
     expect(isEditable("SKIPPED")).toBe(false);
+  });
+  it("YAYINLANIYOR kilidi: yalnız ONAYLI alınır (ikinci koşu alamaz); hata YALNIZ alınmış içerik için gelir; takılı kilidi insan açar", () => {
+    expect(nextStatus("APPROVED", "claim")).toBe("PUBLISHING");
+    expect(nextStatus("PUBLISHING", "claim")).toBeNull(); // çift alma YOK → en fazla bir kez yayın
+    for (const st of ["PLANNED", "DRAFT", "PUBLISHED", "SKIPPED", "FAILED"] as const) expect(nextStatus(st, "claim"), st).toBeNull();
+    expect(nextStatus("APPROVED", "publish-fail")).toBeNull(); // alınmadan hata bildirilemez
+    expect(nextStatus("PUBLISHING", "retry")).toBe("APPROVED"); // "yayınlanmadı" → yeniden denenebilir
+    expect(nextStatus("PUBLISHING", "skip")).toBeNull(); // önce çözülmeli
+    expect(isEditable("PUBLISHING")).toBe(false);
   });
   it("isPlanStatus bilinmeyen değeri reddeder", () => {
     expect(isPlanStatus("DRAFT")).toBe(true);
