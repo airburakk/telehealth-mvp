@@ -10,6 +10,7 @@ import { PlanError, claimForPublish, dueForDay, getItem, markPublishFailed, mark
 // env'inde yaşar; n8n'e girmez.
 // Eylemler (tek POST, `action` alanı):
 //   bak   — YALNIZ OKUMA (durum DEĞİŞMEZ): o günün yayına hazır içeriği + atlananlar + yuva durumları → KURU prova (çiz + arşivle) ve izleme. Her gün için serbest.
+//           Her öğe `render` taşır: kartın çizeceği gövde, önizlemeyle AYNI işlevden (yayınlanan görsel = onaylanan önizleme; kart rubrik adını/şablonunu bilmez).
 //   al    — KİLİTLE: o günün hazır içeriği APPROVED → YAYINLANIYOR (en fazla BİR KEZ yayın). YALNIZ bugün (TR) alınır. Dönen `version` yenidir.
 //   sonuc — `durum:"ok"` (kanallar [+ basarisiz]) → YAYINLANDI · `durum:"hata"` → YAYIN HATASI. Yalnız ALINMIŞ içerik için; İDEMPOTENT (aynı sonuç ikinci kez → 200 `tekrar:true`).
 // "Yayınlanan = onaylanan": içerik onay mührüyle eşleşmiyorsa hiçbir eylem onu YAYINA vermez/yayınlandı işaretlemez (lib/social-calendar/plan).
