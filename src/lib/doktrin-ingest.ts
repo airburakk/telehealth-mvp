@@ -23,6 +23,7 @@
 import { db } from "./db";
 import { extractBranches } from "./hukuk-keywords";
 import { scoreLegalRelevance } from "./doktrin-filter";
+import { describeError } from "./ingest-streak";
 
 const BASE = "https://search.trdizin.gov.tr";
 export const GAP_MS = 800;
@@ -67,9 +68,8 @@ interface TrdizinSource {
   accessType?: string;
 }
 
-function short(e: unknown): string {
-  return (e instanceof Error ? e.message : String(e)).slice(0, 140);
-}
+/** Hata metni + asıl neden (`cause.code`) — v6.341, `lib/ingest-streak describeError`. */
+const short = describeError;
 
 export function searchUrl(query: string, page: number, limit = PAGE_LIMIT): string {
   // ⚠️ order paramı ZORUNLU (yukarıdaki sözleşme notu) — silme.

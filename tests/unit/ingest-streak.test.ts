@@ -10,8 +10,34 @@
 // Fikstür satırları PROD audit zincirinden alınmış GERÇEK biçimlerdir (2026-09/10).
 import { describe, it, expect } from "vitest";
 import {
-  dryStreak, firstErrorTag, isDrySegment, shouldAlertStreak, DRY_STREAK_THRESHOLD, DRY_STREAK_REMIND_EVERY,
+  describeError, dryStreak, firstErrorTag, isDrySegment, shouldAlertStreak, DRY_STREAK_THRESHOLD, DRY_STREAK_REMIND_EVERY,
 } from "@/lib/ingest-streak";
+
+// v6.341: undici "fetch failed" asıl nedeni `cause` içinde taşır — 08.10 ilk ölçüm yalnız mesajı gördü.
+describe("describeError: hata metni + asıl neden", () => {
+  it("fetch hatasının cause.code'u köşeli parantezle eklenir", () => {
+    const e = new TypeError("fetch failed", { cause: Object.assign(new Error("connect ECONNRESET"), { code: "ECONNRESET" }) });
+    expect(describeError(e)).toBe("fetch failed [ECONNRESET]");
+  });
+
+  it("code yoksa cause.message kullanılır (tek satır, 60 karakterle sınırlı)", () => {
+    const e = new TypeError("fetch failed", { cause: new Error("Connect Timeout Error\n  (attempted address: x)") });
+    expect(describeError(e)).toBe("fetch failed [Connect Timeout Error (attempted address: x)]");
+    const uzun = new Error("fetch failed", { cause: new Error("y".repeat(200)) });
+    expect(describeError(uzun)).toBe(`fetch failed [${"y".repeat(60)}]`);
+  });
+
+  it("nedensiz hata ve hata-olmayan değer aynen döner; toplam 140 karakter", () => {
+    expect(describeError(new Error("HTTP 403"))).toBe("HTTP 403");
+    expect(describeError("düz metin")).toBe("düz metin");
+    expect(describeError(new Error("z".repeat(300)))).toHaveLength(140);
+  });
+
+  it("firstErrorTag ile zincir: audit satırında neden görünür", () => {
+    const e = new TypeError("fetch failed", { cause: { code: "UND_ERR_CONNECT_TIMEOUT" } });
+    expect(firstErrorTag([`arama 'malpraktis': ${describeError(e)}`])).toBe(` ilk="arama 'malpraktis': fetch failed [UND_ERR_CONNECT_TIMEOUT]"`);
+  });
+});
 
 const KURU_ESKI = "ictihat yeni=0/0 sorun=1 · doktrin yeni=0/32 · ttb atlandi(haftalik)";
 const KURU_YENI = 'ictihat yeni=0/0 sorun=1 ilk="arama \'hekimin hukuki sorumluluğu\': HTTP 403" · doktrin yeni=0/32 · ttb atlandi(haftalik)';

@@ -24,6 +24,7 @@
 // v6.85 çalışması sürüyordu; ayrıca kaynak/desen farkı ayrı dosyayı zaten hak ediyor).
 import { db } from "./db";
 import { extractBranches } from "./hukuk-keywords";
+import { describeError } from "./ingest-streak";
 
 const BASE = "https://karararama.yargitay.gov.tr";
 // 2026-08-06 saha ölçümü: GAP 1 sn iken ~18-20 istek sonrası HTTP 429 geldi → 2,5 sn'ye çekildi
@@ -71,9 +72,8 @@ export interface YargitayIngestResult {
   errors: string[];
 }
 
-function short(e: unknown): string {
-  return (e instanceof Error ? e.message : String(e)).slice(0, 140);
-}
+/** Hata metni + asıl neden (`cause.code`) — v6.341, `lib/ingest-streak describeError`. */
+const short = describeError;
 
 /** Ölçülen sözleşme: sunucu TAM alan şablonu bekler — boş alanlar dahil gönderilir. */
 function searchPayload(query: string, pageNumber: number): string {
