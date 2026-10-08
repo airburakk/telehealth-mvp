@@ -24,6 +24,28 @@ export const DRY_STREAK_THRESHOLD = 3;
 export const DRY_STREAK_REMIND_EVERY = 7;
 
 const ERROR_TAG_MAX = 120;
+const CAUSE_MAX = 60;
+
+/**
+ * Hata metni + ASIL neden (v6.341, 2026-10-08). Node `fetch` (undici) ağ katmanı hatalarını hep aynı genel
+ * mesajla verir ("fetch failed"); bağlantı reddi / sıfırlama / zaman aşımı / DNS ayrımı yalnız `error.cause`
+ * içindedir (`code`: ECONNRESET · ECONNREFUSED · UND_ERR_CONNECT_TIMEOUT · ENOTFOUND …). v6.337'nin ilk
+ * ölçümü (08.10 05:20) yalnız `arama 'malpraktis': fetch failed` gördü → teşhis bir adım eksik kaldı.
+ * Biçim: `<mesaj> [<cause.code | cause.message>]`; nedensiz hata aynen döner. En çok 140 karakter.
+ */
+export function describeError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  const cause = e instanceof Error ? (e as Error & { cause?: unknown }).cause : undefined;
+  let tag = "";
+  if (cause && typeof cause === "object") {
+    const c = cause as { code?: unknown; message?: unknown };
+    const raw = typeof c.code === "string" && c.code ? c.code : typeof c.message === "string" ? c.message : "";
+    if (raw) tag = ` [${raw.replace(/\s+/g, " ").trim().slice(0, CAUSE_MAX)}]`;
+  } else if (typeof cause === "string" && cause) {
+    tag = ` [${cause.slice(0, CAUSE_MAX)}]`;
+  }
+  return (msg + tag).slice(0, 140);
+}
 
 /**
  * İlk hatanın kısa, tek satırlık etiketi: ` ilk="HTTP 403"` — hata yoksa boş dize.
