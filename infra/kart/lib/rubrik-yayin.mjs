@@ -8,9 +8,11 @@
 //        kuru yok → Vercel `al` (KİLİTLER: ONAYLI → YAYINLANIYOR) → çiz → dosyalar + altyazı n8n'e döner. YALNIZ bugün (Türkiye günü, kartta hesaplanır).
 //        200 { ok, gun, kuru, items:[{ id, version, seriesKey, slotDay, approvedHash, altyazi, caption, hashtags, gorseller:[{ad,boyut,sira}] }],
 //              hatalar:[{ id, seriesKey, hata, bildirildi }], atlanan, sure_sn }
+//        v6.340: her öğede + `video:{ad,boyut,sure_sn,sesli}|null` (YouTube Short) · `videoHata` · `xGruplari` (X zinciri: [[1..4],[5..]]).
+//        Video hatası öğeyi DÜŞÜRMEZ (görseller diğer mecralara gider; n8n `youtube`'u basarisiz bildirir).
 //        502 { hata, belirsiz } yayın planına ulaşılamadı/yanıt geçersiz (`belirsiz:true` → `al` içerik aldıysa durum bilinmiyor: İNSAN bakar)
 //        503 kapalı (CONTENT_PLAN_TOKEN yok) ya da sosyal üretim sürüyor · 429 başka `bugun` sürüyor
-//   GET|HEAD /rubrik/dosya/<gün>/<ad>.png → yalnız `bitti.json`'da listeli adlar (yarım iş GÖRÜNMEZ)
+//   GET|HEAD /rubrik/dosya/<gün>/<ad>.png|<seri>-<gün>-short.mp4 → yalnız `bitti.json`'da listeli adlar (yarım iş GÖRÜNMEZ)
 //   POST /rubrik/sonuc { id, version, durum:"ok"|"hata", kanallar?, basarisiz?, hata? } → Vercel `sonuc`'a İLETİR (durum kodu + gövde aynen;
 //        idempotensi Vercel'de: aynı sonuç ikinci kez 200 `tekrar:true`). `version` = `bugun` yanıtındaki öğe sürümü.
 //
@@ -28,12 +30,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import { renderRubrik, rubrikGovdeDogrula } from "./social-rubrik.mjs";
+import { renderRubrikShort, xGruplari } from "./rubrik-video.mjs";
 
 const GUN_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const HASH_RE = /^[0-9a-f]{64}$/;
 const DOSYA_RE = /^rubrik-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}-\d{2}-\d{2}-\d{2}\.png$/;
+/** YouTube Short (v6.340): seri + gün başına TEK video. */
+const VIDEO_RE = /^rubrik-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}-\d{2}-\d{2}-short\.mp4$/;
 const MARKER = "bitti.json";
 const PNG_IMZA = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
@@ -45,7 +50,7 @@ export function gunGecerli(s) {
   const d = new Date(`${s}T00:00:00Z`);
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s; // 2026-13-01 gibi taşmalar Invalid Date → toISOString() FIRLATIRDI
 }
-export const dosyaAdiGecerli = (s) => typeof s === "string" && DOSYA_RE.test(s);
+export const dosyaAdiGecerli = (s) => typeof s === "string" && (DOSYA_RE.test(s) || VIDEO_RE.test(s));
 
 /** Türkiye takvim günü ("YYYY-AA-GG") — Vercel `todayIsoTr` ile AYNI kural (Europe/Istanbul; UTC gece yarısında farklı gün olabilir). */
 export function bugunTr(ms) {
@@ -54,6 +59,7 @@ export function bugunTr(ms) {
 
 /** Dosya adı: slayt sırası iki haneli (01 = kapak). `seriesKey` Vercel'den gelir → slug biçimi dosya yoluna girmeden ÖNCE doğrulanır. */
 export const slaytDosyaAdi = (seriesKey, gun, n) => `rubrik-${seriesKey}-${gun}-${String(n).padStart(2, "0")}.png`;
+export const shortDosyaAdi = (seriesKey, gun) => `rubrik-${seriesKey}-${gun}-short.mp4`;
 
 /** `buildCaptionText` (Vercel, ZIP içindeki altyazi.txt) ile AYNI biçim: altyazı + boş satır + etiketler. */
 export const altyaziMetni = (caption, hashtags) => [String(caption).trim(), hashtags.join(" ").trim()].filter(Boolean).join("\n\n");
@@ -155,11 +161,13 @@ const hataMesaji = (e) => String(e?.message ?? e).replace(/\s+/g, " ").slice(0, 
  * @param {() => boolean} [o.mesgul]  sosyal üretim (07:55 işi) sürüyor mu → true ise `bugun` 503
  * @param {(m:string)=>void} [o.log]
  * @param {Function} [o.render]  test için sahte çizici
+ * @param {Function} [o.video] YouTube Short üreticisi (vars. renderRubrikShort; testte sahte)
+ * @param {string|null} [o.muzikPath] Short müziği; yoksa video sessiz
  * @param {typeof fetch} [o.fetchImpl]  test için sahte ağ
  * @param {() => number} [o.now]
  * @param {number} [o.saklananGun]
  */
-export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSAYILAN_PLAN_URL, planToken, mesgul = () => false, log = () => {}, render = renderRubrik, fetchImpl = fetch, now = Date.now, saklananGun = 3 }) {
+export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSAYILAN_PLAN_URL, planToken, mesgul = () => false, log = () => {}, render = renderRubrik, video = renderRubrikShort, muzikPath = null, fetchImpl = fetch, now = Date.now, saklananGun = 3 }) {
   let calisiyor = false;
   const kok = path.join(dir, "rubrik");
   const gunDizini = (gun) => path.join(kok, gun);
@@ -223,7 +231,7 @@ export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSA
     fs.mkdirSync(gunDir, { recursive: true });
     const onek = `rubrik-${seriesKey}-${gun}-`;
     for (const ad of fs.readdirSync(gunDir)) {
-      if (DOSYA_RE.test(ad) && ad.startsWith(onek)) fs.rmSync(path.join(gunDir, ad), { force: true });
+      if ((DOSYA_RE.test(ad) || VIDEO_RE.test(ad)) && ad.startsWith(onek)) fs.rmSync(path.join(gunDir, ad), { force: true });
     }
     return pngler.map((png, i) => {
       const ad = slaytDosyaAdi(seriesKey, gun, i + 1);
@@ -242,6 +250,28 @@ export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSA
     const gecici = path.join(gunDir, `${MARKER}.tmp`);
     fs.writeFileSync(gecici, JSON.stringify({ surum: 1, gun, items }, null, 2));
     fs.renameSync(gecici, path.join(gunDir, MARKER));
+  }
+
+  /**
+   * YouTube Short (v6.340): yazılmış ONAYLI PNG'lerden video. Hata öğeyi DÜŞÜRMEZ (görseller diğer mecralara gider) → `videoHata` (genel mesaj; ayrıntı günlükte).
+   * Önce `.tmp.mp4`'e yazılır, sonra yeniden adlandırılır: yarım video listelenmez.
+   */
+  async function shortUret(gun, it, dosyalar) {
+    const gunDir = gunDizini(gun);
+    const ad = shortDosyaAdi(it.seriesKey, gun);
+    const gecici = path.join(gunDir, ad.replace(/\.mp4$/, ".tmp.mp4"));
+    const isDir = path.join(kok, `.is-${it.id}`); // geçici: iş bitince TAMAMEN silinir (gün klasörü sanılmaz — GUN_RE)
+    try {
+      const r = await video({ pngYollari: dosyalar.map((d) => path.join(gunDir, d.ad)), outPath: gecici, workDir: isDir, muzikPath });
+      fs.renameSync(gecici, path.join(gunDir, ad));
+      return { video: { ad, boyut: fs.statSync(path.join(gunDir, ad)).size, sure_sn: r.sure_sn, sesli: r.sesli }, videoHata: null };
+    } catch (e) {
+      log(`rubrik-yayin: ${gun} ${it.seriesKey} video istisnası: ${hataMesaji(e)}`);
+      try { fs.rmSync(gecici, { force: true }); } catch { /* en iyi çaba */ }
+      return { video: null, videoHata: "Short videosu üretilemedi (kart günlüğüne bakın)" };
+    } finally {
+      try { fs.rmSync(isDir, { recursive: true, force: true }); } catch { /* en iyi çaba */ }
+    }
   }
 
   // ── Çizim: tek öğe ─────────────────────────────────────────────────────────────────────────────────
@@ -265,7 +295,8 @@ export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSA
     // Disk hatası (izin/doluluk) da render istisnası gibi GENEL mesaja çevrilir: iç yol Vercel'e/yanıta SIZMAZ (ayrıntı yalnız kart günlüğünde).
     try {
       const dosyalar = dosyalariYaz(gun, it.seriesKey, pngler);
-      const kayit = { id: it.id, seriesKey: it.seriesKey, version: it.version, kuru, olusturuldu: new Date(now()).toISOString(), dosyalar };
+      const { video: vid, videoHata } = await shortUret(gun, it, dosyalar);
+      const kayit = { id: it.id, seriesKey: it.seriesKey, version: it.version, kuru, olusturuldu: new Date(now()).toISOString(), dosyalar, video: vid, videoHata };
       markerYaz(gun, [kayit]); // öğe BAŞINA (kimliğe göre birikir): sonraki öğe düşse de bu öğenin dosyaları listeli kalır
       return kayit;
     } catch (e) {
@@ -310,6 +341,7 @@ export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSA
           items.push({
             id: it.id, version: it.version, seriesKey: it.seriesKey, slotDay: it.slotDay, approvedHash: it.approvedHash,
             altyazi: it.altyazi, caption: it.caption, hashtags: it.hashtags, gorseller: kayit.dosyalar,
+            video: kayit.video, videoHata: kayit.videoHata, xGruplari: xGruplari(kayit.dosyalar.length),
           });
         } catch (e) {
           const mesaj = hataMesaji(e);
@@ -364,12 +396,12 @@ export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSA
     if (parcalar.length !== 2) return json(res, 404, { hata: "yok" });
     const [gun, ad] = parcalar;
     if (!gunGecerli(gun) || !dosyaAdiGecerli(ad)) return json(res, 404, { hata: "yok" });
-    const listeli = markerOku(gun)?.items.some((k) => Array.isArray(k.dosyalar) && k.dosyalar.some((d) => d.ad === ad)); // yalnız TAMAMLANMIŞ içeriğin listeli adları
+    const listeli = markerOku(gun)?.items.some((k) => (Array.isArray(k.dosyalar) && k.dosyalar.some((d) => d.ad === ad)) || k.video?.ad === ad); // yalnız TAMAMLANMIŞ içeriğin listeli adları
     if (!listeli) return json(res, 404, { hata: "yok" });
     const yol = path.join(gunDizini(gun), ad);
     let st;
     try { st = fs.statSync(yol); } catch { return json(res, 404, { hata: "yok" }); }
-    res.writeHead(200, { "Content-Type": "image/png", "Content-Length": st.size, "Cache-Control": "no-store", "Content-Disposition": `attachment; filename="${ad}"` });
+    res.writeHead(200, { "Content-Type": ad.endsWith(".mp4") ? "video/mp4" : "image/png", "Content-Length": st.size, "Cache-Control": "no-store", "Content-Disposition": `attachment; filename="${ad}"` });
     if (req.method === "HEAD") return res.end();
     await pipeline(fs.createReadStream(yol), res);
   }

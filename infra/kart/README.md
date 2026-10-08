@@ -58,6 +58,7 @@ Faz 3 otomasyonunun (n8n) içerikle konuşacağı **tek yüz**: kart bugünün O
 | `POST /rubrik/bugun` | **CANLI** = Vercel `al` (ONAYLI → YAYINLANIYOR; en fazla BİR KEZ) → çiz → dosyalar. YALNIZ bugün (gün kartta hesaplanır; `gun` verilirse **400**). Aynı gövde, `kuru:false` |
 | `POST /rubrik/sonuc` gövde `{id, version, durum:"ok"\|"hata", kanallar?, basarisiz?, hata?}` | Vercel `sonuc`'a İLETİR (beyaz liste; Vercel'in durum kodu + gövdesi aynen: 200 · 400 · 404 yuva yok · 409 geçiş yasak/çakışma). `version` = `bugun` yanıtındaki öğe sürümü. İdempotensi Vercel'de (aynı sonuç ikinci kez 200 `tekrar:true`) |
 | `GET\|HEAD /rubrik/dosya/<YYYY-AA-GG>/<ad>.png` | `image/png` — yalnız `bitti.json`'da listeli adlar (yarım iş GÖRÜNMEZ) |
+| `GET\|HEAD /rubrik/dosya/<YYYY-AA-GG>/rubrik-<seri>-<gün>-short.mp4` | (v6.340) `video/mp4` — YouTube Short (aynı listeleme kuralı) |
 
 - Öğe: `{id, version, seriesKey, slotDay, approvedHash, altyazi, caption, hashtags, gorseller:[{ad,boyut,sira}]}` — `altyazi` = ZIP'teki `altyazi.txt` ile AYNI biçim (altyazı + boş satır + etiketler); resim baytı yanıtta YOK (dosya ucundan indirilir).
 - Hatalar: **502** `{hata, belirsiz}` (Vercel'e ulaşılamadı / yanıt geçersiz / kimlik reddedildi; `belirsiz:true` → `al` içerik aldıysa durum BİLİNMİYOR: İNSAN bakar) · **503** kapalı (jeton yok) ya da sosyal üretim sürüyor (07:55 işi) · **429** başka `bugun` sürüyor · **400** geçersiz parametre/gövde · **413** gövde > 64 KB.
@@ -68,6 +69,7 @@ Faz 3 otomasyonunun (n8n) içerikle konuşacağı **tek yüz**: kart bugünün O
 - **Dosyalar:** `<SOSYAL_DIR>/rubrik/<gün>/rubrik-<seri>-<gün>-NN.png` + `bitti.json` (atomik; kimliğe göre BİRİKİR; öğe BAŞINA yazılır — sonraki öğe düşse de önceki öğenin dosyaları listeli kalır) — sosyal işinin `<SOSYAL_DIR>/<gün>/` klasöründen AYRI (07:55 işi kendi klasörünü siler); en yeni 3 gün saklanır. NN iki haneli slayt sırası (01 = kapak).
 - **Sızıntı yok:** jeton yalnız Authorization başlığında; yanıtta/günlükte yok (davranışsal testle kilitli); beklenmeyen hata gövdesi genel; render istisnasının ve disk (izin/doluluk) hatasının ayrıntısı yalnız kart GÜNLÜĞÜNDE (yanıta/Vercel'e genel mesaj; disk hatası da YAYIN HATASI'dır).
 - Ortam: `CONTENT_PLAN_TOKEN` (boş = DORMANT), `CONTENT_PLAN_URL` (vars. `https://doctorium.tr/api/social-calendar/yayin`).
+- **Beş mecra (v6.339–340, 👤 07–08.10):** Instagram · LinkedIn · Facebook · X · YouTube; yayın saati **12:00 TR**. Her öğe ayrıca `video` (`{ad, boyut, sure_sn, sesli}` ya da `null`), `videoHata` ve `xGruplari` taşır. **YouTube** = onaylı PNG'lerden 1080×1920 Short (`lib/rubrik-video.mjs`; slayt yeniden çizilmez, bulanık arka plan üzerinde ortalanır, kare 0 DOLU, ≤ 58 sn, müzik `SOSYAL_MUZIK` yoksa sessiz). Video hatası öğeyi DÜŞÜRMEZ → n8n yalnız `youtube`'u `basarisiz`'a yazar. **X** = `xGruplari` sırasıyla ZİNCİR (ilk gönderi ≤ 4 görsel + altyazı, kalanlar yanıt). `bugun` öğe başına Short için ≈ 20 sn uzar (n8n zaman aşımı ≥ 120 sn).
 - **Faz 3 yerleşimi:** n8n KURU akışı `POST /rubrik/bugun?kuru=1` → `gorseller`'i `GET /rubrik/dosya/...` ile indirip arşivler; canlı akış `POST /rubrik/bugun` → kanallara yayın → `POST /rubrik/sonuc`. 07:55 sosyal işi sürerken uç 503 verir → rubrik akışını o pencereden SONRA planla (≥ ~08:10; sosyal iş sunucuda ≈ 4 dk).
 - Dağıtım: yeni dosya `lib/rubrik-yayin.mjs` + `server.mjs` (compose değişmez). **Jeton girilmeden dağıtım davranışı DEĞİŞTİRMEZ** (uçlar 503). Aktivasyon (👤 onaylı, ayrı adım): `.env.kart`'a `CONTENT_PLAN_TOKEN` + aynı değer Vercel `doctorium` env'ine + yeniden yayın.
 - Testler: `npx vitest run tests/unit/kart-rubrik-yayin.test.ts` — saf yardımcılar · KURU (`bak` ASLA `al`) · canlı (`al`, Türkiye günü, en fazla bir kez) · render hatası/taşma/bozuk model → YAYIN HATASI · Vercel hata eşlemesi · `sonuc` beyaz liste + aktarım · dosya ucu (yalnız listeli) · saklama + sosyal izolasyonu · jeton sızıntısı.
@@ -110,6 +112,7 @@ lib/social-video.mjs    # hikâye klipleri + Reel A (+ LinkedIn kesiti) üretici
 lib/social-carousel.mjs # kaydırmalı post slaytları: kart + içerikler + kapanış (Playwright, ffmpeg gerekmez)
 lib/social-rubrik.mjs   # içerik takvimi rubrik slaytları + POST /rubrik/render (v6.328; Playwright, ffmpeg gerekmez)
 lib/rubrik-yayin.mjs    # içerik takvimi YAYIN uçları: /rubrik/bugun · /rubrik/sonuc · /rubrik/dosya (v6.335; Vercel `bak|al|sonuc` istemcisi + çizim + dosya ucu)
+lib/rubrik-video.mjs    # rubrik YouTube Short (onaylı PNG → 9:16 MP4, ffmpeg) + X zincir gruplaması (v6.340)
 assets/                 # küre görseli (public/brand ile aynı hash — test kilitli) + vuruş ızgarası
 tools/uret.mjs          # yerel: digest.json + kart.png + müzik → MP4'ler (+ LinkedIn kesiti) + carousel PNG'leri (--only stories|reel|carousel)
 tools/rubrik.mjs        # yerel: model.json (rubrik slaytları) → PNG'ler (v6.328)
@@ -117,7 +120,9 @@ tools/dogrula.mjs       # MP4'leri (Instagram + LinkedIn şartları) + carousel 
 Dockerfile              # playwright:v1.55.0-noble + ffmpeg (npm playwright sürümü imaj etiketiyle AYNI olmalı — test kilitli)
 ```
 
-## Sunucuya dağıtım (👤 onaylı iş; sabah akışını kesmemek için 07:40–07:55 TR DIŞINDA)
+## Sunucuya dağıtım (👤 onaylı iş; güvenli pencere 08:10 → ertesi 07:40 TR, 11:30–12:15 HARİÇ)
+
+> 🪤 07:55 sosyal işi 6 öğeli seçkide ≈ 539 sn sürer (07:55 → ≈ 08:05): o sırada konteyner yeniden yaratılırsa render ölür ve günün Reel + hikâye akışı düşer. Rubrik yayını (`/rubrik/bugun`) 12:00'de koşar; yeniden derleme sırasında kart hiç yanıt vermez → 11:30–12:15 arası da takas YAPILMAZ.
 
 Compose'taki `kart:` bloğu (`/opt/n8n/docker-compose.yml`) şu hâle gelir — **yalnız bu blok** değişir, diğer servislere dokunulmaz:
 

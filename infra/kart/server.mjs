@@ -151,6 +151,7 @@ const rubrikYayin = createRubrikYayin({
   spherePath: path.join(HERE, "assets", "doctorium-sphere-disk-1024-v3.webp"),
   planUrl: process.env.CONTENT_PLAN_URL || undefined,
   planToken: PLAN_TOKEN,
+  muzikPath: process.env.SOSYAL_MUZIK ?? "/varlik/muzik.mp3", // YouTube Short müziği (v6.340); dosya yoksa video sessiz üretilir
   mesgul: () => sosyal.durum().durum === "calisiyor",
   log: (m) => console.log(`[kart] ${m}`),
 });

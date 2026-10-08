@@ -16,6 +16,7 @@ import {
   gunGecerli,
   planYanitiDogrula,
   slaytDosyaAdi,
+  shortDosyaAdi,
   sonucGovdeDogrula,
 } from "../../infra/kart/lib/rubrik-yayin.mjs";
 import { createSosyal } from "../../infra/kart/lib/sosyal-isleri.mjs";
@@ -55,6 +56,18 @@ type Cizici = (a: { model: { slides: { role: string }[] } }) => Promise<unknown>
 
 const sahteRender: Cizici = async ({ model }) => ({ slides: model.slides.map((s, i) => ({ index: i, role: s.role, png: png(`slayt-${i}`), tasma: false })) });
 
+type VideoArg = { pngYollari: string[]; outPath: string; workDir: string; muzikPath: string | null };
+type Videocu = (a: VideoArg) => Promise<{ sure_sn: number; sesli: boolean }>;
+const SAHTE_MP4 = Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypmp42sahte-short")]);
+/** Sahte Short üreticisi: çağrıyı kaydeder, çıktıyı `outPath`'e yazar (gerçek ffmpeg birim testinde ÇAĞRILMAZ). */
+const sahteVideo = (kayit: VideoArg[] = []): Videocu => async (a) => {
+  kayit.push(a);
+  fs.mkdirSync(a.workDir, { recursive: true });
+  fs.writeFileSync(path.join(a.workDir, "ara.mp4"), "ara");
+  fs.writeFileSync(a.outPath, SAHTE_MP4);
+  return { sure_sn: 15, sesli: false };
+};
+
 /** Varsayılan sahte Vercel: `bak` her zaman öğeyi verir; `al` İLK çağrıda verir, sonrakilerde boş (en fazla bir kez); `sonuc` başarı. */
 function varsayilanVercel(): VercelFn {
   let alindi = false;
@@ -80,7 +93,7 @@ afterEach(async () => {
   for (const d of temizlenecek.splice(0)) fs.rmSync(d, { recursive: true, force: true });
 });
 
-async function kur(o: { token?: string; mesgul?: boolean; render?: Cizici; vercel?: VercelFn; now?: number; saklananGun?: number } = {}) {
+async function kur(o: { token?: string; mesgul?: boolean; render?: Cizici; video?: Videocu; muzikPath?: string; vercel?: VercelFn; now?: number; saklananGun?: number } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kart-yayin-"));
   temizlenecek.push(dir);
   const cagrilar: { url: string; auth: string | null; ct: string | null; govde: Govde }[] = [];
@@ -104,6 +117,8 @@ async function kur(o: { token?: string; mesgul?: boolean; render?: Cizici; verce
     mesgul: () => o.mesgul === true,
     log: (m: string) => log.push(m),
     render: o.render ?? sahteRender,
+    video: o.video ?? sahteVideo(),
+    muzikPath: o.muzikPath ?? null,
     fetchImpl,
     now: () => simdi,
     saklananGun: o.saklananGun,
@@ -307,10 +322,13 @@ describe("POST /rubrik/bugun — KURU (salt okuma)", () => {
         id: "cmabc123", version: "2026-10-07T08:00:00.000Z", seriesKey: "karar-masasi", slotDay: GUN, approvedHash: HASH,
         altyazi: "Altyazı metni\n\n#hukuk #saglik", caption: "Altyazı metni", hashtags: ["#hukuk", "#saglik"],
         gorseller: [1, 2, 3].map((n) => ({ ad: `rubrik-karar-masasi-${GUN}-0${n}.png`, boyut: png(`slayt-${n - 1}`).length, sira: n })),
+        video: { ad: `rubrik-karar-masasi-${GUN}-short.mp4`, boyut: SAHTE_MP4.length, sure_sn: 15, sesli: false },
+        videoHata: null,
+        xGruplari: [[1, 2, 3]],
       },
     ]);
     const dir = bugunDizini(t.dir);
-    expect(fs.readdirSync(dir).sort()).toEqual(["bitti.json", ...[1, 2, 3].map((n) => `rubrik-karar-masasi-${GUN}-0${n}.png`)]);
+    expect(fs.readdirSync(dir).sort()).toEqual(["bitti.json", ...[1, 2, 3].map((n) => `rubrik-karar-masasi-${GUN}-0${n}.png`), `rubrik-karar-masasi-${GUN}-short.mp4`]);
     expect(fs.readFileSync(path.join(dir, `rubrik-karar-masasi-${GUN}-02.png`)).equals(png("slayt-1"))).toBe(true);
     const marker = JSON.parse(fs.readFileSync(path.join(dir, "bitti.json"), "utf8")) as { gun: string; items: { id: string; kuru: boolean; dosyalar: unknown[] }[] };
     expect(marker.gun).toBe(GUN);
@@ -361,7 +379,7 @@ describe("POST /rubrik/bugun — canlı (`al` kilidi)", () => {
     const iki = (await (await t.istek("/rubrik/bugun")).json()) as { items: unknown[] };
     expect(bir.items).toHaveLength(1);
     expect(iki.items).toEqual([]);
-    expect(fs.readdirSync(bugunDizini(t.dir))).toHaveLength(4);
+    expect(fs.readdirSync(bugunDizini(t.dir))).toHaveLength(5);
   });
 
   it("aynı gün ikinci koşu aynı seriyi yeniden yazarken eski fazla dosyaları SİLER; bitti.json öğeyi kimliğe göre BİRLEŞTİRİR", async () => {
@@ -728,6 +746,66 @@ describe("saklama ve sosyal işiyle izolasyon", () => {
 
 // ── kaynak kuralları ─────────────────────────────────────────────────────────────────────────────────
 
+describe("YouTube Short + X zinciri (v6.340)", () => {
+  it("Short ONAYLI PNG'lerden, slayt sırasıyla üretilir; müzik yolu iletilir; ara dosyalar ve .tmp kalmaz", async () => {
+    const kayit: VideoArg[] = [];
+    const t = await kur({ video: sahteVideo(kayit), muzikPath: "/varlik/muzik.mp3" });
+    const r = await t.istek("/rubrik/bugun");
+    expect(r.status).toBe(200);
+    expect(kayit).toHaveLength(1);
+    const dir = bugunDizini(t.dir);
+    expect(kayit[0]!.pngYollari).toEqual([1, 2, 3].map((n) => path.join(dir, `rubrik-karar-masasi-${GUN}-0${n}.png`)));
+    expect(kayit[0]!.muzikPath).toBe("/varlik/muzik.mp3");
+    expect(kayit[0]!.outPath.endsWith(".tmp.mp4")).toBe(true);
+    expect(fs.readdirSync(dir).some((a) => a.includes(".tmp"))).toBe(false);
+    expect(fs.readdirSync(path.join(t.dir, "rubrik"))).toEqual([GUN]); // geçici çalışma klasörü (.is-<id>) iz bırakmaz
+  });
+
+  it("X zinciri: 6 slayt → [[1,2,3,4],[5,6]] (ilk gönderi 4 görsel, kalanı yanıtta)", async () => {
+    const vercel: VercelFn = (g) => (g.action === "bak" ? { json: planYaniti([oge({ render: modelOf(6) })]) } : { json: {} });
+    const t = await kur({ vercel });
+    const j = (await (await t.istek("/rubrik/bugun?kuru=1")).json()) as { items: { xGruplari: number[][]; gorseller: unknown[] }[] };
+    expect(j.items[0]!.gorseller).toHaveLength(6);
+    expect(j.items[0]!.xGruplari).toEqual([[1, 2, 3, 4], [5, 6]]);
+  });
+
+  it("video HATASI öğeyi DÜŞÜRMEZ: görseller yayına hazır, video:null + GENEL videoHata (iç ayrıntı sızmaz); Vercel'e HATA bildirilmez; yarım video yok", async () => {
+    const t = await kur({ video: async (a) => { fs.writeFileSync(a.outPath, "yarim"); throw new Error(`ffmpeg hata (1): ${a.outPath} gizli-ayrinti`); } });
+    const r = await t.istek("/rubrik/bugun");
+    const j = (await r.json()) as { items: Govde[]; hatalar: unknown[] };
+    expect(r.status).toBe(200);
+    expect(j.hatalar).toEqual([]);
+    expect(j.items).toHaveLength(1);
+    expect(j.items[0]).toMatchObject({ video: null, videoHata: "Short videosu üretilemedi (kart günlüğüne bakın)" });
+    expect(JSON.stringify(j)).not.toContain("gizli-ayrinti");
+    expect(t.cagrilar.map((c) => c.govde.action)).toEqual(["al"]); // `sonuc hata` YOK: içerik yayınlanabilir
+    const dir = bugunDizini(t.dir);
+    expect(fs.readdirSync(dir).filter((a) => a.endsWith(".mp4"))).toEqual([]);
+    expect(t.log.some((m) => m.includes("video istisnası"))).toBe(true);
+    const yok = await t.istek(`/rubrik/dosya/${GUN}/rubrik-karar-masasi-${GUN}-short.mp4`, "GET");
+    expect(yok.status).toBe(404);
+  });
+
+  it("hazır Short sunulur: video/mp4 + bayt; HEAD yalnız başlıklar", async () => {
+    const t = await kur();
+    await t.istek("/rubrik/bugun?kuru=1");
+    const yol = `/rubrik/dosya/${GUN}/rubrik-karar-masasi-${GUN}-short.mp4`;
+    const r = await t.istek(yol, "GET");
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toBe("video/mp4");
+    expect(Buffer.from(await r.arrayBuffer()).equals(SAHTE_MP4)).toBe(true);
+    const h = await t.istek(yol, "HEAD");
+    expect(h.status).toBe(200);
+    expect(h.headers.get("content-length")).toBe(String(SAHTE_MP4.length));
+  });
+
+  it("shortDosyaAdi + dosyaAdiGecerli: `-short.mp4` kabul; başka uzantı/ad reddedilir", () => {
+    expect(shortDosyaAdi("karar-masasi", GUN)).toBe(`rubrik-karar-masasi-${GUN}-short.mp4`);
+    expect(dosyaAdiGecerli(shortDosyaAdi("ogrenci-kosesi", GUN))).toBe(true);
+    for (const kotu of [`rubrik-karar-masasi-${GUN}-short.mov`, `rubrik-karar-masasi-${GUN}-01.mp4`, `rubrik-karar-masasi-${GUN}-short.tmp.mp4`, "../x-short.mp4"]) expect(dosyaAdiGecerli(kotu)).toBe(false);
+  });
+});
+
 describe("kaynak kuralları", () => {
   const MODUL = fs.readFileSync(path.join(KOK, "infra/kart/lib/rubrik-yayin.mjs"), "utf8");
   const SERVER = fs.readFileSync(path.join(KOK, "infra/kart/server.mjs"), "utf8");
@@ -744,6 +822,7 @@ describe("kaynak kuralları", () => {
     expect(SERVER).toContain('const PLAN_TOKEN = process.env.CONTENT_PLAN_TOKEN ?? "";');
     expect(SERVER).toContain("planToken: PLAN_TOKEN,");
     expect(SERVER).toContain("planUrl: process.env.CONTENT_PLAN_URL || undefined,");
+    expect(SERVER).toMatch(/const rubrikYayin = createRubrikYayin\(\{[\s\S]*?muzikPath: process\.env\.SOSYAL_MUZIK \?\? "\/varlik\/muzik\.mp3"/);
     const sira = ["rubrik.handle(req, res)", "rubrikYayin.handle(req, res)", "sosyal.handle(req, res)"].map((s) => SERVER.indexOf(s));
     expect(sira.every((i) => i > 0)).toBe(true);
     expect([...sira].sort((a, b) => a - b)).toEqual(sira);
