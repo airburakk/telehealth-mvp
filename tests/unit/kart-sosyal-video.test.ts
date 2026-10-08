@@ -11,6 +11,7 @@ import net from "node:net";
 import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
+import vm from "node:vm";
 import { createSosyal, digestDogrula, dosyaAdiGecerli, dosyaMeta, gorselAdiGecerli, gorselMeta, gunGecerli, kapsamHesapla, linkedinAdiGecerli, linkedinMeta } from "../../infra/kart/lib/sosyal-isleri.mjs";
 import { LINKEDIN_BASLANGIC_SN, LINKEDIN_DUZEN, REEL_CTA, hikayeKareHtml, kareleriBas, reelHtml, reelPlan, renderReelA, tipo } from "../../infra/kart/lib/social-video.mjs";
 import { icerikSlaytHtml, kapanisSlaytHtml, renderCarousel } from "../../infra/kart/lib/social-carousel.mjs";
@@ -68,6 +69,74 @@ describe("reelPlan — vuruş planı", () => {
     expect(p.OUTRO_START).toBe(p.plan[3].e);
     expect(p.TOTAL_BEATS).toBe(p.OUTRO_START + 6);
     expect(p.TOTAL_T).toBeCloseTo(0.15 + p.TOTAL_BEATS * GRID.P + 0.6, 6);
+  });
+});
+
+// 2026-10-07 (👤 "Reel'in ilk karesini doldur"): X küçük resmi ≈0,17 sn'yi seçiyor; kare 0 boş zemin, 0,17 sn yarı çizilmiş çizgi + harf parçalarıydı.
+// `window.seek` GERÇEK tarayıcı olmadan, yalnız `style` kaydeden minimal bir DOM ile `vm` içinde çalıştırılır (ffmpeg/Chromium GEREKMEZ).
+describe("Reel A — ilk kare DOLU (giriş animasyonları kare 0'da tamamlanmış)", () => {
+  const KURE = "data:image/webp;base64,AAAA";
+  type Stil = Record<string, string>;
+  type Dugum = { style: Stil; dataset: Record<string, string>; querySelectorAll: (s: string) => Dugum[]; querySelector: (s: string) => Dugum };
+  function zamanCizelgesi(html: string, n: number) {
+    const betik = /<script>([\s\S]*?)<\/script>/.exec(html)![1];
+    const oge = new Map<string, Dugum>();
+    // başlık öğeleri 4. vuruşta görünür olunca `seek` alt öğeleri (.kick/.src/.acc/.w) sorgular → sahte DOM bunları da karşılar
+    const el = (id: string): Dugum => {
+      if (!oge.has(id)) oge.set(id, { style: {}, dataset: {}, querySelectorAll: () => [], querySelector: (s: string) => el(`${id}${s}`) });
+      return oge.get(id)!;
+    };
+    const document = {
+      getElementById: (id: string) => el(id),
+      querySelectorAll: (sel: string) => (sel === "#prog u" ? Array.from({ length: n }, (_, i) => el(`u${i}`)) : []),
+    };
+    const pencere: { seek?: (t: number) => void } = {};
+    vm.runInNewContext(betik, { window: pencere, document });
+    const goster = (t: number) => {
+      pencere.seek!(t);
+      return {
+        cizgi: el("rule").style.transform, masthead: el("mtext").style.opacity, h1: el("h1").style.transform, h2: el("h2s").style.transform,
+        akis: el("cats").style.opacity, akisY: el("cats").style.transform, giris: el("intro").style.opacity,
+      };
+    };
+    return { goster };
+  }
+
+  it("kare 0'da giriş (masthead çizgisi · masthead yazısı · 'Bugünün' · 'N başlığı' · akış satırı) TAMAMLANMIŞ; bu hâl GIRIS_BITIS'e dek SABİT", () => {
+    const d = digestOrnek(3);
+    const p = reelPlan(d, GRID);
+    const { goster } = zamanCizelgesi(reelHtml(d, GRID, KURE), 3);
+    const k0 = goster(0);
+    expect(k0).toEqual({ cizgi: "scaleX(1.0000)", masthead: "1.000", h1: "translateY(0%)", h2: "translateY(0%)", akis: "1.0000", akisY: "translate3d(0,0.00px,0)", giris: "1.000" });
+    // eskiden 0,17 sn'de (X'in seçtiği kare) çizgi %53, "Bugünün" %82 aşağıda gizliydi → şimdi tüm ara anlar kare 0 ile AYNI
+    for (const t of [0.05, 0.17, 0.5, 1.0, 1.5, p.GIRIS_BITIS]) expect(goster(t)).toEqual(k0);
+  });
+
+  it("GIRIS_BITIS = 3. vuruş + 0,5 sn; LinkedIn kesiti/Instagram kapağı (1,7 sn) ile AYNI tamamlanmış görüntüye denk gelir (fark ≤ 0,1 sn)", () => {
+    const p = reelPlan(digestOrnek(3), GRID);
+    expect(p.GIRIS_BITIS).toBeCloseTo(0.15 + 2 * GRID.P + 0.5, 6);
+    expect(p.CFG.GIRIS_BITIS).toBe(p.GIRIS_BITIS);
+    expect(Math.abs(p.GIRIS_BITIS - LINKEDIN_BASLANGIC_SN)).toBeLessThan(0.1);
+    expect(reelHtml(digestOrnek(3), GRID, KURE)).toContain('"GIRIS_BITIS":');
+  });
+
+  it("giriş ÇIKIŞI değişmedi: 4. vuruştan 0,3 sn önce başlar, çıkışın ortasında kapsayıcı yarı saydam, vuruşta tamamen kapalı", () => {
+    const d = digestOrnek(3);
+    const p = reelPlan(d, GRID);
+    const { goster } = zamanCizelgesi(reelHtml(d, GRID, KURE), 3);
+    const cikisBasi = 0.15 + p.plan[0].s * GRID.P - 0.3;
+    expect(Number(goster(cikisBasi - 0.01).giris)).toBe(1);
+    const orta = Number(goster(cikisBasi + 0.15).giris);
+    expect(orta).toBeGreaterThan(0);
+    expect(orta).toBeLessThan(1);
+    expect(Number(goster(cikisBasi + 0.31).giris)).toBe(0);
+  });
+
+  it("yatay LinkedIn düzeni de aynı zaman çizelgesi: kare 0 dolu", () => {
+    const d = digestOrnek(3);
+    const dikey = zamanCizelgesi(reelHtml(d, GRID, KURE), 3).goster(0);
+    const yatay = zamanCizelgesi(reelHtml(d, GRID, KURE, "yatay"), 3).goster(0);
+    expect(yatay).toEqual(dikey);
   });
 });
 
