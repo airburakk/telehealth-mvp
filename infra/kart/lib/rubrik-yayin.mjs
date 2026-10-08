@@ -37,7 +37,7 @@ const DOSYA_RE = /^rubrik-[a-z0-9]+(?:-[a-z0-9]+)*-\d{4}-\d{2}-\d{2}-\d{2}\.png$
 const MARKER = "bitti.json";
 const PNG_IMZA = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-export const YAYIN_SINIR = { planYanitBayt: 4 * 1024 * 1024, sonucGovdeBayt: 64 * 1024, planZamanAsimiMs: 30_000, altyazi: 2200, etiket: 30, kanal: 5, hata: 500 };
+export const YAYIN_SINIR = { planYanitBayt: 4 * 1024 * 1024, sonucGovdeBayt: 64 * 1024, planZamanAsimiMs: 30_000, altyazi: 2200, etiket: 30, kanal: 6, hata: 500 };
 export const VARSAYILAN_PLAN_URL = "https://doctorium.tr/api/social-calendar/yayin";
 
 export function gunGecerli(s) {
@@ -106,10 +106,10 @@ export function sonucGovdeDogrula(raw) {
   const govde = { action: "sonuc", durum: raw.durum, id: raw.id, version: raw.version };
   const kanalGecerli = (c, alan) => c && typeof c === "object" && !Array.isArray(c) && typeof c.channel === "string" && c.channel.length >= 1 && c.channel.length <= 24 && (c[alan] === undefined || (typeof c[alan] === "string" && c[alan].length <= (alan === "url" ? 500 : YAYIN_SINIR.hata)));
   if (raw.durum === "ok") {
-    if (!Array.isArray(raw.kanallar) || raw.kanallar.length < 1 || raw.kanallar.length > YAYIN_SINIR.kanal || !raw.kanallar.every((c) => kanalGecerli(c, "url"))) return { ok: false, hata: "kanallar 1–5 öğe olmalı ({ channel, url? })" };
+    if (!Array.isArray(raw.kanallar) || raw.kanallar.length < 1 || raw.kanallar.length > YAYIN_SINIR.kanal || !raw.kanallar.every((c) => kanalGecerli(c, "url"))) return { ok: false, hata: "kanallar 1–6 öğe olmalı ({ channel, url? })" };
     govde.kanallar = raw.kanallar.map((c) => (c.url === undefined ? { channel: c.channel } : { channel: c.channel, url: c.url }));
     if (raw.basarisiz !== undefined && raw.basarisiz !== null) {
-      if (!Array.isArray(raw.basarisiz) || raw.basarisiz.length > YAYIN_SINIR.kanal || !raw.basarisiz.every((c) => kanalGecerli(c, "error"))) return { ok: false, hata: "basarisiz en çok 5 öğe olmalı ({ channel, error? })" };
+      if (!Array.isArray(raw.basarisiz) || raw.basarisiz.length > YAYIN_SINIR.kanal || !raw.basarisiz.every((c) => kanalGecerli(c, "error"))) return { ok: false, hata: "basarisiz en çok 6 öğe olmalı ({ channel, error? })" };
       if (raw.basarisiz.length) govde.basarisiz = raw.basarisiz.map((c) => (c.error === undefined ? { channel: c.channel } : { channel: c.channel, error: c.error }));
     }
   } else {

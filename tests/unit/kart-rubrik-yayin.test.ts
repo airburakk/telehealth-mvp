@@ -19,6 +19,7 @@ import {
   sonucGovdeDogrula,
 } from "../../infra/kart/lib/rubrik-yayin.mjs";
 import { createSosyal } from "../../infra/kart/lib/sosyal-isleri.mjs";
+import { PUBLISH_CHANNELS } from "@/lib/social-calendar/publication";
 
 const KOK = process.cwd();
 const TOKEN = "plan-test-jetonu-0123456789";
@@ -167,6 +168,12 @@ describe("sonucGovdeDogrula", () => {
     });
   });
 
+  it("kanal sınırı Vercel kanal setiyle SÖZLEŞMELİ (YouTube dahil 6 kanal tek gönderide geçer)", () => {
+    expect(YAYIN_SINIR.kanal).toBe(PUBLISH_CHANNELS.length);
+    const hepsi = PUBLISH_CHANNELS.map((channel) => ({ channel }));
+    expect(sonucGovdeDogrula({ ...ok, kanallar: hepsi })).toMatchObject({ ok: true, govde: { kanallar: hepsi } });
+  });
+
   it("boş `basarisiz` gönderilmez; hata gövdesi: `hata` taşınır, yoksa boş metin", () => {
     expect(sonucGovdeDogrula({ ...ok, basarisiz: [] })).toMatchObject({ ok: true, govde: { durum: "ok" } });
     expect((sonucGovdeDogrula({ ...ok, basarisiz: [] }) as { govde: Govde }).govde).not.toHaveProperty("basarisiz");
@@ -187,13 +194,13 @@ describe("sonucGovdeDogrula", () => {
     expect(hata({ ...ok, version: "x".repeat(41) })).toMatch(/version/);
     expect(hata({ ...ok, durum: "basari" })).toMatch(/durum/);
     expect(hata({ ...ok, kanallar: [] })).toMatch(/kanallar/);
-    expect(hata({ ...ok, kanallar: Array.from({ length: 6 }, () => ({ channel: "x" })) })).toMatch(/kanallar/);
+    expect(hata({ ...ok, kanallar: Array.from({ length: YAYIN_SINIR.kanal + 1 }, () => ({ channel: "x" })) })).toMatch(/kanallar/);
     expect(hata({ ...ok, kanallar: [{ channel: "" }] })).toMatch(/kanallar/);
     expect(hata({ ...ok, kanallar: [{ channel: "x".repeat(25) }] })).toMatch(/kanallar/);
     expect(hata({ ...ok, kanallar: [{ channel: "x", url: "u".repeat(501) }] })).toMatch(/kanallar/);
     expect(hata({ ...ok, kanallar: ["x"] })).toMatch(/kanallar/);
     expect(hata({ ...ok, basarisiz: "kötü" })).toMatch(/basarisiz/);
-    expect(hata({ ...ok, basarisiz: Array.from({ length: 6 }, () => ({ channel: "x" })) })).toMatch(/basarisiz/);
+    expect(hata({ ...ok, basarisiz: Array.from({ length: YAYIN_SINIR.kanal + 1 }, () => ({ channel: "x" })) })).toMatch(/basarisiz/);
     expect(hata({ ...ok, basarisiz: [{ channel: "x", error: "e".repeat(YAYIN_SINIR.hata + 1) }] })).toMatch(/basarisiz/);
     expect(hata({ id: "cmabc123", version: "v1", durum: "hata", hata: "e".repeat(YAYIN_SINIR.hata + 1) })).toMatch(/hata/);
     expect(hata({ id: "cmabc123", version: "v1", durum: "hata", hata: 5 })).toMatch(/hata/);
