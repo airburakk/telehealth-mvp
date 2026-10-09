@@ -85,3 +85,69 @@ export function shouldAlertStreak(streak: number): boolean {
   if (streak < DRY_STREAK_THRESHOLD) return false;
   return (streak - DRY_STREAK_THRESHOLD) % DRY_STREAK_REMIND_EVERY === 0;
 }
+
+// ── v6.343 (2026-10-10, 👤 "tazelik nöbetçisine çevir") — Yargıtay içtihadı YEREL beslenir ──────────────────────
+// Kök neden (10.10 ölçüldü): karararama.yargitay.gov.tr yurt dışı / veri merkezi IP'lerini TCP düzeyinde engelliyor —
+// Türkiye bağlantısı 200 · Hetzner DE 25 sn zaman aşımı · Vercel fra1 "fetch failed" (11.08'den beri). Bu yüzden
+// cron artık karar ÇEKMEZ; kararları kullanıcının bilgisayarındaki haftalık görev yazar (`scripts/ingest-yargitay.ts
+// --prod --yaz`) ve her yazma koşusunda bir NABIZ satırı bırakır. Cron yalnız "son TAM tarama ne zaman?" diye bakar.
+//
+// Ölçü neden "son yeni karar" DEĞİL: Yargıtay bir hafta ilgili karar yayımlamayabilir → yeni karar tarihi ilerlemez
+// ama besleme sağlamdır (yanlış alarm). Ölçü = son TAM tarama nabzı; nabız henüz yoksa (geçiş dönemi) son yazılan
+// karar yedek kanıttır. Yarım tarama (arama 429/CAPTCHA/ağ hatasında kütüphane kalan sorguları bilinçli bırakır)
+// nabız sayılmaz — kuruma yine görünür olsun.
+
+/** Yerel besleme nabzının audit `resourceId`'si (`CRON_MAINTENANCE`, actor null). */
+export const ICTIHAT_LOCAL_RESOURCE = "ingest-yargitay-yerel";
+/** Son tam taramadan bu kadar gün sonra alarm (haftalık görev = iki kaçırılmış hafta). */
+export const ICTIHAT_STALE_DAYS = 14;
+/** Bayatlık sürerken hatırlatma aralığı (gün; günlük cron'da haftalık). */
+export const ICTIHAT_STALE_REMIND_EVERY = 7;
+
+const DAY_MS = 86_400_000;
+
+/** Arama aşaması TAM mı: kütüphane arama hatasını `arama "<sorgu>": …` biçiminde yazar ve kalan sorguları bırakır. */
+export function isSearchComplete(errors: readonly string[]): boolean {
+  return !errors.some((e) => e.startsWith("arama "));
+}
+
+/** Yerel besleme nabzının audit `detail`'i: `yerel yeni=4/102 sorun=2 ilk="…" tarama=yarim`. */
+export function localFeedDetail(r: { created: number; found: number; deferred: number; errors: readonly string[] }): string {
+  const erteli = r.deferred ? ` erteli=${r.deferred}` : "";
+  const sorun = r.errors.length ? ` sorun=${r.errors.length}${firstErrorTag(r.errors)}` : "";
+  return `yerel yeni=${r.created}/${r.found}${erteli}${sorun} tarama=${isSearchComplete(r.errors) ? "tam" : "yarim"}`;
+}
+
+/** Nabız satırı TAM bir taramayı mı kaydediyor. */
+export function isFullLocalScan(detail: string | null | undefined): boolean {
+  return !!detail && /(^| )tarama=tam( |$)/.test(detail);
+}
+
+/** İki kanıttan yenisi (biri ya da ikisi yoksa olanı; hiçbiri yoksa null). */
+export function latestEvidence(...dates: readonly (Date | null | undefined)[]): Date | null {
+  let best: Date | null = null;
+  for (const d of dates) if (d && (!best || d.getTime() > best.getTime())) best = d;
+  return best;
+}
+
+/** Tam gün cinsinden yaş (aşağı yuvarlanır); kanıt yoksa null. Gelecek tarih 0 sayılır. */
+export function ageInDays(evidence: Date | null, now: Date): number | null {
+  if (!evidence) return null;
+  return Math.max(0, Math.floor((now.getTime() - evidence.getTime()) / DAY_MS));
+}
+
+/**
+ * Bayatlık alarmı: eşik gününde bir kez + sonra her ICTIHAT_STALE_REMIND_EVERY günde bir (günlük cron).
+ * Kanıt HİÇ yoksa (tablo boş — üretimde beklenmez) her koşu alarm: sessizlik burada en kötü sonuçtur.
+ */
+export function shouldAlertStale(ageDays: number | null): boolean {
+  if (ageDays === null) return true;
+  if (ageDays < ICTIHAT_STALE_DAYS) return false;
+  return (ageDays - ICTIHAT_STALE_DAYS) % ICTIHAT_STALE_REMIND_EVERY === 0;
+}
+
+/** Cron audit segmenti: `tazelik son=2026-10-10 (3 gun)` · `tazelik son=yok`. (UTC gün; ASCII — segment ayracı korunur.) */
+export function freshnessLine(evidence: Date | null, ageDays: number | null): string {
+  if (!evidence || ageDays === null) return "tazelik son=yok";
+  return `tazelik son=${evidence.toISOString().slice(0, 10)} (${ageDays} gun)`;
+}
