@@ -17,6 +17,8 @@ import {
   planYanitiDogrula,
   slaytDosyaAdi,
   shortDosyaAdi,
+  belgeDosyaAdi,
+  belgeBasligi,
   sonucGovdeDogrula,
 } from "../../infra/kart/lib/rubrik-yayin.mjs";
 import { createSosyal } from "../../infra/kart/lib/sosyal-isleri.mjs";
@@ -59,6 +61,15 @@ const sahteRender: Cizici = async ({ model }) => ({ slides: model.slides.map((s,
 type VideoArg = { pngYollari: string[]; outPath: string; workDir: string; muzikPath: string | null };
 type Videocu = (a: VideoArg) => Promise<{ sure_sn: number; sesli: boolean }>;
 const SAHTE_MP4 = Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypmp42sahte-short")]);
+const SAHTE_PDF = Buffer.from("%PDF-1.4 sahte-belge");
+type BelgeArg = { pngYollari: string[]; outPath: string; browser: unknown; baslik: string };
+type Belgeci = (a: BelgeArg) => Promise<{ sayfa: number; boyut: number }>;
+/** Sahte PDF üreticisi: çağrıyı kaydeder, çıktıyı `outPath`'e yazar (gerçek Chromium birim testinde ÇAĞRILMAZ). */
+const sahteBelge = (kayit: BelgeArg[] = []): Belgeci => async (a) => {
+  kayit.push(a);
+  fs.writeFileSync(a.outPath, SAHTE_PDF);
+  return { sayfa: a.pngYollari.length, boyut: SAHTE_PDF.length };
+};
 /** Sahte Short üreticisi: çağrıyı kaydeder, çıktıyı `outPath`'e yazar (gerçek ffmpeg birim testinde ÇAĞRILMAZ). */
 const sahteVideo = (kayit: VideoArg[] = []): Videocu => async (a) => {
   kayit.push(a);
@@ -93,7 +104,7 @@ afterEach(async () => {
   for (const d of temizlenecek.splice(0)) fs.rmSync(d, { recursive: true, force: true });
 });
 
-async function kur(o: { token?: string; mesgul?: boolean; render?: Cizici; video?: Videocu; muzikPath?: string; vercel?: VercelFn; now?: number; saklananGun?: number } = {}) {
+async function kur(o: { token?: string; mesgul?: boolean; render?: Cizici; video?: Videocu; belge?: Belgeci; muzikPath?: string; vercel?: VercelFn; now?: number; saklananGun?: number } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kart-yayin-"));
   temizlenecek.push(dir);
   const cagrilar: { url: string; auth: string | null; ct: string | null; govde: Govde }[] = [];
@@ -118,6 +129,7 @@ async function kur(o: { token?: string; mesgul?: boolean; render?: Cizici; video
     log: (m: string) => log.push(m),
     render: o.render ?? sahteRender,
     video: o.video ?? sahteVideo(),
+    belge: o.belge ?? sahteBelge(),
     muzikPath: o.muzikPath ?? null,
     fetchImpl,
     now: () => simdi,
@@ -324,11 +336,13 @@ describe("POST /rubrik/bugun — KURU (salt okuma)", () => {
         gorseller: [1, 2, 3].map((n) => ({ ad: `rubrik-karar-masasi-${GUN}-0${n}.png`, boyut: png(`slayt-${n - 1}`).length, sira: n })),
         video: { ad: `rubrik-karar-masasi-${GUN}-short.mp4`, boyut: SAHTE_MP4.length, sure_sn: 15, sesli: false },
         videoHata: null,
+        belge: { ad: `rubrik-karar-masasi-${GUN}-belge.pdf`, boyut: SAHTE_PDF.length, sayfa: 3, baslik: "Karar masası · 7 Ekim 2026" },
+        belgeHata: null,
         xGruplari: [[1, 2, 3]],
       },
     ]);
     const dir = bugunDizini(t.dir);
-    expect(fs.readdirSync(dir).sort()).toEqual(["bitti.json", ...[1, 2, 3].map((n) => `rubrik-karar-masasi-${GUN}-0${n}.png`), `rubrik-karar-masasi-${GUN}-short.mp4`]);
+    expect(fs.readdirSync(dir).sort()).toEqual(["bitti.json", ...[1, 2, 3].map((n) => `rubrik-karar-masasi-${GUN}-0${n}.png`), `rubrik-karar-masasi-${GUN}-belge.pdf`, `rubrik-karar-masasi-${GUN}-short.mp4`]);
     expect(fs.readFileSync(path.join(dir, `rubrik-karar-masasi-${GUN}-02.png`)).equals(png("slayt-1"))).toBe(true);
     const marker = JSON.parse(fs.readFileSync(path.join(dir, "bitti.json"), "utf8")) as { gun: string; items: { id: string; kuru: boolean; dosyalar: unknown[] }[] };
     expect(marker.gun).toBe(GUN);
@@ -379,7 +393,7 @@ describe("POST /rubrik/bugun — canlı (`al` kilidi)", () => {
     const iki = (await (await t.istek("/rubrik/bugun")).json()) as { items: unknown[] };
     expect(bir.items).toHaveLength(1);
     expect(iki.items).toEqual([]);
-    expect(fs.readdirSync(bugunDizini(t.dir))).toHaveLength(5);
+    expect(fs.readdirSync(bugunDizini(t.dir))).toHaveLength(6);
   });
 
   it("aynı gün ikinci koşu aynı seriyi yeniden yazarken eski fazla dosyaları SİLER; bitti.json öğeyi kimliğe göre BİRLEŞTİRİR", async () => {
@@ -803,6 +817,50 @@ describe("YouTube Short + X zinciri (v6.340)", () => {
     expect(shortDosyaAdi("karar-masasi", GUN)).toBe(`rubrik-karar-masasi-${GUN}-short.mp4`);
     expect(dosyaAdiGecerli(shortDosyaAdi("ogrenci-kosesi", GUN))).toBe(true);
     for (const kotu of [`rubrik-karar-masasi-${GUN}-short.mov`, `rubrik-karar-masasi-${GUN}-01.mp4`, `rubrik-karar-masasi-${GUN}-short.tmp.mp4`, "../x-short.mp4"]) expect(dosyaAdiGecerli(kotu)).toBe(false);
+  });
+});
+
+describe("LinkedIn belge (PDF) (v6.342)", () => {
+  it("belge ONAYLI PNG'lerden, slayt sırasıyla, rubrik adı + günlük başlıkla üretilir; .tmp kalmaz", async () => {
+    const kayit: BelgeArg[] = [];
+    const t = await kur({ belge: sahteBelge(kayit) });
+    expect((await t.istek("/rubrik/bugun")).status).toBe(200);
+    const dir = bugunDizini(t.dir);
+    expect(kayit).toHaveLength(1);
+    expect(kayit[0]!.pngYollari).toEqual([1, 2, 3].map((n) => path.join(dir, `rubrik-karar-masasi-${GUN}-0${n}.png`)));
+    expect(kayit[0]!.baslik).toBe("Karar masası · 7 Ekim 2026");
+    expect(kayit[0]!.outPath.endsWith(".tmp.pdf")).toBe(true);
+    expect(fs.readdirSync(dir).some((a) => a.includes(".tmp"))).toBe(false);
+  });
+
+  it("belge HATASI öğeyi DÜŞÜRMEZ: belge:null + GENEL belgeHata (iç ayrıntı sızmaz); Short ve görseller yine hazır; yarım PDF yok", async () => {
+    const t = await kur({ belge: async (a) => { fs.writeFileSync(a.outPath, "yarim"); throw new Error(`chromium hata ${a.outPath} gizli-ayrinti`); } });
+    const r = await t.istek("/rubrik/bugun");
+    const j = (await r.json()) as { items: Govde[]; hatalar: unknown[] };
+    expect(r.status).toBe(200);
+    expect(j.hatalar).toEqual([]);
+    expect(j.items[0]).toMatchObject({ belge: null, belgeHata: "LinkedIn belgesi (PDF) üretilemedi (kart günlüğüne bakın)", videoHata: null });
+    expect(JSON.stringify(j)).not.toContain("gizli-ayrinti");
+    expect(t.cagrilar.map((c) => c.govde.action)).toEqual(["al"]);
+    expect(fs.readdirSync(bugunDizini(t.dir)).filter((a) => a.endsWith(".pdf"))).toEqual([]);
+    expect(t.log.some((m) => m.includes("belge istisnası"))).toBe(true);
+  });
+
+  it("hazır belge sunulur: application/pdf + bayt", async () => {
+    const t = await kur();
+    await t.istek("/rubrik/bugun?kuru=1");
+    const r = await t.istek(`/rubrik/dosya/${GUN}/rubrik-karar-masasi-${GUN}-belge.pdf`, "GET");
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toBe("application/pdf");
+    expect(Buffer.from(await r.arrayBuffer()).equals(SAHTE_PDF)).toBe(true);
+  });
+
+  it("belgeDosyaAdi + belgeBasligi + dosyaAdiGecerli", () => {
+    expect(belgeDosyaAdi("karar-masasi", GUN)).toBe(`rubrik-karar-masasi-${GUN}-belge.pdf`);
+    expect(dosyaAdiGecerli(belgeDosyaAdi("ogrenci-kosesi", GUN))).toBe(true);
+    for (const kotu of [`rubrik-karar-masasi-${GUN}-belge.tmp.pdf`, `rubrik-karar-masasi-${GUN}-01.pdf`, "../x-belge.pdf"]) expect(dosyaAdiGecerli(kotu)).toBe(false);
+    expect(belgeBasligi("Öğrenci köşesi", "2026-10-09")).toBe("Öğrenci köşesi · 9 Ekim 2026");
+    expect(belgeBasligi(undefined, "2026-10-09")).toBe("Doctorium · 9 Ekim 2026");
   });
 });
 
