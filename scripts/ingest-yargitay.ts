@@ -18,6 +18,11 @@
 //   npx tsx scripts/ingest-yargitay.ts --prod         → PROD'a karşı dry-run (salt okuma)
 //   npx tsx scripts/ingest-yargitay.ts --prod --yaz   → PROD'a yaz
 //
+// v6.343 (2026-10-10): KALICI besleme yolu budur — karararama.yargitay.gov.tr yurt dışı IP'lerini engellediği
+// için cron çekmez. Kullanıcının bilgisayarındaki haftalık Windows görevi (vault output/yargitay-besleme/)
+// bu betiği `--prod --yaz` ile koşar; her yazma koşusu audit'e NABIZ satırı bırakır (cron tazelik nöbeti okur).
+// Windows PowerShell'de `npx` (npx.ps1) ExecutionPolicy'ye takılır → `npx.cmd tsx …`.
+//
 // İdempotent: (source=yargitay, externalId) benzersiz → yeniden koşuda 0 yeni. Hiçbir şey SİLMEZ.
 import "dotenv/config";
 
@@ -92,6 +97,26 @@ async function main() {
     console.log(`\n📊 bulunan=${r.found} yazılan=${r.created} erteli=${r.deferred}`);
     for (const e of r.errors) console.error(`  ⚠️ ${e}`);
     if (r.deferred > 0) console.log("  ↻ Kalanlar için script'i yeniden koş (idempotent).");
+
+    // v6.343 NABIZ: cron artık karar çekmiyor (karararama yurt dışı IP'lerini engelliyor); gece `ingest-hukuk`
+    // tazelik nöbeti "son TAM tarama ne zaman?" sorusunu bu satırdan okur. Yarım tarama (`tarama=yarim`)
+    // nabız sayılmaz. Nabız yazılamazsa besleme yine geçerlidir → uyarı basılır, çıkış kodu bozulmaz.
+    const { recordAccess } = await import("../src/lib/audit");
+    const { localFeedDetail, ICTIHAT_LOCAL_RESOURCE } = await import("../src/lib/ingest-streak");
+    const detail = localFeedDetail(r);
+    try {
+      await recordAccess({
+        actor: null,
+        action: "CRON_MAINTENANCE",
+        resourceType: "SYSTEM",
+        resourceId: ICTIHAT_LOCAL_RESOURCE,
+        subjectUserId: null,
+        detail,
+      });
+      console.log(`🫀 nabız yazıldı: ${detail}`);
+    } catch (e) {
+      console.error(`  ⚠️ nabız yazılamadı: ${e instanceof Error ? e.message : e}`);
+    }
   }
 
   await db.$disconnect();

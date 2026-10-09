@@ -11,6 +11,8 @@
 import { describe, it, expect } from "vitest";
 import {
   describeError, dryStreak, firstErrorTag, isDrySegment, shouldAlertStreak, DRY_STREAK_THRESHOLD, DRY_STREAK_REMIND_EVERY,
+  ageInDays, freshnessLine, isFullLocalScan, isSearchComplete, latestEvidence, localFeedDetail, shouldAlertStale,
+  ICTIHAT_STALE_DAYS, ICTIHAT_STALE_REMIND_EVERY,
 } from "@/lib/ingest-streak";
 
 // v6.341: undici "fetch failed" asıl nedeni `cause` içinde taşır — 08.10 ilk ölçüm yalnız mesajı gördü.
@@ -124,5 +126,69 @@ describe("shouldAlertStreak: eşikte bir kez + haftalık hatırlatma", () => {
       DRY_STREAK_THRESHOLD + 2 * DRY_STREAK_REMIND_EVERY,
       DRY_STREAK_THRESHOLD + 3 * DRY_STREAK_REMIND_EVERY,
     ]);
+  });
+});
+
+// v6.343 (2026-10-10): Yargıtay içtihadı YEREL beslenir (karararama yurt dışı IP'lerini engelliyor) → cron yalnız
+// tazelik nöbeti. Fikstürler 10.10 ilk dolumunun GERÇEK çıktısından: yazma koşusu 429 yedi, 7 sorgunun 3'ü tarandı.
+describe("yerel besleme nabzı: tam / yarım tarama", () => {
+  const yarim = { created: 4, found: 102, deferred: 0, errors: ['arama ""tıbbi uygulama hatası"": HTTP 429', "karar 1195426300: getDokuman: FMTY=ERROR"] };
+
+  it("arama hatası taramayı YARIM yapar; tek karar metni hatası yapmaz", () => {
+    expect(isSearchComplete(yarim.errors)).toBe(false);
+    expect(isSearchComplete(["karar 1195426300: getDokuman: FMTY=ERROR"])).toBe(true);
+    expect(isSearchComplete([])).toBe(true);
+  });
+
+  it("nabız satırı sayıları, ilk hatayı ve tarama durumunu taşır; segment ayracını bozmaz", () => {
+    const d = localFeedDetail(yarim);
+    expect(d.startsWith("yerel yeni=4/102 sorun=2 ilk=")).toBe(true);
+    expect(d.endsWith(" tarama=yarim")).toBe(true);
+    expect(d).not.toContain(" · ");
+    expect(localFeedDetail({ created: 16, found: 513, deferred: 0, errors: [] })).toBe("yerel yeni=16/513 tarama=tam");
+    expect(localFeedDetail({ created: 0, found: 513, deferred: 3, errors: [] })).toBe("yerel yeni=0/513 erteli=3 tarama=tam");
+  });
+
+  it("yalnız tam tarama nabız sayılır", () => {
+    expect(isFullLocalScan("yerel yeni=0/513 tarama=tam")).toBe(true);
+    expect(isFullLocalScan(localFeedDetail(yarim))).toBe(false);
+    expect(isFullLocalScan("yerel yeni=1/2 tarama=tamam")).toBe(false);
+    expect(isFullLocalScan(null)).toBe(false);
+  });
+});
+
+describe("içtihat tazelik nöbeti", () => {
+  const now = new Date("2026-10-24T02:20:00Z");
+  const d = (iso: string) => new Date(iso);
+
+  it("kanıt = nabız ile son kararın YENİSİ; hiçbiri yoksa null", () => {
+    expect(latestEvidence(d("2026-10-10T06:00:00Z"), d("2026-10-10T01:30:00Z"))?.toISOString()).toBe("2026-10-10T06:00:00.000Z");
+    expect(latestEvidence(null, d("2026-10-10T01:30:00Z"))?.toISOString()).toBe("2026-10-10T01:30:00.000Z");
+    expect(latestEvidence(undefined, null)).toBeNull();
+  });
+
+  it("yaş tam gün, aşağı yuvarlanır; gelecek tarih 0", () => {
+    expect(ageInDays(d("2026-10-10T02:20:00Z"), now)).toBe(14);
+    expect(ageInDays(d("2026-10-10T02:21:00Z"), now)).toBe(13);
+    expect(ageInDays(d("2026-10-25T00:00:00Z"), now)).toBe(0);
+    expect(ageInDays(null, now)).toBeNull();
+  });
+
+  it("alarm eşikte bir kez + haftalık hatırlatma; kanıt yoksa her koşu", () => {
+    expect(shouldAlertStale(ICTIHAT_STALE_DAYS - 1)).toBe(false);
+    expect(shouldAlertStale(ICTIHAT_STALE_DAYS)).toBe(true);
+    expect(shouldAlertStale(ICTIHAT_STALE_DAYS + 1)).toBe(false);
+    expect(shouldAlertStale(ICTIHAT_STALE_DAYS + ICTIHAT_STALE_REMIND_EVERY)).toBe(true);
+    expect(shouldAlertStale(0)).toBe(false);
+    expect(shouldAlertStale(null)).toBe(true);
+  });
+
+  it("audit segmenti ASCII ve kuruma nöbetine KURU görünmez (seri kesilir)", () => {
+    const line = freshnessLine(d("2026-10-10T01:30:00Z"), 13);
+    expect(line).toBe("tazelik son=2026-10-10 (13 gun)");
+    expect(freshnessLine(null, null)).toBe("tazelik son=yok");
+    const detail = `ictihat ${line} · doktrin yeni=0/12 · ttb atlandi(haftalik)`;
+    expect(isDrySegment(detail, "ictihat")).toBe(false);
+    expect(dryStreak([detail, "ictihat yeni=0/0 sorun=1 · doktrin yeni=0/12"], "ictihat")).toBe(0);
   });
 });

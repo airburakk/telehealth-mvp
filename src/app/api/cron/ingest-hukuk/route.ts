@@ -2,21 +2,27 @@ import { NextResponse } from "next/server";
 import { cronGate, errText } from "@/lib/cron-guard";
 import { recordAccess } from "@/lib/audit";
 import { sendAlert } from "@/lib/alerts";
-import { ingestYargitay, type YargitayIngestResult } from "@/lib/hukuk-ingest";
 import { ingestDoktrin, type DoktrinIngestResult } from "@/lib/doktrin-ingest";
 import { ingestTtbEvents, type TtbEventsResult } from "@/lib/ttb-events";
 import { db } from "@/lib/db";
-import { dryStreak, firstErrorTag, shouldAlertStreak, type IngestSegment } from "@/lib/ingest-streak";
+import {
+  ageInDays, dryStreak, firstErrorTag, freshnessLine, latestEvidence, shouldAlertStale, shouldAlertStreak,
+  ICTIHAT_LOCAL_RESOURCE, ICTIHAT_STALE_DAYS, type IngestSegment,
+} from "@/lib/ingest-streak";
 
-// GET /api/cron/ingest-hukuk — hukuk + etkinlik içerik hattı: Yargıtay içtihat (v6.86) · TR-Dizin
-// doktrin (v6.91) · TTB akredite etkinlik taraması (v6.129, HAFTALIK — yalnız Pazartesi).
+// GET /api/cron/ingest-hukuk — hukuk + etkinlik içerik hattı: Yargıtay içtihat TAZELİK NÖBETİ (v6.343) ·
+// TR-Dizin doktrin (v6.91) · TTB akredite etkinlik taraması (v6.129, HAFTALIK — yalnız Pazartesi).
+//
+// v6.343 (2026-10-10, 👤 karar): karararama.yargitay.gov.tr yurt dışı / veri merkezi IP'lerini TCP düzeyinde
+// engelliyor (TR 200 · Hetzner DE zaman aşımı · fra1 "fetch failed" 11.08'den beri) → cron karar ÇEKMEZ.
+// Kararları kullanıcının bilgisayarındaki haftalık Windows görevi yazar (scripts/ingest-yargitay.ts --prod --yaz;
+// görev vault'ta output/yargitay-besleme/) ve nabız satırı bırakır (`ingest-yargitay-yerel`). Burada yalnız
+// "son TAM tarama kaç gün önce?" ölçülür; ICTIHAT_STALE_DAYS aşılınca alarm (lib/ingest-streak).
 //
 // v6.205 (2026-09-02): purge-deleted bakım nöbetinden AYRILDI (kullanıcı kararı "bölelim"; plan Pro).
 // 02:20 UTC = 05:20 TR — ingest-doctorium'dan 20 dk sonra, Post baskısından (06:30 TR) önce biter.
 // Üç iş birbirinden BAĞIMSIZ: biri düşerse diğerleri koşar; düşen alarmla görünür, koşu 200 döner
-// (kısmi başarı). Yargıtay: koşu başına metin tavanı lib içinde (MAX_DOC_FETCH_DEFAULT), kalan
-// ertesi koşuda idempotent alınır. ⚠️ Vercel fra1 → devlet sitesi erişimi GARANTİ DEĞİL (RG dersi):
-// sürekli hata görülürse yerel yol hazır → scripts/ingest-yargitay.ts (--prod --yaz).
+// (kısmi başarı).
 // TTB: düzenleyiciler etkinlikten ≥30 gün önce başvurur → haftalık tarama yeter; pencere DAR (geçmiş
 // 1 ay + gelecek 13 ay); tam/geri dönük tarama CLI işidir. Kaynaklar arası birleştirme
 // (merge-congress-sources.ts) BİLİNÇLİ cron'da değil — satır silen araç insan gözetiminde kalır.
@@ -31,12 +37,33 @@ export async function GET(req: Request) {
 
   const failures: string[] = [];
 
-  let yargitay: YargitayIngestResult | { error: string };
+  // İçtihat tazelik nöbeti (v6.343): kanıt = son TAM yerel tarama nabzı; nabız henüz yoksa (geçiş) son yazılan karar.
+  let ict: string;
+  let ictihatAgeDays: number | null = null;
   try {
-    yargitay = await ingestYargitay();
+    const [lastScan, lastArticle] = await Promise.all([
+      db.accessLog.findFirst({
+        where: { action: "CRON_MAINTENANCE", resourceId: ICTIHAT_LOCAL_RESOURCE, detail: { contains: "tarama=tam" } },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      db.newsArticle.findFirst({ where: { source: "yargitay" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    ]);
+    const evidence = latestEvidence(lastScan?.createdAt, lastArticle?.createdAt);
+    ictihatAgeDays = ageInDays(evidence, new Date());
+    ict = freshnessLine(evidence, ictihatAgeDays);
+    if (shouldAlertStale(ictihatAgeDays)) {
+      void sendAlert(
+        "ingest-stale-ictihat",
+        ictihatAgeDays === null
+          ? "Yargıtay içtihat: hiç besleme kanıtı yok"
+          : `Yargıtay içtihat ${ictihatAgeDays} gündür beslenmedi (eşik ${ICTIHAT_STALE_DAYS})`,
+        `${ict} — yerel haftalık görev çalışıyor mu? (Görev Zamanlayıcı "Doctorium Yargitay haftalik" + output/yargitay-besleme/log)`,
+      );
+    }
   } catch (e) {
-    yargitay = { error: errText(e, "içtihat ingest koşamadı") };
-    failures.push(`yargitay: ${yargitay.error}`);
+    ict = `hata: ${errText(e, "içtihat tazelik ölçülemedi")}`;
+    failures.push(`ictihat-tazelik: ${ict}`);
   }
 
   let doktrin: DoktrinIngestResult | { error: string };
@@ -65,9 +92,6 @@ export async function GET(req: Request) {
 
   // v6.337: `ilk="…"` = ilk hatanın kısa metni (lib/ingest-streak) — eskiden yalnız SAYI yazılıyordu ve
   // içtihat cron'u 11 Ağustos'tan beri `sorun=1` ile kuruduğu hâlde nedeni hiçbir yerde görünmüyordu.
-  const ict = "error" in yargitay
-    ? `hata: ${yargitay.error}`
-    : `yeni=${yargitay.created}/${yargitay.found}${yargitay.deferred ? ` erteli=${yargitay.deferred}` : ""}${yargitay.errors.length ? ` sorun=${yargitay.errors.length}${firstErrorTag(yargitay.errors)}` : ""}`;
   const dok = "error" in doktrin
     ? `hata: ${doktrin.error}`
     : `yeni=${doktrin.created}/${doktrin.found}${doktrin.errors.length ? ` sorun=${doktrin.errors.length}${firstErrorTag(doktrin.errors)}` : ""}`;
@@ -102,8 +126,8 @@ export async function GET(req: Request) {
       select: { detail: true },
     });
     const details = recent.map((r) => r.detail);
+    // İçtihat v6.343'ten beri burada DEĞİL: cron çekmiyor, bayatlığı yukarıdaki tazelik nöbeti ölçer.
     const segments: { key: IngestSegment; label: string; line: string }[] = [
-      { key: "ictihat", label: "Yargıtay içtihat", line: ict },
       { key: "doktrin", label: "TR-Dizin doktrin", line: dok },
     ];
     for (const s of segments) {
@@ -120,5 +144,5 @@ export async function GET(req: Request) {
     console.error("[ingest-hukuk] kuruma nöbeti okunamadı:", errText(e, "bilinmeyen hata"));
   }
 
-  return NextResponse.json({ ok: failures.length === 0, yargitay, doktrin, ttbEvents });
+  return NextResponse.json({ ok: failures.length === 0, ictihat: { tazelik: ict, gun: ictihatAgeDays }, doktrin, ttbEvents });
 }
