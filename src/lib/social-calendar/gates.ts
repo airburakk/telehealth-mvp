@@ -40,7 +40,8 @@ export interface GateInput {
   payload: PlanPayload | null;
   attestIdentity: boolean;
   sourceIds: string[];
-  /** Seçili kaynakların metinleri (alıntı doğrulaması için; hukuk günü). */
+  /** Seçili kaynakların metinleri: hukuk günü = karar metni (alıntı doğrulaması) · Etkinlik radarı (v6.346) = seçilen etkinliklerin RESMÎ ADLARI
+   *  (ad + düzenleyen; `etkinlik.resmiAdlar`) — yasak-ifade taraması bunları kendi metnimizden ÇIKARIR ("Diş Hekimleri Birliği" veridir). */
   sourceTexts: string[];
   now?: Date;
 }
@@ -182,7 +183,10 @@ export function evaluateGates(input: GateInput): GateReport {
     ]
       .join("\n")
       .trim();
-    const t = tl(own);
+    let t = tl(own);
+    // v6.346: Etkinlik radarında etkinliğin/düzenleyenin RESMÎ ADI veridir (CLAUDE.md terim kuralı istisnası) → taramadan önce metinden çıkarılır.
+    // Yalnız seçilen etkinliklerin adları çıkar; editörün kendi yazdığı "hekim" yine yakalanır.
+    if (series.sourceKind === "etkinlik") for (const ad of input.sourceTexts) if (ad.trim()) t = t.split(tl(ad)).join(" ");
     const found = FORBIDDEN.filter((f) => f.re.test(t)).map((f) => f.label);
     gates.push(result("ifade", found.length === 0, `kendi metninizde: ${found.join("; ")}.`));
   }

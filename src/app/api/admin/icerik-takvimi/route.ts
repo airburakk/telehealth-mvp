@@ -7,8 +7,10 @@ import {
   PlanGateError,
   approve,
   computeCandidates,
+  listEventCandidates,
   markPublished,
   openSlot,
+  pickEvents,
   pickSource,
   previewPlan,
   restore,
@@ -20,6 +22,7 @@ import {
 
 // İçerik takvimi eylemleri (v6.328, 2026-10-06) — /admin/icerik-takvimi: yuva aç · aday üret · kaynak seç · taslak kaydet · onayla ·
 // onayı kaldır · atla · geri al · PNG önizleme · (v6.332) elle yayınlandı işaretle (`publish`) · hatalı yayını yeniden dene (`retry`).
+// (v6.346) Etkinlik radarı: `event-candidates` (yaklaşan etkinlikler, salt okuma) · `pick-events` (1–6 etkinlikten taslak).
 // Tek uç, `action` alanı (admin/hukuki-ceviri deseni). `publish` yalnız ELLE işaretlemedir (manual:true) — otomasyonun yayın sonucu bu uca GELMEZ (Faz 3 ayrı, jetonlu uç).
 // Self-auth: yalnız ADMIN (proxy /admin'i korur ama /api'yi KORUMAZ — her uç kendi kapısı).
 // Durum kodları: 401 yetkisiz · 400 geçersiz istek · 404 yuva yok · 409 geçiş yasak/sürüm çakışması · 422 onay kapıları geçilmedi (gövdede `report`)
@@ -54,6 +57,10 @@ export async function POST(req: Request) {
       }
       case "pick":
         return NextResponse.json({ ok: true, item: await pickSource({ id, articleId: str(b.articleId), expectedVersion: version, ...actor }) });
+      case "event-candidates": // v6.346 Etkinlik radarı: yaklaşan etkinlik adayları (salt okuma)
+        return NextResponse.json({ ok: true, ...(await listEventCandidates({ id })) });
+      case "pick-events": // v6.346 Etkinlik radarı: 1–6 etkinlikten taslak
+        return NextResponse.json({ ok: true, item: await pickEvents({ id, eventIds: b.eventIds, expectedVersion: version, ...actor }) });
       case "save": {
         const item = await saveDraft({
           id,
