@@ -37,7 +37,7 @@ export function LandingFooterV3() {
         </nav>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-x-5 gap-y-3 text-xs text-[var(--dl-muted)]">
           <span>© 2026 Doctorium</span>
-          <DoctoriumSocialLinks className="text-[var(--dl-muted)]" />
+          <DoctoriumSocialLinks />
         </div>
       </div>
     </footer>
