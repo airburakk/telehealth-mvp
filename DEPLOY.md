@@ -178,6 +178,7 @@ ortak DB'de çift koşum olmasın) — iki korkuluk tek yerde: `cronGate()`.
 | 03:00 → 06:00 | `/api/cron/registry-sync` | HealthTürkiye dizini (değişmedi) |
 | 03:30 → 06:30 | `/api/cron/purge-deleted` | KVKK imha · audit+onam zinciri doğrulama · günlük kök damgası · diploma süpürmesi |
 | 03:30 → 06:30 | `/api/cron/daily-digest` | Doctorium Post baskısı · etkinlik/kongre alarmı |
+| 06:00 → 09:00 | `/api/cron/rubrik-hatirlatma` | içerik takvimi rubrik hatırlatması (v6.345): BUGÜN (12:00 yayını) ya da YARIN rubrik yuvası hazır değilse (APPROVED + mühür sağlam) `CONTENT_PLAN_REMINDER_EMAIL` (yoksa `ALERT_EMAIL`) adresine tek e-posta; atlanan/yayınlanan yuva sessiz |
 | 07:00 → 10:00 | `/api/cron/pending-docs-reminders` | DOCS_PENDING hasta hatırlatması (insanca saat — kullanıcı kararı) |
 | 07:20 → 10:20 | `/api/cron/trial-sweep` | Doctorium deneme süpürmesi (hatırlatma · süre doldu · imha) — insanca saat |
 

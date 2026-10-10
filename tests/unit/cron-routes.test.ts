@@ -29,10 +29,10 @@ function minuteOfDay(schedule: string): number {
 }
 
 describe("vercel.json ↔ CRON_SCHEDULES", () => {
-  it("yol ve zamanlama birebir aynı (oniki cron)", () => {
+  it("yol ve zamanlama birebir aynı (onüç cron; 2026-10-10 rubrik-hatirlatma)", () => {
     const fromVercel = Object.fromEntries(vercel.crons.map((c) => [c.path, c.schedule]));
     expect(fromVercel).toEqual(CRON_SCHEDULES);
-    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(12);
+    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(13);
   });
 
   it("her cron yolunun rota dosyası var, cronGate kullanır, maxDuration bildirir", () => {
