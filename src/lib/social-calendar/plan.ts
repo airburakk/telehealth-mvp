@@ -18,6 +18,8 @@ import { buildKararDraft, pickKararCandidates, type KararCandidate, type PickCon
 import { LIMITS } from "./limits";
 import { applyEditorNote, noteFromPayload, normalizePayload, parsePayload, payloadHash, type PlanPayload } from "./payload";
 import { cleanErrorText, normalizeChannels, normalizeFailures, parsePublication, type Publication } from "./publication";
+import { ETKINLIK, adayNedeni, buildEtkinlikDraft, etkinlikAdaylari, resmiAdlar, type EtkinlikAdayi, type EtkinlikKaydi } from "./etkinlik";
+import { EVENT_TYPE_LABEL } from "../doctorium";
 import { renderRequestBody, renderRubrik, type RenderRequestBody } from "./render-client";
 import { isDayString, seriesByKey, slotMatchesSeries, slotsOfWeek, type SeriesDef, type SeriesKey } from "./series";
 import { skeletonPayload } from "./skeleton";
@@ -197,9 +199,13 @@ function parseVersion(v: unknown): Date {
   return d;
 }
 
-/** Seçili kaynakların metinleri (alıntı doğrulaması): hukuk günü NewsArticle.summary; diğer rubriklerde boş. */
+/** Seçili kaynakların metinleri: hukuk günü NewsArticle.summary (alıntı doğrulaması) · Etkinlik radarı resmî adlar (kapı istisnası) · diğerlerinde boş. */
 async function loadSourceTexts(series: SeriesDef, ids: string[]): Promise<string[]> {
-  if (series.sourceKind !== "ictihat" || ids.length === 0) return [];
+  if (ids.length === 0) return [];
+  if (series.sourceKind === "etkinlik") {
+    return resmiAdlar(await db.medicalCongress.findMany({ where: { id: { in: ids } }, select: { title: true, organizer: true } }));
+  }
+  if (series.sourceKind !== "ictihat") return [];
   const rows = await db.newsArticle.findMany({ where: { id: { in: ids } }, select: { summary: true } });
   return rows.map((r) => r.summary);
 }
@@ -342,6 +348,70 @@ export async function pickSource(input: { id: string; articleId: string; expecte
     ...CLEAR_APPROVAL,
   });
   if (wasApproved) await auditPlan(input, "CONTENT_PLAN_UNAPPROVE", row, "kaynak değişti");
+  return view;
+}
+
+// ── Etkinlik radarı (v6.346): yaklaşan etkinlik adayları + 1–6 etkinlikten taslak ─────────────────────────────
+
+/** Liste sorgusu AÇIK select (kapak görseli data URI'si SEÇİLMEZ — lib/doctorium upcomingCongresses kuralı). */
+const ETKINLIK_SELECT = {
+  id: true, title: true, organizer: true, city: true, country: true, venue: true, startDate: true, endDate: true,
+  abstractDeadline: true, earlyBirdDeadline: true, eventType: true, scope: true, ttbCode: true, url: true, warning: true,
+} as const;
+
+function mustEtkinlik(row: Row): SeriesDef {
+  const series = seriesOf(row);
+  if (series.sourceKind !== "etkinlik") throw new PlanError("Bu işlem yalnız Etkinlik radarı içindir.");
+  return series;
+}
+
+/** Başka Etkinlik radarı yuvalarında kullanılmış etkinlikler → o yuvanın günü (aday satırında "kullanıldı" rozeti; seçim ENGELLENMEZ). */
+async function usedEventDays(series: SeriesDef, excludeId: string): Promise<Map<string, string>> {
+  const rows = await db.contentPlanItem.findMany({
+    where: { seriesKey: series.key, status: { in: ["DRAFT", "APPROVED", "PUBLISHED", "FAILED"] }, id: { not: excludeId } },
+    select: { sourceIds: true, slotDay: true },
+    orderBy: { slotDay: "desc" },
+  });
+  const m = new Map<string, string>();
+  for (const r of rows) for (const x of parseJsonArray<string>(r.sourceIds)) if (typeof x === "string" && !m.has(x)) m.set(x, r.slotDay);
+  return m;
+}
+
+/** Yaklaşan etkinlik adayları (DB'ye YAZMAZ — her açılışta taze). Pencere: yayın günü + 60 gün; ileri tarihli olup son günü pencereye düşenler de. */
+export async function listEventCandidates(input: { id: string }): Promise<{ adaylar: EtkinlikAdayi[]; pencereGun: number; enCok: number }> {
+  const row = await mustGet(input.id);
+  const series = mustEtkinlik(row);
+  const [kayitlar, kullanilan] = await Promise.all([
+    db.medicalCongress.findMany({ where: { startDate: { gte: new Date(`${row.slotDay}T00:00:00Z`) } }, select: ETKINLIK_SELECT, orderBy: { startDate: "asc" }, take: 600 }),
+    usedEventDays(series, row.id),
+  ]);
+  return { adaylar: etkinlikAdaylari(kayitlar as EtkinlikKaydi[], row.slotDay, EVENT_TYPE_LABEL, kullanilan), pencereGun: ETKINLIK.pencereGun, enCok: ETKINLIK.enCok };
+}
+
+/** 1–6 etkinlik seç → taslak üret. Önceki içerik DEĞİŞİR (onaylıysa onay düşer). Etkinlik yayın gününe göre aday olmalı (geçmiş etkinlik seçilemez). */
+export async function pickEvents(input: { id: string; eventIds: unknown; expectedVersion: string } & Actor): Promise<PlanItemView> {
+  const row = await mustGet(input.id);
+  const series = mustEtkinlik(row);
+  if (!isEditable(row.status as PlanStatus)) throw new PlanError("Bu yuvada etkinlik seçilemez (yayınlanmış ya da atlanmış).", 409);
+  const version = parseVersion(input.expectedVersion);
+  const ids = Array.isArray(input.eventIds) ? [...new Set(input.eventIds.filter((x): x is string => typeof x === "string" && x.length > 0 && x.length <= 64))] : [];
+  if (ids.length < ETKINLIK.enAz || ids.length > ETKINLIK.enCok) throw new PlanError(`${ETKINLIK.enAz}–${ETKINLIK.enCok} etkinlik seçin.`);
+  const kayitlar = (await db.medicalCongress.findMany({ where: { id: { in: ids } }, select: ETKINLIK_SELECT })) as EtkinlikKaydi[];
+  if (kayitlar.length !== ids.length) throw new PlanError("Seçilen etkinliklerden biri bulunamadı.", 404);
+  const disarda = kayitlar.filter((k) => !adayNedeni(k, row.slotDay));
+  if (disarda.length) throw new PlanError(`Yayın gününe göre aday olmayan etkinlik: ${disarda[0]!.title}`);
+  const payload = buildEtkinlikDraft(kayitlar, row.slotDay, EVENT_TYPE_LABEL);
+  if (!payload) throw new PlanError("Taslak üretilemedi.");
+  const wasApproved = row.status === "APPROVED";
+  const view = await casUpdate(row, version, EDITABLE, {
+    status: nextStatus(row.status as PlanStatus, "pick") ?? "DRAFT",
+    sourceKind: series.sourceKind,
+    sourceIds: JSON.stringify([...kayitlar].sort((a, b) => a.startDate.getTime() - b.startDate.getTime()).map((k) => k.id)),   // slayt sırasıyla aynı
+    payload: JSON.stringify(payload),
+    gateReport: null,
+    ...CLEAR_APPROVAL,
+  });
+  if (wasApproved) await auditPlan(input, "CONTENT_PLAN_UNAPPROVE", row, "etkinlik seçimi değişti");
   return view;
 }
 
