@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DoctoriumLandingV3 } from "@/components/aura/doctorium-v3/DoctoriumLandingV3";
 import { StructuredData } from "@/components/aura/structured-data";
+import { doctoriumSameAs } from "@/components/aura/doctorium-social-links";
 import { LANDING_META } from "@/lib/doctorium-landing/content";
 import { SITE_URL } from "@/lib/aura-landing/seo";
 
@@ -37,15 +38,31 @@ export const metadata: Metadata = {
 };
 
 // JSON-LD — MODÜL-DÜZEYİ sabit (kullanıcı girdisi girmez; structured-data.tsx sözleşmesi).
-// Yalnız WebPage; rating/medical/aggregate şeması YOK (kanıtsız iddia). isPartOf AURA
+// WebPage + Organization; rating/medical/aggregate şeması YOK (kanıtsız iddia). isPartOf AURA
 // WebSite'ı 2026-08-24 ayrışmasında kaldırıldı (marka bağımsız konumlanır).
+// Organization.sameAs (2026-10-09): resmî sosyal hesaplar — footer ikon satırıyla AYNI liste
+// (`doctoriumSameAs()`); arama motoru hesapları markayla eşleştirir. Organization'a yalnız ad +
+// adres + hesaplar girer (kuruluş yılı/çalışan/adres gibi doğrulanmamış alan EKLENMEZ).
+const ORG_ID = `${SITE_URL}/#doctorium`;
 const JSON_LD = JSON.stringify({
   "@context": "https://schema.org",
-  "@type": "WebPage",
-  name: "Doctorium",
-  url: `${SITE_URL}/doctorium`,
-  inLanguage: "tr-TR",
-  description: LANDING_META.description,
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": ORG_ID,
+      name: "Doctorium",
+      url: SITE_URL,
+      sameAs: doctoriumSameAs(),
+    },
+    {
+      "@type": "WebPage",
+      name: "Doctorium",
+      url: `${SITE_URL}/doctorium`,
+      inLanguage: "tr-TR",
+      description: LANDING_META.description,
+      publisher: { "@id": ORG_ID },
+    },
+  ],
 });
 
 export default function DoctoriumLandingPage() {

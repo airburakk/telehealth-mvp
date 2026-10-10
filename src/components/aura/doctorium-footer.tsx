@@ -60,7 +60,7 @@ export function DoctoriumFooter({ portal = false, student = false }: { portal?: 
         </nav>
         <div className={`mt-4 flex flex-wrap items-center justify-between gap-x-5 gap-y-3 text-xs ${portal ? "text-[var(--dl-body)]" : "text-[#777c82]"}`}>
           <span>© 2026 Doctorium</span>
-          <DoctoriumSocialLinks className={portal ? "text-[var(--dl-body)]" : "text-[#9da1a6]"} audienceAware={portal} />
+          <DoctoriumSocialLinks />
         </div>
       </div>
     </footer>
