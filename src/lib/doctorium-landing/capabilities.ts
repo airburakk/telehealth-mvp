@@ -138,7 +138,7 @@ export const CAPABILITIES: readonly Capability[] = [
     ["src/app/doktor/doctorium/page.tsx:671 LegalSearchBox", "src/lib/hukuk-keywords.ts:22 'Aydınlatılmış onam'"],
     ["Sözlük çipleri + serbest arama", "İçerik bilgilendirme amaçlıdır; hukuki görüş yerine geçmez"],
     ["hukuki tavsiye", "hukuki danışmanlık"]),
-  cap("congress.db", "verified", ["prisma/seed-data/congresses.json (214)", "src/lib/ttb-events.ts"], ["Küratörlü etkinlik veritabanı + TTB kredilendirme kayıtları"], ["kredi puanı sayısı"]),
+  cap("congress.db", "verified", ["prisma/seed-data/congresses.json (215)", "src/lib/ttb-events.ts"], ["Küratörlü etkinlik veritabanı + TTB kredilendirme kayıtları"], ["kredi puanı sayısı"]),
   cap("congress.deadlines", "verified", ["prisma/schema.prisma:1143 abstractDeadline/earlyBirdDeadline"], ["Bildiri ve erken kayıt son günleri"]),
   cap("congress.follow", "verified", ["prisma/schema.prisma:1246 CongressFollow", "src/app/api/doctor/congress-follow/route.ts:79"], ["Takip et (girişli)"]),
   cap("congress.save", "verified", ["prisma/schema.prisma:1263 SavedArticle", "src/app/api/doctorium/save/route.ts"], ["Kaydet (girişli)"]),
