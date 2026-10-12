@@ -12,6 +12,7 @@ import { SLIDE_ROLE_LABEL, type SeriesDef } from "@/lib/social-calendar/series";
 import { skeletonPayload } from "@/lib/social-calendar/skeleton";
 import { STATUS_LABEL, isEditable } from "@/lib/social-calendar/status";
 import { AuraPanel } from "@/components/ui/AuraPanel";
+import { EtkinlikSecici } from "./EtkinlikSecici";
 import { PublishPanel } from "./PublishPanel";
 import { BTN_DANGER, BTN_PRIMARY, BTN_SECOND, INPUT, api, fmt, type ApiResult, type Flash, type PickStats } from "./client-shared";
 
@@ -211,6 +212,21 @@ export function SlotEditor({ initial, series }: { initial: PlanItemView; series:
 
       {/* ── Yayın (v6.332): onaylı içeriği elle paylaş · yayınlandı işaretle · hatada yeniden dene ───────────────── */}
       <PublishPanel item={item} series={series} dirty={dirty} busy={busy} run={run} adopt={adopt} notify={setFlash} />
+
+      {/* ── Etkinlik radarı (v6.346): yaklaşan etkinliklerden en çok 6 seçim → taslak ─────────────── */}
+      {series.sourceKind === "etkinlik" && (
+        <EtkinlikSecici
+          item={item}
+          editable={editable}
+          busy={busy}
+          run={run}
+          onPicked={(r) => {
+            if (r.item) adopt(r.item);
+            setPreviews(null);
+            setFlash({ kind: "ok", text: "Etkinlikler seçildi, taslak üretildi. Slaytları ve altyazıyı kontrol edin, kaydedip onaylayın." });
+          }}
+        />
+      )}
 
       {/* ── Kaynak (yalnız üreticili rubrik) ─────────────────────────────────────────────── */}
       {series.generator && (
