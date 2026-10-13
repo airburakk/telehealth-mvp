@@ -3,8 +3,9 @@ import type { ClinicalSummary } from "@/lib/doctorium";
 
 // AI klinik özet bloğu — [id]/page.tsx'ten ÇIKARILDI (2026-08-23; landing V2 "Akademik" bölümü
 // aynı bileşeni salt-okunur gösterir; kopya = drift). Prop-only, DB'siz, hook'suz (sunucu/istemci
-// fark etmez). Başlık "2 dakikalık" ibaresi portalda kalır; landing `compact` modunda ölçülmemiş
-// süre iddiası YAZILMAZ ([[public-claim-honesty]]).
+// fark etmez). Başlık portalda da landing'de de AYNI: ölçülmemiş süre iddiası ("2 dakikalık") YAZILMAZ
+// ([[public-claim-honesty]]; registry academic.summary yasak kalıbı). 2026-10-10 👤: portaldaki "2 dakikalık
+// klinik özet" başlığı da kaldırıldı — YouTube tanıtım videosu portal ekranlarını kamuya taşıyor.
 //
 // Uyarı bandı: PORTALDA KALDIRILAMAZ (karar destek aracı değildir; `disclaimer` varsayılanı true,
 // [id]/page.tsx prop geçmez). Landing V2 `disclaimer={false}` verir — kullanıcı kararı 2026-08-23:
@@ -35,7 +36,7 @@ export function AcademicSummaryBlock({
   return (
     <section className={`rounded-2xl border border-[var(--c-accent)]/25 bg-[var(--c-accent)]/10 ${compact ? "p-4" : "mt-6 p-5"}`}>
       <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--c-accent)]">
-        <Sparkles size={16} /> {compact ? "Klinik özet — yapay zekâ ile üretildi" : "2 dakikalık klinik özet"}
+        <Sparkles size={16} /> Klinik özet — yapay zekâ ile üretildi
       </h2>
 
       <div className="mt-3.5">
