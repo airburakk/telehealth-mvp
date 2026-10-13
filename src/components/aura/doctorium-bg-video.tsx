@@ -11,6 +11,9 @@ type Connection = HeroConnection & EventTarget;
 
 // Film14 and the existing overlay/brand remain unchanged. The text-free poster
 // comes from 15s in that film; the mobile default has no video/source element.
+// 2026-10-12 (v6.348, 👤): film14 kapanış kartındaki "Yalnızca doktorlara özel." satırı → "Doktorlar ve tıp
+// öğrencileri için" (iddia kaydı "yalnızca doktorlar" YASAK; öğrenciler de üye). Kaynak: arşivde düzeltilmiş 1080p ana
+// kopyadan (film14-v11) küçültüldü; aynı dosya adı (Cache-Control max-age=0 + ETag → yeniden doğrulanır).
 export function DoctoriumBgVideo({ overlay }: { overlay: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
