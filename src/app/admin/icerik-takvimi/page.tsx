@@ -126,7 +126,7 @@ export default async function ContentCalendarPage({ searchParams }: { searchPara
                 {WEEKDAY_LONG[s.weekday - 1]} · {s.name}
               </span>
               <span className="text-xs text-[var(--c-ink-3)]">
-                {s.sourceLabel} · {s.approval === "legal" ? "hukuk günü: alıntı + kimlik kapıları" : "hafif onay"} · {s.generator ? "aday ve taslak otomatik" : "taslak elle (üretici sonra)"}
+                {s.sourceLabel} · {s.approval === "legal" ? "hukuk günü: alıntı + kimlik kapıları" : "hafif onay"} · {s.generator ? "aday ve taslak otomatik" : s.sourceKind === "etkinlik" || s.sourceKind === "kariyer-edu" ? "seçiciden taslak otomatik" : "taslak elle (üretici sonra)"}
               </span>
             </li>
           ))}
