@@ -11,6 +11,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useT } from "@/components/useT";
 import { langDir, LANG_BCP47, LANGUAGES, LANG_CHANGE_EVENT } from "@/lib/constants";
 import { navItemsFor } from "@/lib/nav";
+import { headerAuthSlot } from "@/lib/header-auth-slot";
 import { hidesGlobalChrome, usesDoctoriumBrand } from "@/lib/chrome-routes";
 import { BadgeCheck, Bookmark, CalendarDays, Hourglass, LogOut, ShieldOff, Star, UserCog, Wallet } from "lucide-react";
 import { ThemeToggle, type ThemeName } from "@/components/ThemeToggle";
@@ -110,7 +111,7 @@ function TrialBadge({ daysLeft, endsAtLabel }: { daysLeft: number; endsAtLabel: 
 // bitmez krom kendiliğinden AURA'ya döner.
 // doctoriumDeploy (ayrışma 2026-08-24): doctorium.tr deploy'unda /giris AURA'ya 307'lenir —
 // çıkış hedefi bu bayrakla Doctorium kapısına döner (kök layout BRAND_MODE'dan geçirir).
-export function Header({ user, lang = "Türkçe", theme = "dark", student = false, stage1 = false, doctoriumDeploy = false, trial = null, audience = null }: { user: { name: string; role: string } | null; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean; doctoriumDeploy?: boolean; trial?: { daysLeft: number; endsAtLabel: string } | null; audience?: string | null }) {
+export function Header({ user, authPending = false, lang = "Türkçe", theme = "dark", student = false, stage1 = false, doctoriumDeploy = false, trial = null, audience = null }: { user: { name: string; role: string } | null; authPending?: boolean; lang?: string; theme?: ThemeName; student?: boolean; stage1?: boolean; doctoriumDeploy?: boolean; trial?: { daysLeft: number; endsAtLabel: string } | null; audience?: string | null }) {
   const pathname = usePathname();
   const [confirmLogoutAll, setConfirmLogoutAll] = useState(false);
   // Hesap menüsü (2026-08-01, kullanıcı kararı "A"): isim/rol + Hesabım + çıkış işlemleri
@@ -145,6 +146,7 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
   // Nav öğeleri rol bazlı (lib/nav.ts — tam birleşme 2026-07-12: journey daraltması kalktı,
   // hasta nav'ı herkes için aynı). Öğrencide (v6.95) bant boş — Doctorium'a giriş toggle'dan.
   const items = navItemsFor(user?.role, { student, stage1 });
+  const authSlot = headerAuthSlot(user, !authPending);
   // Doctorium odak modu (kullanıcı kararı 2026-08-16, 2. tur): portal içindeyken klinik
   // sekmeler (Doktor, Post-Op) ve hesap menüsündeki Profilim/Finans GİZLENİR — AURA tarafına
   // dönünce geri gelir. Görsel sadeleştirme; rota kapıları (hasClinicalAccess) aynen durur.
@@ -332,7 +334,12 @@ export function Header({ user, lang = "Türkçe", theme = "dark", student = fals
             })}
           </nav>
 
-          {user ? (
+          {authSlot === "pending" ? (
+            // Oturum yanıtı bekleniyor: avatar boyutunda boş yuva — "Giriş yap" çizilmez (lib/header-auth-slot).
+            <div aria-hidden data-auth-slot="pending" className="ml-1 flex shrink-0 items-center border-l border-[var(--c-hairline)] ps-2">
+              <span className="h-11 w-11 rounded-full" />
+            </div>
+          ) : user ? (
             <div className="ml-1 flex shrink-0 items-center border-l border-[var(--c-hairline)] ps-2">
               {/* Hesap menüsü v2 (2026-08-01, 2. tur): zil + tema da menüye taşındı — header'da
                   YALNIZ avatar kalır; okunmamış bildirim avatar rozetinde. Menü paneli koşullu

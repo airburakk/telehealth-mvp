@@ -30,6 +30,9 @@ interface MeResponse {
 export function AppChrome({ doctoriumDeploy }: { doctoriumDeploy: boolean }) {
   const pathname = usePathname();
   const [me, setMe] = useState<MeResponse>({ user: null });
+  // /api/auth/me yanıtı geldi mi? Gelmeden `user: null` "misafir" DEĞİL "bilinmiyor"dur — Header
+  // bu sürede giriş bağlantısı yerine boş yuva çizer (lib/header-auth-slot, 2026-10-10 düzeltmesi).
+  const [meResolved, setMeResolved] = useState(false);
   const [theme, setTheme] = useState<ThemeName>("dark");
 
   useEffect(() => {
@@ -38,12 +41,13 @@ export function AppChrome({ doctoriumDeploy }: { doctoriumDeploy: boolean }) {
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : { user: null }))
       .then((data: MeResponse) => setMe(data))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setMeResolved(true)); // istek düşse de çözülür → misafir (sonsuz boş yuva yok)
   }, []);
 
   return (
     <>
-      {!hidesGlobalChrome(pathname) && <Header user={me.user} lang={me.lang} theme={theme} student={me.student} stage1={me.stage1} doctoriumDeploy={doctoriumDeploy} trial={me.trial ?? null} audience={me.audience ?? null} />}
+      {!hidesGlobalChrome(pathname) && <Header user={me.user} authPending={!meResolved} lang={me.lang} theme={theme} student={me.student} stage1={me.stage1} doctoriumDeploy={doctoriumDeploy} trial={me.trial ?? null} audience={me.audience ?? null} />}
       {me.imp ? (
         <MasterBar mode="impersonating" userName={me.user?.name} />
       ) : me.isMaster ? (
