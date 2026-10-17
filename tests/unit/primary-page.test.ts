@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ lookup: vi.fn(), request: vi.fn() }));
 vi.mock("node:dns/promises", () => ({ lookup: mocks.lookup }));
 vi.mock("node:https", () => ({ request: mocks.request }));
-import { readPrimaryPage } from "@/lib/social-calendar/primary-page";
+import { readPrimaryPage, readPrimaryPdf } from "@/lib/social-calendar/primary-page";
 
 type Response = EventEmitter & { statusCode: number; headers: Record<string, string>; destroy: (error?: Error) => void };
 let response: Response;
@@ -15,7 +15,7 @@ beforeEach(() => {
   mocks.request.mockImplementation((_url: URL, _options: object, callback: (res: Response) => void) => {
     const req = Object.assign(new EventEmitter(), { end: () => queueMicrotask(() => {
       callback(response);
-      if (response.statusCode !== 200 || response.headers["content-type"] !== "text/html" || response.headers["content-encoding"]) return;
+      if (response.statusCode !== 200 || !["text/html", "application/pdf"].includes(response.headers["content-type"]!) || response.headers["content-encoding"]) return;
       for (const chunk of chunks) response.emit("data", chunk);
       response.emit("end");
     }) });
@@ -62,5 +62,13 @@ describe("primary page transport", () => {
     expect(timeout).toHaveBeenCalledWith(4000);
     expect(mocks.request).not.toHaveBeenCalled();
     timeout.mockRestore(); vi.useRealTimers();
+  });
+  it("accepts only bounded genuine PDF bytes on the PDF reader", async () => {
+    response.headers["content-type"] = "application/pdf"; chunks = [Buffer.from("%PDF-1.7 synthetic")];
+    expect((await readPrimaryPdf("https://official.example/call.pdf")).toString()).toContain("%PDF-");
+    chunks = [Buffer.from("not a PDF")];
+    await expect(readPrimaryPdf("https://official.example/call.pdf")).rejects.toThrow("primary-pdf-rejected");
+    chunks = [Buffer.alloc(1_500_001)];
+    await expect(readPrimaryPdf("https://official.example/call.pdf")).rejects.toThrow("primary-page-too-large");
   });
 });

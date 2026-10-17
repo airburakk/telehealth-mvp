@@ -31,7 +31,7 @@ export interface PlanSource {
 
 export interface PlanMeta {
   /** Informational provenance from the automatic draft preparer; approval remains a separate human action. */
-  preparation?: { checkedAt: string; sources: { id: string; url: string; hash: string }[] };
+  preparation?: { checkedAt: string; sources: { id: string; url: string; hash: string }[]; callKey?: string; deadlineAt?: string };
   court?: string;
   daire?: string;
   esas?: string;
@@ -140,7 +140,11 @@ function normalizeMeta(raw: unknown): PlanMeta | undefined {
       && typeof s.url === "string" && s.url.length <= LIMITS.sourceRef && /^https:\/\//.test(s.url)
       && typeof s.hash === "string" && /^[a-f0-9]{64}$/.test(s.hash))
       .slice(0, 6).map(({ id, url, hash }) => ({ id, url, hash }));
-    if (sources.length) out.preparation = { checkedAt: prep.checkedAt, sources };
+    if (sources.length) {
+      out.preparation = { checkedAt: prep.checkedAt, sources };
+      if (typeof prep.callKey === "string" && /^[a-z0-9-]+:\d{4}$/.test(prep.callKey)) out.preparation.callKey = prep.callKey;
+      if (typeof prep.deadlineAt === "string" && Number.isFinite(Date.parse(prep.deadlineAt))) out.preparation.deadlineAt = prep.deadlineAt;
+    }
   }
   for (const k of ["court", "daire", "esas", "karar", "tarih", "theme", "themeLabel", "sonuc"] as const) {
     const v = str(m[k]);

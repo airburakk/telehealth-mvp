@@ -1,8 +1,8 @@
-# Otomatik Etkinlik radarı taslağı
+# Otomatik Etkinlik radarı ve Öğrenci köşesi taslakları
 
 Bu değişiklik mevcut `rubrik-hatirlatma` cron'una hazırlık ekler. Yeni cron, n8n akışı,
 credential, migration veya ücretli AI çağrısı yoktur. Mevcut `cronGate` (AURA deploy +
-CRON_SECRET) korunur. Günlük Seçki, Karar masası ve açık PR #44'teki Öğrenci köşesi seçicisi değişmez.
+CRON_SECRET) korunur. Günlük Seçki, Karar masası ve açık PR #44'teki manuel seçici değişmez.
 
 ## Davranış
 
@@ -34,7 +34,8 @@ CRON_SECRET) korunur. Günlük Seçki, Karar masası ve açık PR #44'teki Öğr
 ## Sınırlar ve etkinleştirme
 
 Bu kod merge/deploy olmadan çalışmaz. Deploy onaylandığında mevcut günlük cron otomatik
-taslak yazmaya başlar ve resmî kaynaklara koşu başına en fazla 5 salt okunur HTTPS isteği yapar.
+taslak yazmaya başlar ve resmî kaynaklara koşu başına en fazla 7 salt okunur HTTPS isteği yapar
+(5 etkinlik HTML + 1 öğrenci program HTML + 1 çağrı PDF).
 Otomatik ONAY, claim, sosyal medya YAYIN veya geçmiş yuvalara geriye tarihli işlem içermez.
 Onay kapıları ve mevcut onay hash sözleşmesi değişmez. Boş kaynak havuzunda/kanıt bulunamazsa
 taslak oluşmaz; audit nedeni açıklar. Kaynak yapısı desteklenmiyorsa sonraki kapsamda o resmî
@@ -49,13 +50,34 @@ Canlı veriyle smoke testi için yetkili test DB gerekir. Üretim cron'unu denem
 tetiklemek gerçek DRAFT kaydı yaratır; bu çalışmada yapılmaz. 19/23 Ekim için hazır Library
 içeriklerinin canlı kaydı ayrı çalışmanın sorumluluğundadır; burada eklenmemiştir.
 
-## Öğrenci köşesi için incelenen sonraki dilim
+## Öğrenci köşesi: desteklenen TÜBİTAK 2209-A adaptörü
 
-PR #44 teknik bir zorunluluk değildir: `EduOpportunity` tablosunda `approvedAt`, `sourceUrl`,
-`deadline`, `deadlineNote`, `eligibility`, `verifiedAt` vardır; `normalizePayload` ve mevcut
-Öğrenci köşesi şablonu, manuel seçici olmadan bağımsız bir hazırlayıcıyı destekler. `main` üzerinde
-bu rubriğin üreticisi yalnız boş `skeletonPayload` olduğundan burada etkinleştirilmemiştir.
-Güvenli devam adımı, resmî fırsat sayfasından dönem/yıl, son başvuru **saati**, danışman onayı ve
-öğrenci uygunluğunu doğrulayan kaynak adaptörüdür. Gün hassasiyetli DB `deadline` alanı tek başına
-11 Kasım 17:30 gibi bir şartı doğrulamaz. Genel program sayfasını açık çağrı sanmak veya eski
-`verifiedAt` tarihini güncel resmî teyit saymak güvenli değildir. Bu ilk dilim o alanlarda tahmin yapmaz.
+PR #44 teknik bağımlılık değildir. Mevcut `EduOpportunity`, payload ve Öğrenci köşesi şablonu
+kullanılır. Yalnız önceden onaylı (`approvedAt` dolu), kimliği ve resmî program URL'si desteklenen
+2209-A kaydı işlenir. İngilizce eski DB program URL'si tanınır; doğrulama sabit resmî Türkçe URL'ye
+yapılır. Kaynak kaydı değiştirilmez veya otomatik onaylanmaz.
+
+- Gelecekteki ilk **Cuma** yuvasına yalnız boş PLANNED/no-row durumunda DRAFT kaydedilir.
+- Program sayfasında açık çağrı duyurusu, aynı yıl, gerçek gün ve saat birlikte bulunmalıdır.
+  Eski dönem, geçersiz/eksik/çelişkili saat, birden fazla duyuru veya iptal/erteleme engellenir.
+  Saat Türkiye +03:00 olarak korunur. Son tarih hem gerçek şimdi anından hem hedef gün 12:00 TR'den sonra olmalıdır.
+- Aynı yılın resmî `tubitak.gov.tr/sites/default/files/.../2209-A_<yıl>_Yili_Cagri_Duyurusu.pdf`
+  bağlantısı program sayfasında bulunmalıdır. PDF aynı HTTPS/DNS korumalarıyla en fazla 1,5 MB,
+  25 sayfa ve 150 bin karakter olarak mevcut `unpdf` bağımlılığıyla okunur.
+- PDF'te lisans/ön lisans uygunluğu, Açık Öğretim/Hazırlık sınıfı istisnası, ARBİS, akademik danışman,
+  güncel YÖK kaydı, danışman onayı ve kuruluş e-imzası aşamaları doğrulanır. PDF'teki son başvuru
+  saati program sayfasındaki saatle uyuşmalıdır. Kayıttaki bayat deadline/eligibility metni kopyalanmaz.
+- Taslak 4 slayt + altyazı + etiket + iki resmî kaynak içerir. Şartlar kısa özetlenir; ücret/bütçe vaadi,
+  öğrenciye özgü kesin uygunluk veya bütün koşulların sağlandığı iddiası üretilmez.
+- İki kaynağın SHA256'sı ve `callKey` (ör. `tubitak-2209a:2026`) ile `deadlineAt` metadata'da saklanır.
+  Aynı çağrı sonraki hafta tekrar hazırlanmaz; resmen doğrulanmış yeni yıllık çağrı kullanılabilir.
+  Döngüsü belirsiz eski manuel kayıtta aynı kaynak varsa tekrar riski nedeniyle engellenir.
+- Öğrenci kaydı sürümü/onayı kayıt öncesi tekrar kontrol edilir. Eşzamanlı yuvaya yazma/editör
+  değişikliği CAS + unique anahtarla korunur. Mevcut onay kapıları ve insan onayı değişmez.
+- `ogrenci-taslak` audit kaydı ve cron `studentPreparation` sonucu durum/neden taşır. Öğrenci
+  hazırlık istisnası etkinlik hazırlığını veya mevcut hatırlatmayı engellemez.
+
+Diğer burs/staj/değişim programları otomatik taranmaz. Desteklenen onaylı kaynak yoksa
+`no-approved-supported-student-source`; açık/güncel çağrı veya koşul kanıtı yoksa somut
+`blocked` nedeni döner ve hiçbir taslak yazılmaz. Yalnız dönemsel genel sayfadan açık çağrı,
+gün sonu varsayımından saat veya eski verifiedAt'ten güncel teyit üretilmez.

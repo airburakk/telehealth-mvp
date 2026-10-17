@@ -16,7 +16,7 @@ export function publicAddress(address: string): boolean {
     || (a === 203 && b === 0 && c === 113));
 }
 
-export async function readPrimaryPage(raw: string): Promise<string> {
+async function readPrimaryBytes(raw: string, mime: string, maxBytes: number): Promise<Buffer> {
   const url = new URL(raw);
   if (url.protocol !== "https:" || url.username || url.password || (url.port && url.port !== "443") || isIP(url.hostname)) {
     throw new Error("primary-url-rejected");
@@ -33,9 +33,9 @@ export async function readPrimaryPage(raw: string): Promise<string> {
     const req = request(url, {
       signal, method: "GET", agent: false, family: target.family,
       lookup: (_hostname, _options, callback) => callback(null, target.address, target.family),
-      headers: { "User-Agent": "Doctorium-Source-Check/1.0", Accept: "text/html", "Accept-Encoding": "identity" },
+      headers: { "User-Agent": "Doctorium-Source-Check/1.0", Accept: mime, "Accept-Encoding": "identity" },
     }, (res) => {
-      if (res.statusCode !== 200 || !/text\/html/i.test(res.headers["content-type"] ?? "")
+      if (res.statusCode !== 200 || (res.headers["content-type"] ?? "").split(";")[0]!.trim().toLowerCase() !== mime
         || (res.headers["content-encoding"] && res.headers["content-encoding"] !== "identity")) {
         res.destroy(); reject(new Error("primary-response-rejected")); return;
       }
@@ -43,13 +43,23 @@ export async function readPrimaryPage(raw: string): Promise<string> {
       let size = 0;
       res.on("data", (chunk: Buffer) => {
         size += chunk.length;
-        if (size > 512_000) { res.destroy(new Error("primary-page-too-large")); return; }
+        if (size > maxBytes) { res.destroy(new Error("primary-page-too-large")); return; }
         chunks.push(chunk);
       });
       res.on("error", reject);
-      res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+      res.on("end", () => resolve(Buffer.concat(chunks)));
     });
     req.on("error", reject);
     req.end();
   });
+}
+
+export async function readPrimaryPage(raw: string): Promise<string> {
+  return (await readPrimaryBytes(raw, "text/html", 512_000)).toString("utf8");
+}
+
+export async function readPrimaryPdf(raw: string): Promise<Buffer> {
+  const bytes = await readPrimaryBytes(raw, "application/pdf", 1_500_000);
+  if (!bytes.subarray(0, 5).equals(Buffer.from("%PDF-"))) throw new Error("primary-pdf-rejected");
+  return bytes;
 }

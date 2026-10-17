@@ -1,6 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ prepare: vi.fn(), remind: vi.fn(), audit: vi.fn(), alert: vi.fn() }));
+const mocks = vi.hoisted(() => ({ prepare: vi.fn(), student: vi.fn(), remind: vi.fn(), audit: vi.fn(), alert: vi.fn() }));
 vi.mock("@/lib/social-calendar/prepare-events", () => ({ prepareEventDraft: mocks.prepare }));
+vi.mock("@/lib/social-calendar/prepare-students", () => ({ prepareStudentDraft: mocks.student }));
 vi.mock("@/lib/social-calendar/reminder-run", () => ({ rubrikHatirlatmasi: mocks.remind }));
 vi.mock("@/lib/audit", () => ({ recordAccess: mocks.audit }));
 vi.mock("@/lib/alerts", () => ({ sendAlert: mocks.alert }));
@@ -9,6 +10,7 @@ import { GET } from "@/app/api/cron/rubrik-hatirlatma/route";
 beforeEach(() => {
   vi.resetAllMocks(); vi.stubEnv("BRAND_MODE", "aura"); vi.stubEnv("CRON_SECRET", "test-only");
   mocks.prepare.mockResolvedValue({ status: "created", slotDay: "2026-10-19", checked: 1, reasons: [], itemId: "draft" });
+  mocks.student.mockResolvedValue({ status: "created", slotDay: "2026-10-23", checked: 1, reasons: [], itemId: "student-draft" });
   mocks.remind.mockResolvedValue({ bugun: "2026-10-18", maddeler: [], gonderildi: false, atlama: "gerek-yok" });
 });
 afterEach(() => vi.unstubAllEnvs());
@@ -22,6 +24,7 @@ describe("preparation on the existing reminder cron", () => {
     vi.stubEnv("BRAND_MODE", "aura"); vi.stubEnv("CRON_SECRET", "");
     expect((await GET(request())).status).toBe(503);
     expect(mocks.prepare).not.toHaveBeenCalled(); expect(mocks.remind).not.toHaveBeenCalled();
+    expect(mocks.student).not.toHaveBeenCalled();
   });
   it("prepares before reminding and persists a distinct audit result", async () => {
     const res = await GET(request());
@@ -36,5 +39,13 @@ describe("preparation on the existing reminder cron", () => {
     expect(JSON.stringify(result)).not.toContain("sensitive");
     expect(mocks.remind).toHaveBeenCalledTimes(1);
     expect(mocks.alert).toHaveBeenCalledWith("cron-rubrik-taslak", expect.any(String), "rubrik-hatirlatma: preparation-error");
+  });
+  it("isolates student preparation failure from events and the existing reminder", async () => {
+    mocks.student.mockRejectedValue(new Error("sensitive db details"));
+    const result = await (await GET(request())).json();
+    expect(result).toMatchObject({ preparation: { status: "created" }, studentPreparation: { status: "error" } });
+    expect(mocks.remind).toHaveBeenCalledTimes(1);
+    expect(mocks.audit).toHaveBeenCalledWith(expect.objectContaining({ resourceId: "ogrenci-taslak", detail: '{"status":"error"}' }));
+    expect(mocks.alert).toHaveBeenCalledWith("cron-ogrenci-taslak", expect.any(String), "rubrik-hatirlatma: student-preparation-error");
   });
 });
