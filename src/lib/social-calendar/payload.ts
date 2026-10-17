@@ -30,6 +30,8 @@ export interface PlanSource {
 }
 
 export interface PlanMeta {
+  /** Informational provenance from the automatic draft preparer; approval remains a separate human action. */
+  preparation?: { checkedAt: string; sources: { id: string; url: string; hash: string }[] };
   court?: string;
   daire?: string;
   esas?: string;
@@ -132,6 +134,14 @@ function normalizeMeta(raw: unknown): PlanMeta | undefined {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
   const m = raw as Record<string, unknown>;
   const out: PlanMeta = {};
+  const prep = m.preparation as PlanMeta["preparation"] | undefined;
+  if (prep && typeof prep.checkedAt === "string" && Number.isFinite(Date.parse(prep.checkedAt)) && Array.isArray(prep.sources)) {
+    const sources = prep.sources.filter((s) => s && typeof s.id === "string" && s.id.length <= 64
+      && typeof s.url === "string" && s.url.length <= LIMITS.sourceRef && /^https:\/\//.test(s.url)
+      && typeof s.hash === "string" && /^[a-f0-9]{64}$/.test(s.hash))
+      .slice(0, 6).map(({ id, url, hash }) => ({ id, url, hash }));
+    if (sources.length) out.preparation = { checkedAt: prep.checkedAt, sources };
+  }
   for (const k of ["court", "daire", "esas", "karar", "tarih", "theme", "themeLabel", "sonuc"] as const) {
     const v = str(m[k]);
     if (v) out[k] = v.slice(0, 200);
