@@ -56,7 +56,10 @@ body { font-family:Inter,sans-serif; -webkit-font-smoothing:antialiased; backgro
 .mast { border-top:3px solid #18181b; border-bottom:1px solid rgba(24,24,27,.25); padding:20px 0;
         display:flex; justify-content:center; gap:26px; font-size:22px; letter-spacing:.14em; text-transform:uppercase; color:#6b6b68; }
 .mast b { color:#047857; font-weight:600; }
-.list { flex:1; display:flex; flex-direction:column; justify-content:center; }
+/* min-height:0 ŞART (2026-10-17): flex çocuğunun varsayılan min-height:auto değeri listeyi İÇERİĞİ kadar uzatır →
+   scrollHeight > clientHeight hiç doğru olmaz, aşağıdaki sığdırma döngüsü hiç çalışmaz ve taşan içerik alt logo çubuğunu
+   tuval dışına iter (10.10 · 13.10 · 15.10 · 17.10 kartları logosuz/kırpık yayınlandı). */
+.list { flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center; }
 .item { padding:${sik ? 20 : 30}px 0; border-bottom:1px solid rgba(24,24,27,.12); }
 .item.son { border-bottom:none; }
 .stream { font-size:${sik ? 18 : 20}px; font-weight:600; letter-spacing:.18em; color:#047857; text-transform:uppercase; }
@@ -102,9 +105,10 @@ async function renderBulten(digestIn) {
     await page.evaluate(() => document.fonts.ready);
     // Sığdırma döngüsü: başlıklar KISALTILMAZ (kullanıcı kararı) — içerik alana sığmıyorsa
     // başlık puntosu (ve öğe dolgusu) kademeli düşürülür; 6 akışlı uzun günlerde de tam metin.
-    await page.evaluate(() => {
+    const sigdirma = await page.evaluate(() => {
       const list = document.querySelector(".list");
-      let boy = parseFloat(getComputedStyle(document.querySelector("h2")).fontSize);
+      const ilk = parseFloat(getComputedStyle(document.querySelector("h2")).fontSize);
+      let boy = ilk;
       let dolgu = parseFloat(getComputedStyle(document.querySelector(".item")).paddingTop);
       while (list.scrollHeight > list.clientHeight && boy > 20) {
         boy -= 1;
@@ -114,7 +118,12 @@ async function renderBulten(digestIn) {
           el.style.paddingTop = `${dolgu}px`; el.style.paddingBottom = `${dolgu}px`;
         });
       }
+      return { ilk, boy, tasma: list.scrollHeight - list.clientHeight };
     });
+    // Sığdırma devreye girdiyse ya da en küçük punto bile yetmediyse iz bırak (döngü haftalarca SESSİZCE çalışmıyordu — 2026-10-17).
+    if (sigdirma.boy < sigdirma.ilk || sigdirma.tasma > 0) {
+      console.log(`[kart] bülten sığdırma: başlık ${sigdirma.ilk}→${sigdirma.boy}px${sigdirma.tasma > 0 ? ` · UYARI taşma ${sigdirma.tasma}px (logo kırpılabilir)` : ""}`);
+    }
     return await page.screenshot({ type: "png" });
   } finally {
     await page.close();
