@@ -27,6 +27,8 @@ CRON_SECRET) korunur. Günlük Seçki, Karar masası ve açık PR #44'teki manue
   dışa aktarma/kanal araçları korunur; yeni sosyal medya gönderimi yapılmaz.
 - Kaynak sürümleri kayıt öncesi yeniden kontrol edilir. Boş yuvaya CAS ve benzersiz anahtar
   eşzamanlı editör işlemi veya ikinci cron koşusunun üzerine yazmayı önler.
+  Farklı haftaları hedefleyen eşzamanlı koşularda da kaynak tekrarı olmasın diye son tekrar
+  kontrolü ve kayıt, rubrik başına PostgreSQL transaction advisory lock altında yapılır.
 - Sonuçlar `created`, `preserved`, `blocked`, `conflict`, `error` olarak cron yanıtında ve
   mevcut `CRON_MAINTENANCE / rubrik-taslak` audit yolunda görünür. Hatalar sabit neden kodlarıdır;
   ham ağ hataları/credential loglanmaz. Hazırlık istisnasında alarm gönderilir ve hatırlatma devam eder.

@@ -44,7 +44,7 @@ export async function prepareStudentDraft(now = new Date(), readers = { page: re
   if (!callResult.ok) return { ...base, status: "blocked", reasons: [callResult.reason] };
   const call = callResult.value;
   const previous = await db.contentPlanItem.findMany({ where: { seriesKey, NOT: { slotDay } }, select: { sourceIds: true, payload: true } });
-  const used = previous.some((r) => {
+  const alreadyUsed = (rows: typeof previous) => rows.some((r) => {
     const p = parsePayload(r.payload);
     const callKey = p?.meta?.preparation?.callKey;
     if (callKey) return callKey === call.callKey;
@@ -54,7 +54,7 @@ export async function prepareStudentDraft(now = new Date(), readers = { page: re
     return (Array.isArray(ids) && supported.some((s) => ids.includes(s.id)))
       || !!p?.sources.some((s) => supportsStudentSource({ title: "2209-A", sourceUrl: sourceKey(s.ref) ?? "" }));
   });
-  if (used) return { ...base, status: "blocked", reasons: ["student-call-already-used"] };
+  if (alreadyUsed(previous)) return { ...base, status: "blocked", reasons: ["student-call-already-used"] };
   let pdf: { text: string; hash: string };
   try { pdf = await readers.pdf(call.pdfUrl); }
   catch { return { ...base, status: "blocked", reasons: ["student-primary-pdf-failed"] }; }
@@ -72,6 +72,11 @@ export async function prepareStudentDraft(now = new Date(), readers = { page: re
     gateReport: JSON.stringify(report), attestIdentity: false, approvedAt: null, approvedById: null, approvedBy: null, approvedHash: null };
   try {
     const itemId = await db.$transaction(async (tx) => {
+      // Across a Friday midnight, concurrent requests can target different weeks. Serialize the
+      // final duplicate check and write across slots, not only inserts into the same unique slot.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${0x4350}::int4, ${2}::int4)`;
+      const current = await tx.contentPlanItem.findMany({ where: { seriesKey, NOT: { slotDay } }, select: { sourceIds: true, payload: true } });
+      if (alreadyUsed(current)) return null;
       const unchanged = await tx.eduOpportunity.count({ where: { id: opportunity.id, updatedAt: opportunity.updatedAt, approvedAt: { not: null } } });
       if (unchanged !== 1) return null;
       if (existing) {

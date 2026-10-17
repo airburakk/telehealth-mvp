@@ -10,24 +10,27 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("student DRAFT database concurre
     const year = String(8000 + Math.floor(Math.random() * 900));
     const now = new Date(`${year}-10-17T12:00:00Z`);
     const slotDay = nextStudentSlot(`${year}-10-17`);
+    const secondNow = new Date(now.getTime() + 7 * 86_400_000);
+    const secondSlot = nextStudentSlot(secondNow.toISOString().slice(0, 10));
     // Reserve an unused artificial-future slot; never remove any pre-existing row.
     expect(await db.contentPlanItem.findUnique({ where: { seriesKey_slotDay: { seriesKey: "ogrenci-kosesi", slotDay } } })).toBeNull();
+    expect(await db.contentPlanItem.findUnique({ where: { seriesKey_slotDay: { seriesKey: "ogrenci-kosesi", slotDay: secondSlot } } })).toBeNull();
     const id = `000_itest_student_${Date.now()}`;
     const createdIds: string[] = [];
     await db.eduOpportunity.create({ data: { id, kind: "burs", title: "TÜBİTAK 2209-A", organizer: "TÜBİTAK", eligibility: "test-only",
       sourceUrl: TUBITAK_2209A_URL, verifiedAt: new Date(), approvedAt: new Date() } });
     const readers = { page: async () => programHtml(year), pdf: async () => ({ text: callRules(year), hash: "a".repeat(64) }) };
     try {
-      const results = await Promise.all([prepareStudentDraft(now, readers), prepareStudentDraft(now, readers)]);
+      const results = await Promise.all([prepareStudentDraft(now, readers), prepareStudentDraft(secondNow, readers)]);
       for (const result of results) if (result.status === "created" && result.itemId) createdIds.push(result.itemId);
       expect(createdIds).toHaveLength(1);
       const row = await db.contentPlanItem.findUniqueOrThrow({ where: { id: createdIds[0] } });
       expect(row.status).toBe("DRAFT"); expect(row.approvedAt).toBeNull(); expect(row.approvedHash).toBeNull(); expect(row.publishedAt).toBeNull();
       await db.contentPlanItem.update({ where: { id: row.id }, data: { payload: '{"editor":"preserve"}' } });
-      expect((await prepareStudentDraft(now, readers)).status).toBe("preserved");
+      expect((await prepareStudentDraft(row.slotDay === slotDay ? now : secondNow, readers)).status).toBe("preserved");
       expect((await db.contentPlanItem.findUniqueOrThrow({ where: { id: row.id } })).payload).toBe('{"editor":"preserve"}');
     } finally {
-      await db.contentPlanItem.deleteMany({ where: { seriesKey: "ogrenci-kosesi", slotDay, sourceIds: JSON.stringify([id]) } });
+      await db.contentPlanItem.deleteMany({ where: { seriesKey: "ogrenci-kosesi", slotDay: { in: [slotDay, secondSlot] }, sourceIds: JSON.stringify([id]) } });
       await db.eduOpportunity.delete({ where: { id } });
     }
   });

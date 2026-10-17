@@ -28,7 +28,7 @@ beforeEach(() => {
   mocks.count.mockResolvedValue(1);
   mocks.create.mockResolvedValue({ id: "new-draft" });
   mocks.update.mockResolvedValue({ count: 1 });
-  mocks.transaction.mockImplementation(async (fn) => fn({ medicalCongress: { count: mocks.count }, contentPlanItem: { create: mocks.create, updateMany: mocks.update } }));
+  mocks.transaction.mockImplementation(async (fn) => fn({ $executeRaw: vi.fn(), medicalCongress: { count: mocks.count }, contentPlanItem: { create: mocks.create, updateMany: mocks.update, findMany: mocks.previous } }));
   readPage.mockResolvedValue(html);
 });
 
@@ -118,5 +118,10 @@ describe("automatic event drafts", () => {
     expect(sourceKey("https://EXAMPLE.org/event/?utm_campaign=x#old")).toBe("https://example.org/event");
     expect(sourceKey("https://example.org/?id=1")).not.toBe(sourceKey("https://example.org/?id=2"));
     expect(sourceKey("http://example.org")).toBeNull();
+  });
+  it("rechecks cross-week source reuse inside the database lock", async () => {
+    mocks.previous.mockResolvedValueOnce([]).mockResolvedValue([{ sourceIds: '["e1"]', payload: null }]);
+    expect((await prepareEventDraft(now, readPage)).status).toBe("conflict");
+    expect(mocks.create).not.toHaveBeenCalled();
   });
 });

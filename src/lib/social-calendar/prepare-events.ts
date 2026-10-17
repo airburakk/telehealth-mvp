@@ -95,6 +95,14 @@ export async function prepareEventDraft(now = new Date(), readPage = readPrimary
   try {
     // Verification occurs outside the transaction; recheck source versions and CAS the empty slot inside it.
     const itemId = await db.$transaction(async (tx) => {
+      // Recheck under a transaction-scoped lock: two runs around a Monday midnight may target
+      // different slots, where the slot's unique key alone cannot prevent source reuse.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${0x4350}::int4, ${1}::int4)`;
+      const current = await tx.contentPlanItem.findMany({ where: { seriesKey, NOT: { slotDay } }, select: { sourceIds: true, payload: true } });
+      const selectedIds = new Set(selected.map((e) => e.id));
+      const selectedUrls = new Set(evidence.map((e) => sourceKey(e.url)));
+      if (current.some((r) => ids(r.sourceIds).some((id) => selectedIds.has(id))
+        || parsePayload(r.payload)?.sources.some((s) => selectedUrls.has(sourceKey(s.ref))))) return null;
       const unchanged = await tx.medicalCongress.count({ where: { OR: evidence.map((e) => ({ id: e.id, updatedAt: e.updatedAt })) } });
       if (unchanged !== evidence.length) return null;
       if (existing) {

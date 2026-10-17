@@ -12,7 +12,7 @@ const opportunity = { id: "edu1", title: "TÜBİTAK 2209-A", sourceUrl: TUBITAK_
 beforeEach(() => {
   vi.resetAllMocks(); mocks.slot.mockResolvedValue(null); mocks.previous.mockResolvedValue([]); mocks.pool.mockResolvedValue([opportunity]);
   mocks.count.mockResolvedValue(1); mocks.create.mockResolvedValue({ id: "draft" }); mocks.update.mockResolvedValue({ count: 1 });
-  mocks.transaction.mockImplementation(async (fn) => fn({ eduOpportunity: { count: mocks.count }, contentPlanItem: { create: mocks.create, updateMany: mocks.update } }));
+  mocks.transaction.mockImplementation(async (fn) => fn({ $executeRaw: vi.fn(), eduOpportunity: { count: mocks.count }, contentPlanItem: { create: mocks.create, updateMany: mocks.update, findMany: mocks.previous } }));
   page.mockResolvedValue(programHtml()); pdf.mockResolvedValue({ text: callRules(), hash: "a".repeat(64) });
 });
 
@@ -79,5 +79,10 @@ describe("student automatic DRAFT preparation", () => {
   it("classifies duplicate inserts but propagates unexpected DB errors for the cron to report", async () => {
     mocks.create.mockRejectedValue({ code: "P2002" }); expect((await prepareStudentDraft(now, readers)).status).toBe("conflict");
     mocks.create.mockRejectedValue(new Error("db unavailable")); await expect(prepareStudentDraft(now, readers)).rejects.toThrow("db unavailable");
+  });
+  it("rechecks cross-week duplicate claims inside the database lock", async () => {
+    mocks.previous.mockResolvedValueOnce([]).mockResolvedValue([{ sourceIds: '["edu1"]', payload: null }]);
+    expect((await prepareStudentDraft(now, readers)).status).toBe("conflict");
+    expect(mocks.create).not.toHaveBeenCalled();
   });
 });
