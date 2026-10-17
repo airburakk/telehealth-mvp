@@ -20,6 +20,7 @@ import { applyEditorNote, noteFromPayload, normalizePayload, parsePayload, paylo
 import { cleanErrorText, normalizeChannels, normalizeFailures, parsePublication, type Publication } from "./publication";
 import { ETKINLIK, adayNedeni, buildEtkinlikDraft, etkinlikAdaylari, resmiAdlar, type EtkinlikAdayi, type EtkinlikKaydi } from "./etkinlik";
 import { EVENT_TYPE_LABEL } from "../doctorium";
+import { OGRENCI, buildOgrenciDraft, firsatAdayMi, firsatAdaylari, firsatResmiAdlari, siraliFirsatlar, type FirsatAdayi, type FirsatKaydi } from "./ogrenci";
 import { renderRequestBody, renderRubrik, type RenderRequestBody } from "./render-client";
 import { isDayString, seriesByKey, slotMatchesSeries, slotsOfWeek, type SeriesDef, type SeriesKey } from "./series";
 import { skeletonPayload } from "./skeleton";
@@ -199,11 +200,14 @@ function parseVersion(v: unknown): Date {
   return d;
 }
 
-/** Seçili kaynakların metinleri: hukuk günü NewsArticle.summary (alıntı doğrulaması) · Etkinlik radarı resmî adlar (kapı istisnası) · diğerlerinde boş. */
+/** Seçili kaynakların metinleri: hukuk günü NewsArticle.summary (alıntı doğrulaması) · Etkinlik radarı + Öğrenci köşesi resmî adlar (kapı istisnası). */
 async function loadSourceTexts(series: SeriesDef, ids: string[]): Promise<string[]> {
   if (ids.length === 0) return [];
   if (series.sourceKind === "etkinlik") {
     return resmiAdlar(await db.medicalCongress.findMany({ where: { id: { in: ids } }, select: { title: true, organizer: true } }));
+  }
+  if (series.sourceKind === "kariyer-edu") {
+    return firsatResmiAdlari(await db.eduOpportunity.findMany({ where: { id: { in: ids } }, select: { title: true, organizer: true } }));
   }
   if (series.sourceKind !== "ictihat") return [];
   const rows = await db.newsArticle.findMany({ where: { id: { in: ids } }, select: { summary: true } });
@@ -412,6 +416,56 @@ export async function pickEvents(input: { id: string; eventIds: unknown; expecte
     ...CLEAR_APPROVAL,
   });
   if (wasApproved) await auditPlan(input, "CONTENT_PLAN_UNAPPROVE", row, "etkinlik seçimi değişti");
+  return view;
+}
+
+// ── Öğrenci köşesi (v6.349): Kariyer EDU fırsat adayları + 1–3 fırsattan taslak ─────────────────────────────
+
+const FIRSAT_SELECT = {
+  id: true, kind: true, title: true, organizer: true, country: true, deadline: true, deadlineNote: true, startsAt: true, eligibility: true, sourceUrl: true,
+} as const;
+
+function mustOgrenci(row: Row): SeriesDef {
+  const series = seriesOf(row);
+  if (series.sourceKind !== "kariyer-edu") throw new PlanError("Bu işlem yalnız Öğrenci köşesi içindir.");
+  return series;
+}
+
+/** Fırsat adayları (DB'ye YAZMAZ — her açılışta taze): yalnız 👤 onaylı kayıtlar; dönemseller + son başvurusu yayın günü ya da sonrası olan tarihliler. */
+export async function listOpportunityCandidates(input: { id: string }): Promise<{ adaylar: FirsatAdayi[]; enCok: number }> {
+  const row = await mustGet(input.id);
+  const series = mustOgrenci(row);
+  const [kayitlar, kullanilan] = await Promise.all([
+    db.eduOpportunity.findMany({ where: { approvedAt: { not: null } }, select: FIRSAT_SELECT, take: 500 }),
+    usedEventDays(series, row.id),
+  ]);
+  return { adaylar: firsatAdaylari(kayitlar as FirsatKaydi[], row.slotDay, kullanilan), enCok: OGRENCI.enCok };
+}
+
+/** 1–3 fırsat seç → taslak üret. Önceki içerik DEĞİŞİR (onaylıysa onay düşer). Onaysız ya da başvurusu kapanmış fırsat seçilemez. */
+export async function pickOpportunities(input: { id: string; opportunityIds: unknown; expectedVersion: string } & Actor): Promise<PlanItemView> {
+  const row = await mustGet(input.id);
+  const series = mustOgrenci(row);
+  if (!isEditable(row.status as PlanStatus)) throw new PlanError("Bu yuvada fırsat seçilemez (yayınlanmış ya da atlanmış).", 409);
+  const version = parseVersion(input.expectedVersion);
+  const ids = Array.isArray(input.opportunityIds) ? [...new Set(input.opportunityIds.filter((x): x is string => typeof x === "string" && x.length > 0 && x.length <= 64))] : [];
+  if (ids.length < OGRENCI.enAz || ids.length > OGRENCI.enCok) throw new PlanError(`${OGRENCI.enAz}–${OGRENCI.enCok} fırsat seçin.`);
+  const kayitlar = (await db.eduOpportunity.findMany({ where: { id: { in: ids }, approvedAt: { not: null } }, select: FIRSAT_SELECT })) as FirsatKaydi[];
+  if (kayitlar.length !== ids.length) throw new PlanError("Seçilen fırsatlardan biri bulunamadı ya da onaylı değil.", 404);
+  const kapali = kayitlar.filter((k) => !firsatAdayMi(k, row.slotDay));
+  if (kapali.length) throw new PlanError(`Yayın gününden önce başvurusu kapanan fırsat: ${kapali[0]!.title}`);
+  const payload = buildOgrenciDraft(kayitlar, row.slotDay);
+  if (!payload) throw new PlanError("Taslak üretilemedi.");
+  const wasApproved = row.status === "APPROVED";
+  const view = await casUpdate(row, version, EDITABLE, {
+    status: nextStatus(row.status as PlanStatus, "pick") ?? "DRAFT",
+    sourceKind: series.sourceKind,
+    sourceIds: JSON.stringify(siraliFirsatlar(kayitlar).map((k) => k.id)), // slayt sırasıyla aynı
+    payload: JSON.stringify(payload),
+    gateReport: null,
+    ...CLEAR_APPROVAL,
+  });
+  if (wasApproved) await auditPlan(input, "CONTENT_PLAN_UNAPPROVE", row, "fırsat seçimi değişti");
   return view;
 }
 
