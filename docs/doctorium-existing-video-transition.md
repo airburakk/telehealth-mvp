@@ -4,6 +4,31 @@ Read-only observations supplied by the parent browser worker. No workflow was
 executed, saved, published, activated or disabled. No production deployment or
 migration occurred. Raw exports/credentials are excluded from this repository.
 
+## 18 Ekim 2026 günlük akış kanıtları ve geçiş sınırı
+
+Parent'ın mevcut oturumla yaptığı salt okunur n8n incelemesinden aktarılmıştır.
+Bu worker yeni sağlayıcı çağrısı veya workflow çalıştırması yapmadı.
+
+| Kanal | Mevcut günlük kayıt | Kanıtın sınırı |
+|---|---|---|
+| LinkedIn video | `NMw1ByrPVNgXu8Ob`, run `597`, 08:20 başarılı; `yayinModu=KAPALI`; Buffer create yok. `linkedin-a-2026-10-18.mp4`, 4.056.330 bayt hazırlanmış | Başarı yalnız denetim/arşivdir; video yayımlanmamıştır. KAPALI durumu korunacak |
+| Instagram | Üretici run `596`, 07:55; kayıtlı `media_publish`: 7 story + 1 reel, 8/8; `doctoriumtr` preflight token valid=true | Mevcut günlük sağlayıcı yanıtı; haftalık adaptör yetkisi/uygulaması veya PR48 E2E kanıtı değil |
+| X | `qhgQ0sbzgJYznubO`, run `609`; tweet ID `2111872473905938894` | Mevcut günlük sağlayıcı yanıtı; haftalık yayın izni değil |
+| Facebook | `T48iWGuhykT0cljy`, run `599`; sayfa Doctorium, video ID `1144825737890424`, `yayinlandi=true` | Mevcut günlük sağlayıcı yanıtı; haftalık yayın izni değil |
+| YouTube | `3kCzKihFevRnFgoI`, run `601`, 08:30; Buffer post `6ad4595a6d56c60a73f8a13e`, dueAt 17:30Z / 20:30 TR | Kuyruğa kabul, gerçek YouTube yayını kanıtı değildir |
+
+Mevcut HTTPS günlük Reel adresi `otomasyon.doctorium.tr` hostundadır. Parent
+tarayıcı kontrolünde 1080x1920, 42,233333 saniye, readyState=4 ve medya hatası yok
+olarak çözüldü. Bu, yeni depolama hizmeti seçmeyi gerektirmez; haftalık değişmez
+hash adresleri, saklama ve onay öncesi erişim politikası ayrıca doğrulanacaktır.
+
+Geçişte LinkedIn video KAPALI kalır; onu açmak veya mevcut günlük akışların
+guards/saatlerini değiştirmek bu PR'ın çalışma yetkisinde değildir. Günlük
+kanıtlar haftalık nihai medya/metin/hesap/saat insan onayını, PR48'in ayrı
+aktivasyonunu ya da sağlayıcı bazında tekrar/iptal mutabakatını karşılamaz.
+Kullanıcı beş hesabın sahibi olduğunu doğruladı; bu beyan teknik token scope
+veya ek yayın yetkisi yerine kullanılmaz.
+
 ## Verified existing production/distribution paths
 
 | Target | Observed behavior | Limits of this evidence |
