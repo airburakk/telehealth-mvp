@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import {
-  ArrowRight, BarChart2, BellRing, CalendarDays, CalendarRange, Gift, KeyRound, LayoutDashboard, Megaphone,
+  ArrowRight, BarChart2, BellRing, CalendarDays, CalendarRange, Gauge, Gift, KeyRound, LayoutDashboard, Megaphone,
   MousePointerClick, TrendingUp, GraduationCap, ShieldCheck, Languages
 } from "lucide-react";
 import { isEmailConfigured, maskEmail } from "@/lib/email";
@@ -33,6 +33,13 @@ export const metadata = { title: "Yönetim" };
 // PANELS kartı + OVERSIGHT dizisi ve ilgili lucide ikonları geri alınır.
 
 const PANELS = [
+  {
+    href: "/admin/pano",
+    label: "Pano",
+    desc: "Tek ekranda özet — toplam üye, son 24 saat / 7 gün / 30 gün yeni üyeler, doğrulama durumu ve beş sosyal medya hesabı.",
+    icon: Gauge,
+    tone: "#34d399",
+  },
   {
     href: "/admin/kampanya",
     label: "Sponsorlu Kampanyalar",
