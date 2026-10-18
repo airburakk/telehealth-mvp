@@ -63,7 +63,7 @@ async function lockedPackage(tx: Tx, id: string) {
   if (!p) throw new PlanError("Paket bulunamadı.", 404);
   return p;
 }
-async function snapshots(tx: Tx, manifest: WeeklyManifest, lock: boolean) {
+async function snapshots(tx: Tx, manifest: WeeklyManifest, lock: boolean, reviewAttestation = false) {
   const rows: ContentPlanItem[] = [], views: WeeklySnapshot[] = [];
   for (const e of [...manifest.entries].sort((a, b) => a.id.localeCompare(b.id))) {
     if (lock) await tx.$queryRaw`SELECT "id" FROM "ContentPlanItem" WHERE "id"=${e.id} FOR UPDATE`;
@@ -74,7 +74,9 @@ async function snapshots(tx: Tx, manifest: WeeklyManifest, lock: boolean) {
     let ids: unknown;
     try { ids = JSON.parse(row.sourceIds); } catch { throw new PlanError("Kaynak kayıtları geçersiz.", 422); }
     if (!Array.isArray(ids) || ids.some(id => typeof id !== "string")) throw new PlanError("Kaynak kayıtları geçersiz.", 422);
-    const report = evaluateGates({ series, payload, attestIdentity: row.attestIdentity, sourceIds: ids, sourceTexts: await loadSourceTexts(series, ids, tx) });
+    // A preparation preview is not an attestation. The single explicit weekly
+    // confirmation supplies the human attestation at approval; dispatch uses DB state.
+    const report = evaluateGates({ series, payload, attestIdentity: reviewAttestation ? true : row.attestIdentity, sourceIds: ids, sourceTexts: await loadSourceTexts(series, ids, tx) });
     views.push({ id: row.id, version: row.updatedAt.toISOString(), seriesKey: row.seriesKey, slotDay: row.slotDay, payload, gatesPassed: report.ok });
     rows.push(row);
   }
@@ -96,7 +98,7 @@ export async function prepareWeeklyPackage(input: Actor & { manifest: unknown })
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('doctorium-week'), hashtext(${manifest.week}))`;
     const existing = await tx.weeklyContentPackage.findFirst({ where: { week: manifest.week, status: { in: ["DRAFT", "APPROVED"] } } });
     if (existing) conflict("Bu hafta için açık paket var; değiştirmeden önce geri çekin.");
-    const { rows, views } = await snapshots(tx, manifest, true);
+    const { rows, views } = await snapshots(tx, manifest, true, true);
     reviewOrThrow(manifest, views, new Date());
     if (rows.some(r => r.status !== "DRAFT" || r.weeklyPackageId)) conflict("Yalnız pakete alınmamış taslaklar hazırlanabilir.");
     return tx.weeklyContentPackage.create({ data: { week: manifest.week, manifest: JSON.stringify(manifest), manifestHash: hash } });
@@ -114,7 +116,7 @@ export async function approveWeeklyPackage(input: Actor & { id: string; version:
     if (p.status !== "DRAFT" || p.updatedAt.toISOString() !== input.version || p.manifestHash !== input.hash) conflict("Görüntülenen paket değişti veya onaylanabilir durumda değil.");
     const manifest = normalizeWeeklyManifest(JSON.parse(p.manifest));
     if (weeklyManifestHash(manifest) !== input.hash) conflict("Paket mührü geçersiz.");
-    const { rows, views } = await snapshots(tx, manifest, true);
+    const { rows, views } = await snapshots(tx, manifest, true, input.confirmed);
     const now = new Date();
     reviewOrThrow(manifest, views, now);
     for (const row of rows) {
@@ -122,6 +124,7 @@ export async function approveWeeklyPackage(input: Actor & { id: string; version:
       const e = manifest.entries.find(e => e.id === row.id)!;
       const updated = await tx.contentPlanItem.updateMany({ where: { id: row.id, status: "DRAFT", weeklyPackageId: null, updatedAt: new Date(e.version) }, data: {
         status: "APPROVED", weeklyPackageId: p.id, approvedAt: now, approvedById: input.actor.id,
+        attestIdentity: seriesByKey(row.seriesKey)?.attestIdentity ? true : row.attestIdentity,
         approvedBy: input.actor.name || input.actor.email, approvedHash: e.contentHash,
       } });
       if (updated.count !== 1) conflict("Taslak onay sırasında değişti.");

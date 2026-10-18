@@ -15,6 +15,7 @@ describe("weekly review page safety", () => {
     const html = renderToStaticMarkup(await WeeklyReviewPage({ searchParams: Promise.resolve({ hafta: "2026-10-19" }) }));
     expect(html).toContain("youtube:review-account"); expect(html).toContain("12:00"); expect(html).toContain("https://example.com/review.mp4");
     expect(html).toContain("henüz doğrulanıp etkinleştirilmedi");
+    expect(html).toContain("taraf adı veya kimlik bilgisi bulunmadığını doğruladım");
     expect(html).toContain('type="checkbox"'); expect(html).not.toContain('checked=""');
     expect(html).toMatch(/disabled=""[^>]*>Haftalık paketi onayla/);
   });

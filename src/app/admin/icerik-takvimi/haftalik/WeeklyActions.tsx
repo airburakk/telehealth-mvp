@@ -18,7 +18,7 @@ export function WeeklyActions({ id, version, hash, status }: { id: string; versi
   return <div className="mt-6 space-y-3 text-sm text-[var(--c-ink)]">
     {status === "DRAFT" && <>
       <label className="flex items-start gap-3"><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} disabled={busy} className="mt-1" />
-        <span>Bu haftanın tüm metinlerini, son görsellerini, videolarını, altyazılarını, hesaplarını ve Türkiye saatlerini inceledim. Hukuk içeriğinin mevcut inceleme koşulları dahil, yalnız bu paketi onaylıyorum.</span></label>
+        <span>Bu haftanın tüm metinlerini, son görsellerini, videolarını, altyazılarını, hesaplarını ve Türkiye saatlerini inceledim. Hukuk içeriğinde taraf adı veya kimlik bilgisi bulunmadığını doğruladım; alıntıları ve “Doktor için çıkarım” maddelerini inceledim. Yalnız bu paketi onaylıyorum.</span></label>
       <button type="button" disabled={!confirmed || busy} onClick={() => act("approve")} className="rounded-lg bg-[var(--c-accent)] px-4 py-2 text-white disabled:opacity-40">{busy ? "Kaydediliyor…" : "Haftalık paketi onayla"}</button>
     </>}
     <button type="button" disabled={busy} onClick={() => act("revoke")} className="ml-3 rounded-lg border border-[var(--c-hairline)] px-4 py-2 disabled:opacity-40">{status === "REVOKED" ? "Yayın denemesi olmayan taslakları serbest bırak" : "Paketi geri çek"}</button>

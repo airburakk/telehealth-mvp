@@ -40,6 +40,11 @@ and stamps all three items and creates all 15 channel jobs in one transaction.
 Any failed gate or concurrent change rolls back the whole approval. Karar masası
 still requires its existing identity, exact-quote and human-note gates. A separate
 source-literacy alternative cannot silently replace that registered legal item.
+The weekly confirmation explicitly attests to identity safety, quotations and the
+human review of the note, so an extra per-item approval is unnecessary. Preparation
+may preview an unattested draft but never saves an attestation; only that explicit
+human confirmation records attestIdentity=true inside the approval transaction.
+Automatic identity scanning and source-quote validation still cannot be bypassed.
 
 Package receipts survive revocation. A new revision requires revoking the open
 package first and reviewing the new item versions/assets/accounts/schedule.
