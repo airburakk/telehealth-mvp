@@ -55,7 +55,7 @@ installation or media download occurs.
 
 `createWeeklyArchive` uses only a separately confirmed existing filesystem to
 public-HTTPS mapping. It provisions no service and exposes no new file server.
-SHA256 filenames are immutable/exclusive. Existing collisions must have identical
+`weekly-<SHA256>` filenames are immutable/exclusive. Existing collisions must have identical
 bytes. Every public file is read back without credentials/redirects and compared
 before the application receives `prepare`. Hash URLs are not access control:
 the operator must confirm that this existing mount is suitable for pre-approval
@@ -83,7 +83,8 @@ Requests return 503 while dependencies are unverified. Jobs run only 10:00–20:
 Istanbul, refuse an already-running daily render and reserve a dedicated
 `SOSYAL_DIR/weekly-draft/<week>` directory. Concurrent/manual duplicate starts
 fail. Existing daily routes, triggers and daily duplicate guards are unchanged.
-Other rubric render requests wait while this weekly job runs.
+The weekly worker does not add a busy gate to any existing daily/rubric handler.
+It checks existing daily activity only before starting its own work.
 
 The worker returns 202 and persists state. Only after all three complete
 render/archive receipts does it call the existing idempotent `prepare` action.

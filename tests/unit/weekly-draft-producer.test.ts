@@ -46,22 +46,28 @@ describe("existing renderer -> immutable archive -> automatic DRAFT only", () =>
   it("archives by content hash, verifies public bytes and refuses overwrite/tampering", () => temp(async dir => {
     const localPath = path.join(dir, "post.json"), bytes = Buffer.from('{"caption":"reviewed"}'); fs.writeFileSync(localPath, bytes);
     const asset = { channel: "youtube", name: "post.json", localPath, sha256: hash(bytes) };
-    const fetchImpl = vi.fn().mockImplementation(async () => new Response(bytes));
+    const fetchImpl = vi.fn().mockImplementation(async () => new Response(bytes, { headers: { "content-type": "application/json; charset=utf-8" } }));
     const options = { root: path.join(dir, "archive"), publicBaseUrl: "https://archive.example.test/weekly/", fetchImpl };
     await expect(createWeeklyArchive(options)([asset])).rejects.toThrow(/MAPPING_REQUIRED/); expect(fetchImpl).not.toHaveBeenCalled();
     const archive = createWeeklyArchive({ ...options, mappingVerified: true });
     const receipt = await archive([asset]); await archive([asset]);
-    expect(receipt[0].url).toBe(`https://archive.example.test/weekly/${hash(bytes)}.json`); expect(receipt[0]).not.toHaveProperty("localPath");
-    fs.writeFileSync(path.join(options.root, `${hash(bytes)}.json`), "corrupted");
+    expect(receipt[0].url).toBe(`https://archive.example.test/weekly/weekly-${hash(bytes)}.json`); expect(receipt[0]).not.toHaveProperty("localPath");
+    fs.writeFileSync(path.join(options.root, `weekly-${hash(bytes)}.json`), "corrupted");
     await expect(archive([asset])).rejects.toThrow(/WRITE_FAILED/);
   }));
   it("refuses truncated, redirected or oversized public archive evidence", () => temp(async dir => {
     const localPath = path.join(dir, "post.json"); fs.writeFileSync(localPath, "expected");
     const asset = { channel: "x", name: "post.json", localPath, sha256: hash("expected") };
     for (const content of ["wrong", "unbounded-content-larger-than-original"]) {
-      const archive = createWeeklyArchive({ root: path.join(dir, "archive"), publicBaseUrl: "https://archive.example.test/", mappingVerified: true, fetchImpl: async () => new Response(content) });
+      const archive = createWeeklyArchive({ root: path.join(dir, "archive"), publicBaseUrl: "https://archive.example.test/", mappingVerified: true, fetchImpl: async () => new Response(content, { headers: { "content-type": "application/json" } }) });
       await expect(archive([asset])).rejects.toThrow();
     }
+  }));
+  it("refuses an otherwise identical public file served with the wrong media content type", () => temp(async dir => {
+    const localPath = path.join(dir, "post.json"); fs.writeFileSync(localPath, "expected");
+    const archive = createWeeklyArchive({ root: path.join(dir, "archive"), publicBaseUrl: "https://archive.example.test/", mappingVerified: true,
+      fetchImpl: async () => new Response("expected", { headers: { "content-type": "video/mp4" } }) });
+    await expect(archive([{ channel: "x", name: "post.json", localPath, sha256: hash("expected") }])).rejects.toThrow("ARCHIVE_CONTENT_TYPE_MISMATCH");
   }));
   it("uses the actual existing card/master/adaptation chain and blocks overflowing cards before encoding", () => temp(async dir => {
     const item = { render: { templateKey: "etkinlik-radari", seriesName: "Etkinlik", slotDay: "2026-10-21", slides: [{ role: "kapak", title: "Title", body: "Body", bullets: [] }] } };
@@ -80,7 +86,7 @@ describe("existing renderer -> immutable archive -> automatic DRAFT only", () =>
     const renderer = vi.fn().mockImplementation(async () => ({ state: "DRAFT_REVIEW_ONLY", approved: false, published: false, masterVideoHash: hash("master"), assets: channels.flatMap(channel => [{ channel, name: "video.mp4", sha256: hash(channel), sourceMasterHash: hash("master") }, { channel, name: "post.json", sha256: hash(channel) }]) }));
     const archive = vi.fn().mockImplementation(async assets => assets.map((a: {name: string}) => ({ ...a, url: `https://archive.example.test/${a.name}` })));
     const runDir = path.join(dir, "run");
-    expect(await prepareWeeklyDraft({ week: source.week, runDir, profiles, client, renderer, archive })).toMatchObject({ state: "DRAFT_SAVED", approved: false, published: false });
+    expect(await prepareWeeklyDraft({ week: source.week, runDir, profiles, client, renderer, archive })).toMatchObject({ state: "DRAFT_SAVED", approved: false, published: false, dailyDuplicateCheck: "UNKNOWN_NO_READ_ONLY_INDEX_REVIEW_REQUIRED" });
     expect(client.mock.calls.map(c => c[0])).toEqual(["drafts", "prepare"]); expect(archive).toHaveBeenCalledTimes(3);
     const manifest = client.mock.calls[1][1].manifest;
     expect(manifest.entries.every((e: {channels: string[]}) => e.channels.length === 5)).toBe(true);
@@ -102,6 +108,13 @@ describe("existing renderer -> immutable archive -> automatic DRAFT only", () =>
     const client = vi.fn().mockResolvedValue(source), renderer = vi.fn(), archive = vi.fn();
     await expect(prepareWeeklyDraft({ week: source.week, runDir: path.join(dir, "run"), profiles, client, renderer, archive })).rejects.toThrow("SOURCE_EDITORIAL_GATES_BLOCKED");
     expect(renderer).not.toHaveBeenCalled(); expect(archive).not.toHaveBeenCalled(); expect(client).toHaveBeenCalledTimes(1);
+  }));
+  it("blocks only weekly work on an existing daily hash and never mutates the read-only daily index", () => temp(async dir => {
+    const { source, profiles } = fixture(), client = vi.fn().mockResolvedValue(source), archive = vi.fn();
+    const renderer = vi.fn().mockResolvedValue({ state: "DRAFT_REVIEW_ONLY", approved: false, published: false, masterVideoHash: hash("daily-video"), assets: [] });
+    const dailyIndex = Object.freeze({ contentHashes: Object.freeze([]), mediaHashes: Object.freeze([hash("daily-video")]) });
+    await expect(prepareWeeklyDraft({ week: source.week, runDir: path.join(dir, "run"), profiles, client, renderer, archive, dailyIndex })).rejects.toThrow("WEEKLY_DUPLICATES_EXISTING_DAILY_CONTENT");
+    expect(archive).not.toHaveBeenCalled(); expect(client.mock.calls.map(c => c[0])).toEqual(["drafts"]); expect(dailyIndex.mediaHashes).toEqual([hash("daily-video")]);
   }));
   it("retains the exact manifest and makes no retry when the application save outcome is uncertain", () => temp(async dir => {
     const { source, profiles } = fixture();

@@ -150,7 +150,7 @@ const rubrik = createRubrik({
   getBrowser,
   spherePath: path.join(HERE, "assets", "doctorium-sphere-disk-1024-v3.webp"),
   token: TOKEN,
-  mesgul: () => sosyal.durum().durum === "calisiyor" || weeklyDraft.busy(),
+  mesgul: () => sosyal.durum().durum === "calisiyor",
   log: (m) => console.log(`[kart] ${m}`),
 });
 
@@ -162,7 +162,7 @@ const rubrikYayin = createRubrikYayin({
   planUrl: process.env.CONTENT_PLAN_URL || undefined,
   planToken: PLAN_TOKEN,
   muzikPath: process.env.SOSYAL_MUZIK ?? "/varlik/muzik.mp3", // YouTube Short müziği (v6.340); dosya yoksa video sessiz üretilir
-  mesgul: () => sosyal.durum().durum === "calisiyor" || weeklyDraft.busy(),
+  mesgul: () => sosyal.durum().durum === "calisiyor",
   log: (m) => console.log(`[kart] ${m}`),
 });
 
@@ -176,6 +176,7 @@ const weeklyDraft = createWeeklyDraftWorker({
   archiveRoot: process.env.WEEKLY_DRAFT_ARCHIVE_ROOT,
   archiveBaseUrl: process.env.WEEKLY_DRAFT_ARCHIVE_BASE_URL,
   archiveMappingVerified: process.env.WEEKLY_DRAFT_ARCHIVE_VERIFIED === "true",
+  dailyIndexFile: process.env.WEEKLY_DRAFT_DAILY_READ_ONLY_INDEX_FILE,
   mesgul: () => sosyal.durum().durum === "calisiyor",
 });
 

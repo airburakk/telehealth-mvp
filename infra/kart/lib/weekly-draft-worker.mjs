@@ -11,7 +11,7 @@ const json = (res, status, value) => { res.writeHead(status, { "content-type": "
  * Reuses kart's existing browser and token. Complete receipts/errors stay on disk.
  */
 export function createWeeklyDraftWorker({ dir, getBrowser, spherePath, token, planToken = "", enabled = false, profileFile = "",
-  archiveRoot = "", archiveBaseUrl = "", archiveMappingVerified = false, mesgul = () => false, now = Date.now,
+  archiveRoot = "", archiveBaseUrl = "", archiveMappingVerified = false, dailyIndexFile = "", mesgul = () => false, now = Date.now,
   run = prepareWeeklyDraft, fetchImpl = fetch }) {
   let running = false;
   return {
@@ -35,13 +35,14 @@ export function createWeeklyDraftWorker({ dir, getBrowser, spherePath, token, pl
       const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Istanbul", hour: "2-digit", hourCycle: "h23" }).format(new Date(now())));
       if (hour < 10 || hour >= 20 || mesgul() || running) { json(res, 409, { error: "RENDER_RESOURCE_BUSY_OR_OUTSIDE_WINDOW" }); return true; }
       if (fs.existsSync(runDir)) { json(res, 409, { error: "RUN_ALREADY_EXISTS_CHECK_RECEIPT" }); return true; }
-      let profiles;
+      let profiles, dailyIndex = null;
       try { profiles = JSON.parse(fs.readFileSync(profileFile, "utf8")); } catch { json(res, 503, { error: "OPERATIONAL_PROFILE_REQUIRED" }); return true; }
+      if (dailyIndexFile) { try { dailyIndex = JSON.parse(fs.readFileSync(dailyIndexFile, "utf8")); } catch { json(res, 503, { error: "DAILY_READ_ONLY_INDEX_UNAVAILABLE" }); return true; } }
       fs.mkdirSync(path.dirname(runDir), { recursive: true });
       running = true;
       // Reserve synchronously before 202 to prevent concurrent starts/processes.
       // prepareWeeklyDraft owns the mkdir lock; no await occurs before it runs.
-      const job = run({ week, runDir, profiles,
+      const job = run({ week, runDir, profiles, dailyIndex,
         client: createWeeklyDraftClient({ token: planToken, fetchImpl }),
         renderer: createWeeklyVideoRenderer({ getBrowser, spherePath }),
         archive: createWeeklyArchive({ root: archiveRoot, publicBaseUrl: archiveBaseUrl, mappingVerified: archiveMappingVerified, fetchImpl }) });

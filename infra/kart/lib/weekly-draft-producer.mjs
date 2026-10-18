@@ -92,19 +92,22 @@ export function createWeeklyArchive({ root, publicBaseUrl, mappingVerified = fal
       if (!/^[a-f0-9]{64}$/.test(a.sha256) || !["video.mp4", "post.json", "captions.srt"].includes(a.name)) fail("INVALID_ARCHIVE_ASSET");
       const bytes = fs.readFileSync(a.localPath);
       if (hash(bytes) !== a.sha256) fail("LOCAL_ASSET_CHANGED");
-      const name = `${a.sha256}.${a.name.split(".").at(-1)}`, target = path.join(destination, name);
+      const name = `weekly-${a.sha256}.${a.name.split(".").at(-1)}`, target = path.join(destination, name);
       try { fs.writeFileSync(target, bytes, { flag: "wx" }); }
       catch (e) { if (e.code !== "EEXIST" || hash(fs.readFileSync(target)) !== a.sha256) fail("ARCHIVE_WRITE_FAILED"); }
       const url = new URL(name, base).href;
       let r, content;
       try { r = await fetchImpl(url, { redirect: "error", signal: AbortSignal.timeout(90000) });
         if (!r.ok || Number(r.headers.get("content-length")) > bytes.length) fail("ARCHIVE_READ_FAILED");
+        const mime = (r.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+        const expectedTypes = a.name === "video.mp4" ? ["video/mp4"] : a.name === "post.json" ? ["application/json"] : ["application/x-subrip", "text/plain"];
+        if (!expectedTypes.includes(mime)) fail("ARCHIVE_CONTENT_TYPE_MISMATCH");
         const reader = r.body?.getReader(); if (!reader) fail("ARCHIVE_READ_FAILED");
         const chunks = []; let size = 0;
         try { for (;;) { const next = await reader.read(); if (next.done) break; size += next.value.length; if (size > bytes.length) fail("ARCHIVE_BYTES_CHANGED"); chunks.push(Buffer.from(next.value)); } }
         finally { await reader.cancel(); }
         content = Buffer.concat(chunks);
-      } catch { fail("ARCHIVE_READBACK_FAILED"); }
+      } catch (e) { if (e instanceof Error && /^ARCHIVE_[A-Z_]+$/.test(e.message)) throw e; fail("ARCHIVE_READBACK_FAILED"); }
       if (hash(content) !== a.sha256) fail("PUBLIC_ASSET_CHANGED");
       const { localPath: _local, ...publicAsset } = a;
       result.push({ ...publicAsset, url });
@@ -137,7 +140,7 @@ export function createWeeklyVideoRenderer({ getBrowser, spherePath, render = ren
  * is derived from the source-checked payload; profiles contain reusable policy.
  * No approval, identity attestation, delivery claim or provider operation exists.
  */
-export async function prepareWeeklyDraft({ week, runDir, profiles, client, renderer, archive }) {
+export async function prepareWeeklyDraft({ week, runDir, profiles, client, renderer, archive, dailyIndex = /** @type {{contentHashes: readonly string[], mediaHashes: readonly string[]} | null} */ (null) }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(week) || new Date(`${week}T00:00:00Z`).getUTCDay() !== 1) fail("MONDAY_REQUIRED");
   // mkdir is the cross-process lock; completed jobs are intentionally not removed.
   fs.mkdirSync(runDir, { recursive: false });
@@ -165,6 +168,10 @@ export async function prepareWeeklyDraft({ week, runDir, profiles, client, rende
       write(state, { state: "RENDERING", item: index + 1, total: 3, approved: false, published: false });
       const report = await renderer({ item, outDir: path.join(runDir, `item-${index}`), posts });
       if (report.state !== "DRAFT_REVIEW_ONLY" || report.approved !== false || report.published !== false || !/^[a-f0-9]{64}$/.test(report.masterVideoHash)) fail("DRAFT_RENDER_RECEIPT_REQUIRED");
+      // Read-only cross-layer evidence. Never mutate daily jobs/static-data or
+      // reset their markers. A known collision blocks ONLY this weekly draft.
+      if (dailyIndex !== null && (!Array.isArray(dailyIndex.contentHashes) || !Array.isArray(dailyIndex.mediaHashes))) fail("DAILY_READ_ONLY_INDEX_INVALID");
+      if (dailyIndex && (dailyIndex.contentHashes.includes(item.contentHash) || dailyIndex.mediaHashes.includes(report.masterVideoHash) || report.assets.some(a => dailyIndex.mediaHashes.includes(a.sha256)))) fail("WEEKLY_DUPLICATES_EXISTING_DAILY_CONTENT");
       write(state, { state: "ARCHIVING_AND_VERIFYING", item: index + 1, total: 3, approved: false, published: false });
       const assets = await archive(report.assets);
       if (assets.length !== report.assets.length || report.assets.some(a => !assets.some(b => b.channel === a.channel && b.name === a.name && b.sha256 === a.sha256 && b.sourceMasterHash === a.sourceMasterHash))) fail("ARCHIVE_RECEIPT_MISMATCH");
@@ -177,7 +184,8 @@ export async function prepareWeeklyDraft({ week, runDir, profiles, client, rende
     write(state, { state: "SAVING_DRAFT", approved: false, published: false });
     const saved = await client("prepare", { manifest });
     if (!saved.package?.id || saved.package.status !== "DRAFT" || !/^[a-f0-9]{64}$/.test(saved.package.hash)) fail("DRAFT_SAVE_UNCERTAIN");
-    const result = { state: "DRAFT_SAVED", package: saved.package, approved: false, published: false };
+    const result = { state: "DRAFT_SAVED", package: saved.package, approved: false, published: false,
+      dailyDuplicateCheck: dailyIndex === null ? "UNKNOWN_NO_READ_ONLY_INDEX_REVIEW_REQUIRED" : "NO_MATCH_IN_SUPPLIED_READ_ONLY_INDEX" };
     write(state, result); return result;
   } catch (e) {
     // Never log arbitrary upstream text (may contain credentials/content).

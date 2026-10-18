@@ -1,4 +1,4 @@
-# Reuse existing video workflows: proposed transition, not activation
+# Haftalık ikinci katman: günlük akışlara dokunmadan yeniden kullanım
 
 Read-only observations supplied by the parent browser worker. No workflow was
 executed, saved, published, activated or disabled. No production deployment or
@@ -80,38 +80,31 @@ force can bypass it. This is not an atomic durable delivery ledger and a Buffer
 ID does not prove public publication. Preserve it for the existing daily path,
 but never use force or reset that marker to push an approved weekly item through.
 
-## Proposed first stage: preserve daily, add reviewed weekly content
+## Kesin kapsam: günlük akış sabit, haftalık orchestration ayrı
 
-This is a proposal for an explicit transition decision, not permission to toggle
-anything. Keep all existing daily schedules, credentials, static-data guards and
-daily publishing behavior unchanged in the first stage:
+Kullanıcı mevcut seçki/n8n yayınlarına dokunulmamasını kesinleştirdi. Günlük
+akışların tamamı, saatleri, credential bağlantıları, guard'ları ve mevcut açık/
+kapalı durumları aynen korunur. Bu bir günlük cutover veya geçiş önerisi değildir:
 
 - 07:45 Morning Bulletin image distribution.
 - 07:55 daily video production/archive and current Instagram distribution.
 - 08:30 daily YouTube enqueue for 20:30 publication.
 - Existing daily LinkedIn/X/Facebook video and Instagram feed senders.
 
-The weekly package contains additional reviewed rubric content, not replacements
-for whatever dynamic daily news is selected. Reuse the existing sender adapters
-with an explicit WEEKLY context, exact account binding and a server-side delivery
-claim. Do not duplicate credentials or create a parallel publisher.
+Haftalık paket ayrı bir workflow/katmanda ek içeriktir. Mevcut servis/render ve
+adapter sözleşmeleri yeniden kullanılır; yeni credential veya ikinci bir API
+yayın altyapısı kurulmaz. Haftalık job, medya adı ve ledger günlükten ayrıdır.
 
-Concrete sender shape to review: retain the existing YouTube daily input and
-guard, add an approval-checked weekly input, and converge both on its existing
-Buffer media/createPost adapter. DAILY keeps its current asset/schedule and
-youtubeShortsGunu behavior; WEEKLY uses the sealed package asset/time/account and
-durable delivery/provider-queue state. The weekly input must never fall through
-to a daily file/date fallback. Prove this routing in an inactive test copy before
-any approved change to the existing published sender. Apply the same principle
-to the inspected IG/LinkedIn/X/Facebook adapters rather than recreating their APIs.
+Günlük YouTube veya diğer sender workflowlarına haftalık input/node eklenmez.
+Ayrı pasif haftalık workflow yalnız WEEKLY bağlamı, mühürlü medya/hesap/saat ve
+haftalık delivery ledger kullanır. Günlük dosya/tarih fallback'i, marker reset'i,
+force veya staticData yazması yasaktır. Günlük katmandan tekrar kanıtı yalnız
+okunur; eşleşme haftalık işi durdurur veya belirsizlik uyarısı verir.
 
 Current weekly calendar suggestions are Monday/Wednesday/Friday 12:00 Turkey time;
 these are not approved live schedules. Review actual dates/account IDs/times and
-platform capacity together in the package. Do not infer approval to move or remove
-the existing 20:30 daily YouTube post. If the desired outcome is instead to replace
-daily videos with weekly-approved Shorts, list each affected workflow/schedule
-and obtain that explicit content-policy/transition decision first; an additional
-weekly slot and replacement of a daily slot are different effects.
+platform capacity together in the package. The existing 20:30 daily YouTube post
+and all other daily outputs are outside this weekly layer's modification scope.
 
 ## Isolation requirements before connecting senders
 
@@ -210,11 +203,9 @@ isolated renderer validation, provider queue reconciliation and the dry-run bran
 mapping remain required integration checks. Do not run the current daily producer
 just to obtain a preview, because it also publishes Instagram media.
 
-Before any edit, retain access-controlled exports/revision IDs for the producer,
-YouTube and each affected sender; compare their currently published and draft
-nodes/connections. Morning Bulletin's active/draft 24 nodes/connections were
-identical in the earlier read-only comparison; recheck before any later change.
-Report the exact per-workflow node/schedule/asset-path/duplicate-key/account diff.
+Mevcut günlük workflowlar yalnız salt okunur kanıt olarak incelenebilir; edit,
+toggle, node ekleme, cutover veya guard değişikliği yapılmaz. İncelenebilir diff
+yalnız yeni pasif haftalık workflow ve haftalık servis/medya namespace'i içindir.
 
 Dry tests must stop before real send/enqueue nodes and must not consume daily
 guards. Then test the weekly gate, changed assets, wrong accounts, duplicate
@@ -224,5 +215,5 @@ approved concrete transition; none occurred in this work.
 
 Rollback preserves the existing daily published revisions and guards. Stop new
 weekly claims, retain delivery/queue evidence, and reconcile already accepted
-provider jobs before restoring routing. Disabling a workflow does not cancel a
+provider jobs within the weekly layer. Disabling a weekly workflow does not cancel a
 Buffer post already queued for 20:30. Do not reset successes or replay daily posts.
