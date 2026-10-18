@@ -15,7 +15,9 @@ export type SocialPlatformKey = "instagram" | "facebook" | "linkedin" | "x" | "y
 
 /** Panoda gösterilecek ölçü — sıra kart sırasıdır. `kpi` = 13.10 kararındaki asıl başarı ölçüsü. */
 export interface SocialMetricSpec {
-  key: "followers" | "reach" | "likes" | "comments" | "saves" | "profileClicks";
+  // reach = tekil kişi · views = gösterim/görüntülenme. İkisi AYRI ölçüdür: X yalnız gösterim verir → X kartı `views` çizer
+  // (👤 2026-10-18: X'in gösterimini "erişim" diye etiketlemek yanlış olur). Anahtarlar lib/social-metrics alanlarıdır.
+  key: "followers" | "reach" | "views" | "likes" | "comments" | "saves" | "profileClicks";
   label: string;
   kpi?: boolean;
 }
@@ -40,6 +42,7 @@ export interface SocialPlatform {
 export const SOCIAL_METRIC_LABEL: Record<SocialMetricSpec["key"], string> = {
   followers: "Takipçi",
   reach: "Erişim",
+  views: "Görüntülenme",
   likes: "Beğeni",
   comments: "Yorum",
   saves: "Kaydetme",
@@ -70,8 +73,8 @@ export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   {
     key: "x", name: "X", handle: "@Doctoriumtr", url: "https://x.com/Doctoriumtr", mark: "X",
     schedule: [{ time: "07:45", what: "Kart" }, { time: "20:30", what: "Video" }],
-    source: "X API (kullanım başına)", metrics: ["followers", "reach", "likes", "comments", "saves", "profileClicks"],
-    readiness: "n8n", readinessNote: "Haftalık metrik nöbetçisi zaten okuyor (Pzt 09:10); panoya aktarım yok",
+    source: "X API (kullanım başına)", metrics: ["followers", "views", "likes", "comments", "saves", "profileClicks"],
+    readiness: "n8n", readinessNote: "Haftalık metrik nöbetçisi (Pzt 09:10) okuyor; pano gövdesi KURU modda hazırlanıyor, gönderim için anahtar bekleniyor",
   },
   {
     key: "youtube", name: "YouTube", handle: null, url: null, mark: "▶",
