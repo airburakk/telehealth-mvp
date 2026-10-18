@@ -3,6 +3,11 @@
 Implemented on PR48 only. No production schema, credential, n8n activation,
 provider request, enqueue, cancellation or social post was performed.
 
+The dormant renderer-to-DRAFT worker, existing archive dependency and official
+Buffer read/delete contract adapter are documented in
+[doctorium-draft-producer.md](doctorium-draft-producer.md). Their presence does
+not enable live provider reads/cancellations or weekly preparation.
+
 ## Queue acceptance versus public publication
 
 Additive migration `20261018060000_weekly_provider_queue` stores provider/queue ID,
