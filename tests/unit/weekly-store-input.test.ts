@@ -9,6 +9,7 @@ function input() {
   return { v: 1, week: "2026-10-19", entries: [0, 1, 2].map(i => ({ id: `item-${i}`, version: "2026-10-18T00:00:00.000Z", seriesKey: ["etkinlik-radari", "karar-masasi", "ogrenci-kosesi"][i], slotDay: `2026-10-${19 + 2 * i}`, contentHash: "a".repeat(64), scheduledAt: `2026-10-${19 + 2 * i}T09:00:00.000Z`, channels: [...WEEKLY_CHANNELS], accounts: Object.fromEntries(WEEKLY_CHANNELS.map(c => [c, `${c}:account`])), assets: WEEKLY_CHANNELS.flatMap(c => [{ channel: c, name: c === "youtube" ? "review.mp4" : "review.txt", sha256: "b".repeat(64), url: `https://example.com/${c}.mp4` }, { channel: c, name: "post.json", sha256: "c".repeat(64), url: `https://example.com/${c}.json` }]) })) };
 }
 describe("weekly preparation and explicit human approval input", () => {
+  const preparedInput = () => { const value = input(); return { ...value, entries: value.entries.map(e => ({ ...e, mediaKind: "carousel" as const })) }; };
   it("seals the exact accounts and public asset URLs", () => {
     const m = normalizeWeeklyManifest(input()), hash = weeklyManifestHash(m);
     m.entries[0].accounts!.x = "x:other";
@@ -32,16 +33,16 @@ describe("weekly preparation and explicit human approval input", () => {
   it("retries only definite database rollbacks, at most three attempts", async () => {
     const actor = { id: "x", role: "ADMIN" } as SessionUser;
     vi.mocked(db.$transaction).mockRejectedValueOnce({ code: "P2034" }).mockRejectedValueOnce({ code: "P2010", meta: { code: "40001" } }).mockRejectedValueOnce({ code: "P2034" });
-    await expect(prepareWeeklyPackage({ actor, manifest: input() })).rejects.toMatchObject({ status: 409 });
+    await expect(prepareWeeklyPackage({ actor, manifest: preparedInput() })).rejects.toMatchObject({ status: 409 });
     expect(db.$transaction).toHaveBeenCalledTimes(3);
   });
   it("does not retry an uncertain connection failure or uniqueness conflict", async () => {
     const actor = { id: "x", role: "ADMIN" } as SessionUser;
     vi.mocked(db.$transaction).mockRejectedValueOnce({ code: "P1017" });
-    await expect(prepareWeeklyPackage({ actor, manifest: input() })).rejects.toMatchObject({ code: "P1017" });
+    await expect(prepareWeeklyPackage({ actor, manifest: preparedInput() })).rejects.toMatchObject({ code: "P1017" });
     expect(db.$transaction).toHaveBeenCalledTimes(1);
     vi.mocked(db.$transaction).mockReset().mockRejectedValueOnce({ code: "P2002" });
-    await expect(prepareWeeklyPackage({ actor, manifest: input() })).rejects.toMatchObject({ status: 409 });
+    await expect(prepareWeeklyPackage({ actor, manifest: preparedInput() })).rejects.toMatchObject({ status: 409 });
     expect(db.$transaction).toHaveBeenCalledTimes(1);
   });
 });

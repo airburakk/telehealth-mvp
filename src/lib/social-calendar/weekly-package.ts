@@ -15,10 +15,14 @@ export interface WeeklyEntry {
   slotDay: string;
   contentHash: string;
   scheduledAt: string;
+  publishTimes?: Partial<Record<WeeklyChannel, string>>;
+  enqueueTimes?: Partial<Record<WeeklyChannel, string>>;
+  mediaKind?: "video" | "carousel";
+  masterVideoHash?: string;
   channels: WeeklyChannel[];
   accounts?: Partial<Record<WeeklyChannel, string>>;
   /** Final rendered files, including MP4, audio, captions and channel-specific text. */
-  assets: { channel: WeeklyChannel; name: string; sha256: string; url?: string }[];
+  assets: { channel: WeeklyChannel; name: string; sha256: string; url?: string; sourceMasterHash?: string }[];
 }
 export interface WeeklyManifest { v: 1; week: string; entries: WeeklyEntry[] }
 export interface WeeklySnapshot {
@@ -37,10 +41,13 @@ export function weeklyManifestHash(manifest: WeeklyManifest): string {
     entries: [...manifest.entries].sort((a, b) => a.id.localeCompare(b.id)).map(e => ({
       id: e.id, version: e.version, seriesKey: e.seriesKey, slotDay: e.slotDay,
       contentHash: e.contentHash, scheduledAt: e.scheduledAt,
+      publishTimes: e.publishTimes ? Object.fromEntries([...e.channels].sort().filter(c => e.publishTimes?.[c]).map(c => [c, e.publishTimes?.[c]])) : undefined,
+      enqueueTimes: e.enqueueTimes ? Object.fromEntries([...e.channels].sort().filter(c => e.enqueueTimes?.[c]).map(c => [c, e.enqueueTimes?.[c]])) : undefined,
+      mediaKind: e.mediaKind, masterVideoHash: e.masterVideoHash,
       channels: [...e.channels].sort(),
       accounts: e.accounts ? Object.fromEntries([...e.channels].sort().map(c => [c, e.accounts?.[c]])) : undefined,
       assets: [...e.assets].sort((a, b) => `${a.channel}/${a.name}`.localeCompare(`${b.channel}/${b.name}`))
-        .map(a => ({ channel: a.channel, name: a.name, sha256: a.sha256, url: a.url })),
+        .map(a => ({ channel: a.channel, name: a.name, sha256: a.sha256, url: a.url, sourceMasterHash: a.sourceMasterHash })),
     })),
   }));
 }
@@ -69,6 +76,15 @@ export function reviewWeeklyPackage(manifest: WeeklyManifest, snapshots: WeeklyS
     const trDay = instant(e.scheduledAt) ? new Date(Date.parse(e.scheduledAt) + 3 * 3600_000).toISOString().slice(0, 10) : "";
     if (!trDay || trDay !== e.slotDay || e.slotDay < manifest.week || e.slotDay >= addDays(manifest.week, 7) || Date.parse(e.scheduledAt) <= now.getTime())
       errors.push(`${prefix}: schedule must be future and on its Turkey slot day`);
+    for (const c of WEEKLY_CHANNELS) {
+      const publish = e.publishTimes?.[c] ?? e.scheduledAt, enqueue = e.enqueueTimes?.[c] ?? publish;
+      const day = instant(publish) ? new Date(Date.parse(publish) + 10800000).toISOString().slice(0, 10) : "";
+      if (day !== e.slotDay || Date.parse(publish) <= now.getTime()) errors.push(`${prefix}: ${c} publication time invalid`);
+      if (!instant(enqueue) || Date.parse(enqueue) <= now.getTime() || Date.parse(enqueue) > Date.parse(publish) || Date.parse(publish) - Date.parse(enqueue) > 86400000)
+        errors.push(`${prefix}: ${c} enqueue time invalid`);
+      if (e.mediaKind === "video" && (!HASH.test(e.masterVideoHash ?? "") || !e.assets.some(a => a.channel === c && a.name.endsWith(".mp4") && a.sourceMasterHash === e.masterVideoHash)))
+        errors.push(`${prefix}: ${c} native video adaptation from the reviewed master missing`);
+    }
     if (e.channels.length !== WEEKLY_CHANNELS.length || new Set(e.channels).size !== WEEKLY_CHANNELS.length || WEEKLY_CHANNELS.some(c => !e.channels.includes(c)))
       errors.push(`${prefix}: all five distinct channels required`);
     const names = new Set<string>();

@@ -25,4 +25,13 @@ describe("weekly review page safety", () => {
     expect(html).toContain("paket henüz yok"); expect(html).not.toContain("Haftalık paketi onayla");
     expect(state.findMany).not.toHaveBeenCalled();
   });
+  it("keeps revoked remote-queue risk and provider identity visible until unsend is verified", async () => {
+    state.findMany.mockResolvedValue([]);
+    const date = new Date("2026-10-19T17:30:00Z");
+    state.getPackage.mockResolvedValue({ id: "p", status: "REVOKED", updatedAt: date, manifestHash: "h", approvedBy: "Reviewer", approvedAt: date, revokedReason: "HUMAN_REVOKE", manifest: { entries: [] },
+      deliveries: [{ id: "d", channel: "youtube", accountId: "review-account", scheduledAt: date, effectiveState: "CANCEL_PENDING", remoteRisk: true, providerQueueId: "provider-queue-id", providerDueAt: date, cancelRequestedAt: date, cancelConfirmedAt: null, publishedUrl: null, resultNote: "VERIFY_UNSEND", updatedAt: date, events: [] }] });
+    const html = renderToStaticMarkup(await WeeklyReviewPage({ searchParams: Promise.resolve({ hafta: "2026-10-19" }) }));
+    expect(html).toContain("Uzak yayın riski var"); expect(html).toContain("provider-queue-id");
+    expect(html).toContain("kuyruğunu iptal etmez"); expect(html).toContain("CANCEL_PENDING");
+  });
 });

@@ -24,8 +24,8 @@ export async function POST(req: Request) {
       case "approve": return NextResponse.json({ ok: true, package: await approveWeeklyPackage({ id: str(b.id), version: str(b.version), hash: str(b.hash), confirmed: b.confirmed === true, ...ctx }) });
       case "revoke": return NextResponse.json({ ok: true, package: await revokeWeeklyPackage({ id: str(b.id), version: str(b.version), ...ctx }) });
       case "reconcile": {
-        if (b.outcome !== "FOUND" && b.outcome !== "NOT_FOUND") throw new PlanError("Platform kontrolü sonucu gerekli.");
-        return NextResponse.json({ ok: true, ...(await reconcileWeeklyDelivery({ id: str(b.id), version: str(b.version), outcome: b.outcome, evidence: str(b.evidence), platformId: str(b.platformId), ...ctx })) });
+        if (b.outcome !== "FOUND" && b.outcome !== "NOT_FOUND" && b.outcome !== "NO_REMOTE_JOB") throw new PlanError("Platform kontrolü sonucu gerekli.");
+        return NextResponse.json({ ok: true, ...(await reconcileWeeklyDelivery({ id: str(b.id), version: str(b.version), outcome: b.outcome, evidence: str(b.evidence), platformId: str(b.platformId), publishedUrl: str(b.publishedUrl), publishedAt: str(b.publishedAt), providerQueueId: str(b.providerQueueId), allRemoteJobsChecked: b.allRemoteJobsChecked === true, ...ctx })) });
       }
       default: throw new PlanError("Bilinmeyen işlem.");
     }

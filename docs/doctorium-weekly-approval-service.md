@@ -1,5 +1,11 @@
 # Weekly approval service: review-only rollout
 
+Queue lifecycle and the new all-platform original-video scope are implemented in
+[the provider-queue contract](doctorium-provider-queue.md). That document extends
+the base contract below with queue IDs, early enqueue/publication times, confirmed
+cancellation, remote-risk states and explicit public publication evidence. Queue
+acceptance alone never completes a job. No live adapter or flag was enabled.
+
 Implemented on the PR branch, not production. No production migration or social
 upload occurred. The existing dynamic Daily Selection is a different workflow.
 

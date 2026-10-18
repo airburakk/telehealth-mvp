@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { reqMeta } from "@/lib/audit";
 import { PlanError } from "@/lib/social-calendar/plan";
-import { prepareWeeklyPackage, getWeeklyDrafts, getWeeklyPackage, claimWeeklyDelivery, completeWeeklyDelivery } from "@/lib/social-calendar/weekly-store";
+import { prepareWeeklyPackage, getWeeklyDrafts, getWeeklyPackage, claimWeeklyDelivery, completeWeeklyDelivery, queueWeeklyDelivery, observeWeeklyQueue, getWeeklyQueueTasks } from "@/lib/social-calendar/weekly-store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -20,6 +20,13 @@ export async function POST(req: Request) {
   catch { return NextResponse.json({ error: "Geçersiz JSON." }, { status: 400 }); }
   const str = (s: unknown) => typeof s === "string" ? s : "";
   try {
+    if (b.action === "queue-tasks") return NextResponse.json({ ok: true, tasks: await getWeeklyQueueTasks(str(b.week)) });
+    if (b.action === "queued") return NextResponse.json({ ok: true, ...(await queueWeeklyDelivery({ id: str(b.id), claimToken: str(b.claimToken), providerQueueId: str(b.providerQueueId), dueAt: str(b.dueAt) })) });
+    if (b.action === "queue-observation") {
+      if (!["QUEUED", "CANCELLED", "UNKNOWN", "PUBLISHED"].includes(str(b.observation))) throw new PlanError("Uzak kuyruk gözlemi geçersiz.");
+      if (["CANCELLED", "PUBLISHED"].includes(str(b.observation)) && process.env.WEEKLY_REMOTE_OBSERVER_VERIFIED !== "true") return NextResponse.json({ error: "Sağlayıcı teyit yeteneği doğrulanmadı; insan incelemesi gerekli." }, { status: 503 });
+      return NextResponse.json({ ok: true, ...(await observeWeeklyQueue({ id: str(b.id), providerQueueId: str(b.providerQueueId), observation: b.observation as "QUEUED" | "CANCELLED" | "UNKNOWN" | "PUBLISHED", observedAt: str(b.observedAt), platformId: str(b.platformId), publishedUrl: str(b.publishedUrl), publishedAt: str(b.publishedAt) })) });
+    }
     if (b.action === "drafts") return NextResponse.json({ ok: true, ...(await getWeeklyDrafts(str(b.week))) });
     if (b.action === "prepare") {
       const p = await prepareWeeklyPackage({ manifest: b.manifest, actor: null, ...reqMeta(req) });
@@ -28,7 +35,7 @@ export async function POST(req: Request) {
     if (b.action === "inspect") {
       const p = await getWeeklyPackage(str(b.week));
       if (!p || p.status !== "APPROVED") return NextResponse.json({ ok: true, package: null });
-      return NextResponse.json({ ok: true, package: { id: p.id, hash: p.manifestHash, manifest: p.manifest, deliveries: p.deliveries.map(d => ({ id: d.id, itemId: d.itemId, channel: d.channel, accountId: d.accountId, state: d.effectiveState, scheduledAt: d.scheduledAt })) } });
+      return NextResponse.json({ ok: true, package: { id: p.id, hash: p.manifestHash, manifest: p.manifest, deliveries: p.deliveries.map(d => ({ id: d.id, itemId: d.itemId, channel: d.channel, accountId: d.accountId, state: d.effectiveState, scheduledAt: d.scheduledAt, enqueueAt: d.enqueueAt, providerQueueId: d.providerQueueId, providerDueAt: d.providerDueAt })) } });
     }
     if (b.action === "claim") {
       // Activation is a separate reviewed operation after the actual n8n workflow is mapped.
@@ -38,7 +45,7 @@ export async function POST(req: Request) {
     }
     if (b.action === "result") {
       if (!["SUCCEEDED", "FAILED", "UNKNOWN"].includes(str(b.result))) throw new PlanError("Kanal sonucu geçersiz.");
-      return NextResponse.json({ ok: true, ...(await completeWeeklyDelivery({ id: str(b.id), claimToken: str(b.claimToken), result: b.result as "SUCCEEDED" | "FAILED" | "UNKNOWN", platformId: str(b.platformId), noRequestSent: b.noRequestSent === true })) });
+      return NextResponse.json({ ok: true, ...(await completeWeeklyDelivery({ id: str(b.id), claimToken: str(b.claimToken), result: b.result as "SUCCEEDED" | "FAILED" | "UNKNOWN", platformId: str(b.platformId), publishedUrl: str(b.publishedUrl), publishedAt: str(b.publishedAt), noRequestSent: b.noRequestSent === true })) });
     }
     throw new PlanError("Bilinmeyen işlem.");
   } catch (e) {

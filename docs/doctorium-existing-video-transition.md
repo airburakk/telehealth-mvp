@@ -123,11 +123,13 @@ A Buffer queue/post ID proves queue acceptance, not public YouTube publication.
 Do not call the current weekly result endpoint SUCCEEDED just because Buffer
 accepted a customScheduled request, and do not mark the site item PUBLISHED then.
 
-The current PR ledger supports PENDING/CLAIMED/SUCCEEDED/FAILED/UNKNOWN/CANCELLED,
-claims only during the 15-minute window after the approved timestamp, and treats
-lost claims as visibly UNKNOWN after 20 minutes. Consequently it is **not yet an
-adapter for the existing twelve-hour prequeue behavior**. Before connecting that
-behavior, choose and implement one reviewed option:
+The PR now implements separate durable queue/cancellation/publication states,
+per-channel enqueue/publication times and late-observation risk; see
+[the queue contract and runnable dry-run](doctorium-provider-queue.md). The data
+model can retain the observed twelve-hour queue without calling acceptance
+publication. Actual provider observation/cancellation capabilities and n8n wiring
+remain unverified and inactive. Before connecting the existing sender, choose a
+reviewed timing option and verify its adapter:
 
 - Just-in-time weekly dispatch at the exact approved time, with the existing
   sender adapted only after its provider semantics are verified. Persist its
@@ -148,9 +150,9 @@ the reviewed account/publication time; a matching file hash alone does not make 
 different provider schedule the intended schedule. Early enqueue time and actual
 publication time need distinct explicit semantics when that option is chosen.
 
-Neither option has been activated or claimed to work by this PR. Queue acceptance
-versus actual publication is an integration blocker, not evidence that the current
-daily YouTube workflow is missing or broken.
+Neither live timing option has been activated. The queue-state service is tested
+separately; actual provider queue/publication observation and cancellation wiring
+remain integration checks, not evidence that the daily YouTube workflow is missing.
 
 ## Reviewable live-change boundary and rollback
 

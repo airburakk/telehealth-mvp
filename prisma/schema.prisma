@@ -999,6 +999,17 @@ model WeeklyChannelDelivery {
   accountId String
   state String @default("PENDING")
   scheduledAt DateTime
+  enqueueAt DateTime?
+  provider String?
+  providerQueueId String?
+  additionalQueueRisk Boolean @default(false)
+  providerDueAt DateTime?
+  queuedAt DateTime?
+  remoteObservedAt DateTime?
+  cancelRequestedAt DateTime?
+  cancelConfirmedAt DateTime?
+  publishedUrl String?
+  remotePublishedAt DateTime?
   attempt Int @default(0)
   claimToken String?
   claimedAt DateTime?
@@ -1010,6 +1021,7 @@ model WeeklyChannelDelivery {
   updatedAt DateTime @updatedAt
   events WeeklyDeliveryEvent[]
   @@unique([itemId, channel])
+  @@unique([provider, providerQueueId])
   @@index([packageId, state, scheduledAt])
 }
 

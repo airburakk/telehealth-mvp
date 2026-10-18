@@ -15,6 +15,20 @@ function fixture() {
 }
 
 describe("weekly review contract (no DB approval or publishing)", () => {
+  it("seals per-channel enqueue/publication times and requires native video for all five platforms", () => {
+    const { rows, manifest, now } = fixture();
+    const e = manifest.entries[0]; e.mediaKind = "video"; e.masterVideoHash = "b".repeat(64);
+    e.publishTimes = { youtube: "2026-10-19T17:30:00.000Z" };
+    e.enqueueTimes = { youtube: "2026-10-19T05:30:00.000Z" };
+    expect(reviewWeeklyPackage(manifest, rows, now).some(x => x.includes("native video"))).toBe(true);
+    e.assets = WEEKLY_CHANNELS.map(channel => ({ channel, name: "video.mp4", sha256: "a".repeat(64), sourceMasterHash: e.masterVideoHash }));
+    expect(reviewWeeklyPackage(manifest, rows, now)).toEqual([]);
+    const hash = weeklyManifestHash(manifest);
+    e.enqueueTimes.youtube = "2026-10-19T06:30:00.000Z";
+    expect(weeklyManifestHash(manifest)).not.toBe(hash);
+    e.enqueueTimes.youtube = "2026-10-19T18:30:00.000Z";
+    expect(reviewWeeklyPackage(manifest, rows, now).some(x => x.includes("enqueue"))).toBe(true);
+  });
   it("accepts a complete future review without modifying it", () => {
     const { rows, manifest, now } = fixture();
     const before = JSON.stringify({ rows, manifest });

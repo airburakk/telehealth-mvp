@@ -1,13 +1,14 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-const state = vi.hoisted(() => ({ user: null as null | { id: string; role: string }, prepare: vi.fn(), drafts: vi.fn(), approve: vi.fn(), revoke: vi.fn(), reconcile: vi.fn(), inspect: vi.fn(), claim: vi.fn(), complete: vi.fn() }));
+const state = vi.hoisted(() => ({ user: null as null | { id: string; role: string }, prepare: vi.fn(), drafts: vi.fn(), approve: vi.fn(), revoke: vi.fn(), reconcile: vi.fn(), inspect: vi.fn(), claim: vi.fn(), complete: vi.fn(), queued: vi.fn(), observe: vi.fn(), tasks: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ getCurrentUser: async () => state.user }));
 vi.mock("@/lib/audit", () => ({ reqMeta: () => ({ ip: null, userAgent: null }) }));
 vi.mock("@/lib/social-calendar/weekly-store", () => ({ prepareWeeklyPackage: state.prepare, approveWeeklyPackage: state.approve, revokeWeeklyPackage: state.revoke,
-  reconcileWeeklyDelivery: state.reconcile, getWeeklyDrafts: state.drafts, getWeeklyPackage: state.inspect, claimWeeklyDelivery: state.claim, completeWeeklyDelivery: state.complete }));
+  reconcileWeeklyDelivery: state.reconcile, getWeeklyDrafts: state.drafts, getWeeklyPackage: state.inspect, claimWeeklyDelivery: state.claim, completeWeeklyDelivery: state.complete,
+  queueWeeklyDelivery: state.queued, observeWeeklyQueue: state.observe, getWeeklyQueueTasks: state.tasks }));
 import { POST as admin } from "../../src/app/api/admin/icerik-takvimi/haftalik/route";
 import { POST as machine } from "../../src/app/api/social-calendar/haftalik/route";
 const request = (body: unknown, token?: string, origin?: string) => new Request("https://doctorium.tr/api/test", { method: "POST", headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}), ...(origin ? { origin } : {}) }, body: JSON.stringify(body) });
-beforeEach(() => { vi.clearAllMocks(); state.user = null; vi.stubEnv("CONTENT_PLAN_TOKEN", "test-weekly-token"); vi.stubEnv("WEEKLY_PUBLISH_ENABLED", ""); });
+beforeEach(() => { vi.clearAllMocks(); state.user = null; vi.stubEnv("CONTENT_PLAN_TOKEN", "test-weekly-token"); vi.stubEnv("WEEKLY_PUBLISH_ENABLED", ""); vi.stubEnv("WEEKLY_REMOTE_OBSERVER_VERIFIED", ""); });
 afterEach(() => { vi.unstubAllEnvs(); });
 
 describe("weekly API authorization boundaries", () => {
@@ -58,7 +59,15 @@ describe("weekly API authorization boundaries", () => {
   it("accepts in-flight result reporting after publishing is disabled and never passes error payloads", async () => {
     state.complete.mockResolvedValue({ state: "UNKNOWN" });
     expect((await machine(request({ action: "result", id: "d", claimToken: "attempt", result: "FAILED", error: "secret raw platform response" }, "test-weekly-token"))).status).toBe(200);
-    expect(state.complete).toHaveBeenCalledWith({ id: "d", claimToken: "attempt", result: "FAILED", platformId: "", noRequestSent: false });
+    expect(state.complete).toHaveBeenCalledWith({ id: "d", claimToken: "attempt", result: "FAILED", platformId: "", publishedUrl: "", publishedAt: "", noRequestSent: false });
+  });
+  it("keeps accepted queue tracking available after disabling new sends but gates unverified definitive observations", async () => {
+    state.queued.mockResolvedValue({ state: "QUEUED" });
+    expect((await machine(request({ action: "queued", id: "d", claimToken: "t", providerQueueId: "q", dueAt: "2026-10-19T17:30:00Z" }, "test-weekly-token"))).status).toBe(200);
+    expect((await machine(request({ action: "queue-observation", observation: "CANCELLED" }, "test-weekly-token"))).status).toBe(503);
+    expect(state.observe).not.toHaveBeenCalled();
+    state.observe.mockResolvedValue({ state: "CANCEL_UNKNOWN" });
+    expect((await machine(request({ action: "queue-observation", observation: "UNKNOWN" }, "test-weekly-token"))).status).toBe(200);
   });
   it("approved dispatch inspection never returns an unapproved package", async () => {
     state.inspect.mockResolvedValue({ status: "DRAFT", manifest: { internal: true } });
