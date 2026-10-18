@@ -30,13 +30,18 @@ mapping evidence; no live mutation was performed or activated here.
 
 Subsequent read-only inventory found 13 workflows, including Published “YouTube
 Shorts (Buffer)”, “LinkedIn video (Buffer)”, “X video (Reel A)”, “Facebook Reels
-(Reel A)”, “Instagram Günlük Kart (feed)” and “Sabah Hikâye + Reels (üret + arşivle
-+ yayın)”. Existing video/Instagram distribution therefore must be inspected and
+(Reel A)”, “Instagram Günlük Kart (feed)” and
+“Sabah Hikâye + Reels (üret + arşivle + yayın)”. Existing video/Instagram distribution therefore must be inspected and
 reused before proposing any new pipeline. YouTube/shared-producer node details
 and account/permission checks remain pending with the browser worker. Inventory
 visibility/Published labels alone do not prove successful executions or account
 ownership. The offline preview helper and inactive dry-review JSON in this PR
 are not replacements for those live workflows and have not been connected.
+The producer and YouTube node-level findings are now recorded in
+[the reuse and transition plan](doctorium-existing-video-transition.md): the
+07:55 producer already calls the existing video backend, and the 08:30 YouTube
+workflow queues that daily Reel A for 20:30. No new rendering backend should be
+invented; approved weekly assets must be isolated from those live daily assets.
 
 Daily Selection uses `/bulten.png`, `/sosyal/uret`, `/sosyal/durum` and the
 existing MP4-only `dosyalar` field. Rubric publishing has a separate
