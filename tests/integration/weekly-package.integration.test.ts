@@ -20,7 +20,7 @@ async function fixture() {
   const entries = [];
   for (const { series, slotDay } of slotsOfWeek(week)) {
     const payload: PlanPayload = { v: 1, caption: "Kaynaklı inceleme için hazırlanmış test taslağı; gerçek bir karar veya duyuru değildir.", hashtags: [], sources: [{ label: "Test source", ref: "https://www.yargitay.gov.tr/" }],
-      slides: series.requiredRoles.map(role => ({ role, title: "Kaynak incelemesi", body: role === "kaynak" ? "Bilgilendirme amaçlıdır; hukuki görüş değildir." : quote,
+      slides: series.slideRoles.map(role => ({ role, title: "Kaynak incelemesi", body: role === "kaynak" ? "Bilgilendirme amaçlıdır; hukuki görüş değildir." : quote,
         ...(series.quoteRoles.includes(role) ? { quote: true } : {}), ...(role === "cikarim" ? { bullets: ["Kaynak tarihini işlem öncesinde kontrol edin.", "Karar kapsamını asıl metinden kontrol edin.", "Dosya içeriğini ayrıca değerlendirmek gerekir."] } : {}) })) };
     const row = await db.contentPlanItem.create({ data: { id: `${run}_${series.key}`, seriesKey: series.key, slotDay, status: "DRAFT", payload: JSON.stringify(payload), sourceIds: JSON.stringify([sourceId]), attestIdentity: true } });
     ids.push(row.id);
