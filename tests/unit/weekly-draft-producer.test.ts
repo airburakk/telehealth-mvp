@@ -103,4 +103,19 @@ describe("existing renderer -> immutable archive -> automatic DRAFT only", () =>
     await expect(prepareWeeklyDraft({ week: source.week, runDir: path.join(dir, "run"), profiles, client, renderer, archive })).rejects.toThrow("SOURCE_EDITORIAL_GATES_BLOCKED");
     expect(renderer).not.toHaveBeenCalled(); expect(archive).not.toHaveBeenCalled(); expect(client).toHaveBeenCalledTimes(1);
   }));
+  it("retains the exact manifest and makes no retry when the application save outcome is uncertain", () => temp(async dir => {
+    const { source, profiles } = fixture();
+    const client = vi.fn().mockImplementation(async (action: string) => { if (action === "drafts") return source; throw new Error("DRAFT_SAVE_UNCERTAIN"); });
+    const renderer = vi.fn().mockResolvedValue({ state: "DRAFT_REVIEW_ONLY", approved: false, published: false, masterVideoHash: hash("master"), assets: [] });
+    const runDir = path.join(dir, "uncertain");
+    await expect(prepareWeeklyDraft({ week: source.week, runDir, profiles, client, renderer, archive: async () => [] })).rejects.toThrow("DRAFT_SAVE_UNCERTAIN");
+    expect(JSON.parse(fs.readFileSync(path.join(runDir, "manifest.json"), "utf8"))).toEqual(client.mock.calls[1][1].manifest);
+    expect(JSON.parse(fs.readFileSync(path.join(runDir, "state.json"), "utf8"))).toMatchObject({ state: "BLOCKED", code: "DRAFT_SAVE_UNCERTAIN" });
+    expect(client).toHaveBeenCalledTimes(2);
+    for (const result of [new Response("service failed", { status: 503 }), new Response("invalid json", { status: 200 }), new Response("null", { status: 200 })]) {
+      const fetchImpl = vi.fn().mockResolvedValue(result);
+      await expect(createWeeklyDraftClient({ token: "test-only", fetchImpl })("prepare", {})).rejects.toThrow("DRAFT_SAVE_UNCERTAIN");
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+    }
+  }));
 });

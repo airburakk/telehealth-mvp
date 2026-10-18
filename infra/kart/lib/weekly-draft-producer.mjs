@@ -67,9 +67,11 @@ export function createWeeklyDraftClient({ token, fetchImpl = fetch }) {
         headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: JSON.stringify({ ...data, action }) });
       body = await r.text();
     } catch { fail(action === "prepare" ? "DRAFT_SAVE_UNCERTAIN" : "DRAFT_READ_FAILED"); }
-    if (body.length > 4 * 1024 * 1024) fail("DRAFT_RESPONSE_TOO_LARGE");
-    let j; try { j = JSON.parse(body); } catch { fail("DRAFT_RESPONSE_INVALID"); }
-    if (!r.ok || j.ok !== true) fail(`DRAFT_REQUEST_REJECTED_${r.status}`);
+    if (action === "prepare" && r.status >= 500) fail("DRAFT_SAVE_UNCERTAIN");
+    if (body.length > 4 * 1024 * 1024) fail(action === "prepare" ? "DRAFT_SAVE_UNCERTAIN" : "DRAFT_RESPONSE_TOO_LARGE");
+    let j; try { j = JSON.parse(body); } catch { fail(action === "prepare" ? "DRAFT_SAVE_UNCERTAIN" : "DRAFT_RESPONSE_INVALID"); }
+    if (!r.ok) fail(`DRAFT_REQUEST_REJECTED_${r.status}`);
+    if (!j || j.ok !== true) fail(action === "prepare" ? "DRAFT_SAVE_UNCERTAIN" : "DRAFT_RESPONSE_INVALID");
     return j;
   };
 }
@@ -174,7 +176,7 @@ export async function prepareWeeklyDraft({ week, runDir, profiles, client, rende
     write(path.join(runDir, "manifest.json"), manifest);
     write(state, { state: "SAVING_DRAFT", approved: false, published: false });
     const saved = await client("prepare", { manifest });
-    if (!saved.package?.id || saved.package.status !== "DRAFT" || !/^[a-f0-9]{64}$/.test(saved.package.hash)) fail("DRAFT_SAVE_RECEIPT_INVALID");
+    if (!saved.package?.id || saved.package.status !== "DRAFT" || !/^[a-f0-9]{64}$/.test(saved.package.hash)) fail("DRAFT_SAVE_UNCERTAIN");
     const result = { state: "DRAFT_SAVED", package: saved.package, approved: false, published: false };
     write(state, result); return result;
   } catch (e) {
