@@ -30,6 +30,7 @@ describe("weekly API authorization boundaries", () => {
     expect((await machine(request({ action: "inspect" }))).status).toBe(503);
     vi.stubEnv("CONTENT_PLAN_TOKEN", "test-weekly-token");
     expect((await machine(request({ action: "inspect" }, "wrong"))).status).toBe(401);
+    expect((await machine(new Request("https://doctorium.tr/api/test", { method: "POST", headers: { authorization: "test-weekly-token" }, body: '{}' }))).status).toBe(401);
     expect((await machine(request({ action: "approve" }, "test-weekly-token"))).status).toBe(400);
     expect(state.approve).not.toHaveBeenCalled(); expect(state.inspect).not.toHaveBeenCalled();
   });

@@ -9,7 +9,8 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   const secret = process.env.CONTENT_PLAN_TOKEN;
   if (!secret) return NextResponse.json({ error: "İçerik planı bağlantısı devre dışı." }, { status: 503 });
-  const given = Buffer.from((req.headers.get("authorization") ?? "").replace(/^Bearer /, "")), expected = Buffer.from(secret);
+  const header = req.headers.get("authorization") ?? "";
+  const given = Buffer.from(header.startsWith("Bearer ") ? header.slice(7) : ""), expected = Buffer.from(secret);
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   const text = await req.text();
   if (text.length > 32768) return NextResponse.json({ error: "İstek çok büyük." }, { status: 413 });
