@@ -71,6 +71,15 @@ for whatever dynamic daily news is selected. Reuse the existing sender adapters
 with an explicit WEEKLY context, exact account binding and a server-side delivery
 claim. Do not duplicate credentials or create a parallel publisher.
 
+Concrete sender shape to review: retain the existing YouTube daily input and
+guard, add an approval-checked weekly input, and converge both on its existing
+Buffer media/createPost adapter. DAILY keeps its current asset/schedule and
+youtubeShortsGunu behavior; WEEKLY uses the sealed package asset/time/account and
+durable delivery/provider-queue state. The weekly input must never fall through
+to a daily file/date fallback. Prove this routing in an inactive test copy before
+any approved change to the existing published sender. Apply the same principle
+to the inspected IG/LinkedIn/X/Facebook adapters rather than recreating their APIs.
+
 Current weekly calendar suggestions are Monday/Wednesday/Friday 12:00 Turkey time;
 these are not approved live schedules. Review actual dates/account IDs/times and
 platform capacity together in the package. Do not infer approval to move or remove
@@ -133,6 +142,11 @@ behavior, choose and implement one reviewed option:
   post while the first queue item's existence is unresolved. A package revocation
   must reconcile/cancel an existing provider queue item, not just cancel PENDING
   database jobs.
+
+The adapter must also compare the actual post.json account and dueAt fields with
+the reviewed account/publication time; a matching file hash alone does not make a
+different provider schedule the intended schedule. Early enqueue time and actual
+publication time need distinct explicit semantics when that option is chosen.
 
 Neither option has been activated or claimed to work by this PR. Queue acceptance
 versus actual publication is an integration blocker, not evidence that the current
