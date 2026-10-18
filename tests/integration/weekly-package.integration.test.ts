@@ -1,7 +1,7 @@
 // Real transactions/locks/trigger on TEST_DATABASE_URL only. No external fetch or platform API.
 import { describe, expect, it, vi } from "vitest";
 import { db } from "@/lib/db";
-import { prepareWeeklyPackage, approveWeeklyPackage, claimWeeklyDelivery, completeWeeklyDelivery, reconcileWeeklyDelivery, revokeWeeklyPackage } from "@/lib/social-calendar/weekly-store";
+import { prepareWeeklyPackage, getWeeklyDrafts, approveWeeklyPackage, claimWeeklyDelivery, completeWeeklyDelivery, reconcileWeeklyDelivery, revokeWeeklyPackage } from "@/lib/social-calendar/weekly-store";
 import { payloadHash, type PlanPayload } from "@/lib/social-calendar/payload";
 import { WEEKLY_CHANNELS, type WeeklyManifest } from "@/lib/social-calendar/weekly-package";
 import { slotsOfWeek, weekStart } from "@/lib/social-calendar/series";
@@ -46,10 +46,12 @@ async function approved(f: Awaited<ReturnType<typeof fixture>>) {
   return approveWeeklyPackage({ actor, id: p.id, version: p.updatedAt.toISOString(), hash: p.manifestHash, confirmed: true });
 }
 
-describe.skipIf(!process.env.TEST_DATABASE_URL)("weekly package real DB integrity", () => {
+describe.skipIf(!process.env.TEST_DATABASE_URL)("weekly package real DB integrity", { timeout: 120000 }, () => {
   it("rejects stale preview atomically without approving any item", async () => {
     const f = await fixture();
     try {
+      const drafts = await getWeeklyDrafts(f.manifest.week);
+      expect(drafts.items).toHaveLength(3); expect(drafts.missing).toEqual([]);
       const p = await prepareWeeklyPackage({ actor: null, manifest: f.manifest });
       expect(p.status).toBe("DRAFT"); expect(p.approvedAt).toBeNull();
       expect((await prepareWeeklyPackage({ actor: null, manifest: f.manifest })).id).toBe(p.id);

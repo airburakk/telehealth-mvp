@@ -62,6 +62,7 @@ no new secret or OAuth grant is created. It cannot approve. Actions:
 
 | Action | Contract |
 |---|---|
+| drafts | Read existing unreserved DRAFT payloads/versions/hashes and the current kart render model; no slots or content are created/edited |
 | prepare | Save a prepared DRAFT manifest as automation; no approval or attestation, even if the caller supplies such flags |
 | inspect | Read an approved week/manifest/jobs; no drafts or claim tokens |
 | claim | id, package hash, actual accountId, downloaded assetHashes by filename |

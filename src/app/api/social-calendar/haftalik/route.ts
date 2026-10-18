@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { reqMeta } from "@/lib/audit";
 import { PlanError } from "@/lib/social-calendar/plan";
-import { prepareWeeklyPackage, getWeeklyPackage, claimWeeklyDelivery, completeWeeklyDelivery } from "@/lib/social-calendar/weekly-store";
+import { prepareWeeklyPackage, getWeeklyDrafts, getWeeklyPackage, claimWeeklyDelivery, completeWeeklyDelivery } from "@/lib/social-calendar/weekly-store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -20,6 +20,7 @@ export async function POST(req: Request) {
   catch { return NextResponse.json({ error: "Geçersiz JSON." }, { status: 400 }); }
   const str = (s: unknown) => typeof s === "string" ? s : "";
   try {
+    if (b.action === "drafts") return NextResponse.json({ ok: true, ...(await getWeeklyDrafts(str(b.week))) });
     if (b.action === "prepare") {
       const p = await prepareWeeklyPackage({ manifest: b.manifest, actor: null, ...reqMeta(req) });
       return NextResponse.json({ ok: true, package: { id: p.id, status: p.status, hash: p.manifestHash } });

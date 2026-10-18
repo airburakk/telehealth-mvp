@@ -1,9 +1,9 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-const state = vi.hoisted(() => ({ user: null as null | { id: string; role: string }, prepare: vi.fn(), approve: vi.fn(), revoke: vi.fn(), reconcile: vi.fn(), inspect: vi.fn(), claim: vi.fn(), complete: vi.fn() }));
+const state = vi.hoisted(() => ({ user: null as null | { id: string; role: string }, prepare: vi.fn(), drafts: vi.fn(), approve: vi.fn(), revoke: vi.fn(), reconcile: vi.fn(), inspect: vi.fn(), claim: vi.fn(), complete: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ getCurrentUser: async () => state.user }));
 vi.mock("@/lib/audit", () => ({ reqMeta: () => ({ ip: null, userAgent: null }) }));
 vi.mock("@/lib/social-calendar/weekly-store", () => ({ prepareWeeklyPackage: state.prepare, approveWeeklyPackage: state.approve, revokeWeeklyPackage: state.revoke,
-  reconcileWeeklyDelivery: state.reconcile, getWeeklyPackage: state.inspect, claimWeeklyDelivery: state.claim, completeWeeklyDelivery: state.complete }));
+  reconcileWeeklyDelivery: state.reconcile, getWeeklyDrafts: state.drafts, getWeeklyPackage: state.inspect, claimWeeklyDelivery: state.claim, completeWeeklyDelivery: state.complete }));
 import { POST as admin } from "../../src/app/api/admin/icerik-takvimi/haftalik/route";
 import { POST as machine } from "../../src/app/api/social-calendar/haftalik/route";
 const request = (body: unknown, token?: string, origin?: string) => new Request("https://doctorium.tr/api/test", { method: "POST", headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}), ...(origin ? { origin } : {}) }, body: JSON.stringify(body) });
@@ -42,6 +42,12 @@ describe("weekly API authorization boundaries", () => {
     expect(state.approve).not.toHaveBeenCalled(); expect(state.claim).not.toHaveBeenCalled();
     expect((await res.json()).package.status).toBe("DRAFT");
   });
+  it("provides existing drafts to the authenticated renderer without a write or claim", async () => {
+    state.drafts.mockResolvedValue({ week: "2026-10-19", items: [], missing: [] });
+    expect((await machine(request({ action: "drafts", week: "2026-10-19" }, "test-weekly-token"))).status).toBe(200);
+    expect(state.drafts).toHaveBeenCalledWith("2026-10-19");
+    expect(state.prepare).not.toHaveBeenCalled(); expect(state.approve).not.toHaveBeenCalled(); expect(state.claim).not.toHaveBeenCalled();
+  });
   it("claims stay dormant by default; enabling requires explicit reviewed activation", async () => {
     const body = { action: "claim", id: "d", hash: "h", accountId: "x:account", assetHashes: { "post.txt": "a".repeat(64) } };
     expect((await machine(request(body, "test-weekly-token"))).status).toBe(503); expect(state.claim).not.toHaveBeenCalled();
@@ -54,7 +60,7 @@ describe("weekly API authorization boundaries", () => {
     expect((await machine(request({ action: "result", id: "d", claimToken: "attempt", result: "FAILED", error: "secret raw platform response" }, "test-weekly-token"))).status).toBe(200);
     expect(state.complete).toHaveBeenCalledWith({ id: "d", claimToken: "attempt", result: "FAILED", platformId: "", noRequestSent: false });
   });
-  it("does not expose approval drafts to the machine", async () => {
+  it("approved dispatch inspection never returns an unapproved package", async () => {
     state.inspect.mockResolvedValue({ status: "DRAFT", manifest: { internal: true } });
     expect(await (await machine(request({ action: "inspect", week: "2026-10-19" }, "test-weekly-token"))).json()).toEqual({ ok: true, package: null });
   });

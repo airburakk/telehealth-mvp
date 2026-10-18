@@ -6,7 +6,8 @@ import type { SessionUser } from "../session";
 import { evaluateGates, type GateReport } from "./gates";
 import { parsePayload, payloadHash } from "./payload";
 import { loadSourceTexts, PlanError } from "./plan";
-import { seriesByKey, isDayString } from "./series";
+import { seriesByKey, isDayString, slotsOfWeek } from "./series";
+import { renderRequestBody } from "./render-client";
 import { WEEKLY_CHANNELS, reviewWeeklyPackage, weeklyDeliveryKey, weeklyManifestHash, type WeeklyManifest, type WeeklySnapshot, type WeeklyChannel } from "./weekly-package";
 
 type Tx = Prisma.TransactionClient;
@@ -190,6 +191,27 @@ export async function getWeeklyPackage(week: string) {
     void claimToken;
     return { ...view, effectiveState: d.state === "CLAIMED" && d.claimedAt && Date.now() - d.claimedAt.getTime() > 20 * 60000 ? "UNKNOWN" : d.state };
   }) };
+}
+
+/** Authenticated preparation input: read existing drafts, never create slots,
+ * mutate editor work or approve. The renderer receives the existing card model.
+ */
+export async function getWeeklyDrafts(week: string) {
+  if (!isDayString(week) || new Date(`${week}T00:00:00Z`).getUTCDay() !== 1) throw new PlanError("Pazartesi tarihi gerekli.");
+  const slots = slotsOfWeek(week);
+  const rows = await db.contentPlanItem.findMany({ where: { slotDay: { in: slots.map(s => s.slotDay) }, status: "DRAFT", weeklyPackageId: null } });
+  const items = [];
+  for (const { series, slotDay } of slots) {
+    const row = rows.find(r => r.seriesKey === series.key && r.slotDay === slotDay), payload = parsePayload(row?.payload);
+    if (!row || !payload) continue;
+    let ids: unknown;
+    try { ids = JSON.parse(row.sourceIds); } catch { continue; }
+    if (!Array.isArray(ids) || ids.some(id => typeof id !== "string")) continue;
+    const gates = evaluateGates({ series, payload, attestIdentity: row.attestIdentity, sourceIds: ids, sourceTexts: await loadSourceTexts(series, ids) });
+    items.push({ id: row.id, version: row.updatedAt.toISOString(), seriesKey: row.seriesKey, slotDay, contentHash: payloadHash(payload), payload,
+      render: renderRequestBody(series, payload, slotDay), gates, state: "DRAFT_REVIEW_ONLY" });
+  }
+  return { week, items, missing: slots.filter(s => !items.some(i => i.seriesKey === s.series.key && i.slotDay === s.slotDay)).map(s => ({ seriesKey: s.series.key, slotDay: s.slotDay })) };
 }
 
 async function intact(tx: Tx, p: Awaited<ReturnType<typeof lockedPackage>>, itemId: string) {
