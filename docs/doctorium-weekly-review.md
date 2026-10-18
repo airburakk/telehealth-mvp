@@ -18,10 +18,14 @@ another worker owns its read-only browser inspection. Its actual nodes,
 credentials and executions were not accessed by this repository worker. The
 parent's read-only worker subsequently verified a 24-node Daily Selection flow
 with 07:45 Europe/Istanbul scheduling, X/Facebook images and immediate LinkedIn
-Buffer publishing. No YouTube, Instagram or approval nodes were observed. The
-toolbar changed from Published to Publish for an unknown reason; compare the
-published/draft revisions before any live save or publish. No export is available
-here, and no live mutation is authorized by this implementation.
+Buffer publishing. No YouTube, Instagram or approval nodes were observed.
+Subsequent read-only UI-export comparison by the parent worker verified active=true,
+active revision `d6d0014a-aaeb-42ad-8d0c-b6a92357f771` (16 October) and draft
+`b4f9265a-432d-4e70-9a87-dd27a146ded7`: all 24 node objects and connections are
+identical. The Published/Publish toolbar difference is version metadata, not an
+observed node/connection change. Raw exports may contain credentials and are not
+stored in this repository. See the service document for the limited account
+mapping evidence; no live mutation was performed or activated here.
 
 Daily Selection uses `/bulten.png`, `/sosyal/uret`, `/sosyal/durum` and the
 existing MP4-only `dosyalar` field. Rubric publishing has a separate

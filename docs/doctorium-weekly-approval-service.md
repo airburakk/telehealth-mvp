@@ -108,12 +108,27 @@ Apply additive schema before code only after production approval; keep the publi
 flag disabled. Test explicit review, stale edits, rollback of all item approvals,
 legacy exclusion, concurrent claims, uncertain callbacks and human reconciliation.
 
-Before any live n8n edit, back up/export verified workflow TnY74Tf0YUtMXxyR,
-record its active and published/draft revision state, nodes/connections/schedules
-and credential references in access-controlled storage. The browser's toolbar
-changed from Published to Publish without a reported edit; resolve that difference
-before saving/publishing. Do not rewire the dynamic daily news workflow into a
-weekly package. Build a separate inactive rubric flow and report the exact diff/
+The parent worker's subsequent read-only UI-export comparison verified:
+
+| Observation | Evidence and boundary |
+|---|---|
+| Workflow | TnY74Tf0YUtMXxyR, active=true |
+| Active revision | d6d0014a-aaeb-42ad-8d0c-b6a92357f771, 16 October |
+| Draft revision | b4f9265a-432d-4e70-9a87-dd27a146ded7 |
+| Revision comparison | All 24 complete node objects and connections identical; toolbar difference is version metadata |
+| X | Credential display name “X (Twitter) - Doctorium”; exact handle not independently established |
+| Facebook | Destination page ID 1324715560732735; do not infer independent account ownership/scope validation |
+| Buffer | Channel 6abf7282ea19ca0bde516274; workflow-code label “Doctorium (LinkedIn Page)”; external account identity not independently verified |
+
+These identifiers/display labels are nonsecret mapping evidence, not proof that
+the credentials target the intended accounts or have all required permissions.
+No save, publish, execution, deployment or live change was performed. Raw exports
+may contain credentials: keep them out of Git, user artifacts and logs.
+
+Before any live n8n edit, retain the actual backup in access-controlled storage and
+recheck that these revision IDs, active state and node/connection equality still
+hold. Do not rewire the dynamic daily news workflow into a weekly package. Build
+a separate inactive rubric flow and report the exact diff/
 effect for approval. Verify actual platform account scopes and test failures before
 separately approving activation. The manual dry-review JSON is not a live backup.
 
