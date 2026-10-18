@@ -45,6 +45,9 @@ human review of the note, so an extra per-item approval is unnecessary. Preparat
 may preview an unattested draft but never saves an attestation; only that explicit
 human confirmation records attestIdentity=true inside the approval transaction.
 Automatic identity scanning and source-quote validation still cannot be bypassed.
+Definite SERIALIZABLE/deadlock rollbacks may retry the DB-only transaction at most
+three times with fresh reads. Connection failures/unknown commit outcomes and
+platform upload requests are never automatically retried by this mechanism.
 
 Package receipts survive revocation. A new revision requires revoking the open
 package first and reviewing the new item versions/assets/accounts/schedule.

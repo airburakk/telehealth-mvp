@@ -51,10 +51,17 @@ export function normalizeWeeklyManifest(raw: unknown): WeeklyManifest {
 }
 
 async function transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
-  try { return await db.$transaction(fn, { isolationLevel: "Serializable", timeout: 30000 }); }
-  catch (e) {
-    if (["P2034", "P2002"].includes((e as { code?: string })?.code ?? "")) conflict("Paket başka bir işlemde değişti; yenileyin.");
-    throw e;
+  // These callbacks contain DB work only. Retry ONLY PostgreSQL's definite
+  // transaction rollback, never network/unknown outcomes or platform requests.
+  for (let attempt = 0; ; attempt++) {
+    try { return await db.$transaction(fn, { isolationLevel: "Serializable", timeout: 30000 }); }
+    catch (e) {
+      const error = e as { code?: string; meta?: { code?: string } };
+      const rolledBack = error.code === "P2034" || (error.code === "P2010" && ["40001", "40P01"].includes(error.meta?.code ?? ""));
+      if (rolledBack && attempt < 2) continue;
+      if (rolledBack || error.code === "P2002") conflict("Paket başka bir işlemde değişti; yenileyin.");
+      throw e;
+    }
   }
 }
 async function lockedPackage(tx: Tx, id: string) {

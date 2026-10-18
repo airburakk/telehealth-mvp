@@ -4,7 +4,7 @@ import { PlanError } from "@/lib/social-calendar/plan";
 import { getWeeklyPackage, claimWeeklyDelivery, completeWeeklyDelivery } from "@/lib/social-calendar/weekly-store";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 /** Dormant worker surface. Reuses the existing kart-held token; never approves packages. */
 export async function POST(req: Request) {
   const secret = process.env.CONTENT_PLAN_TOKEN;

@@ -5,7 +5,7 @@ import { PlanError } from "@/lib/social-calendar/plan";
 import { prepareWeeklyPackage, approveWeeklyPackage, revokeWeeklyPackage, reconcileWeeklyDelivery } from "@/lib/social-calendar/weekly-store";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 export async function POST(req: Request) {
   const actor = await getCurrentUser();
   if (!actor || actor.role !== "ADMIN") return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
