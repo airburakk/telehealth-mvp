@@ -15,31 +15,31 @@ datasource db {
 
 /// Platform kullanıcısı (kimlik doğrulama + rol)
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         String // PATIENT, DOCTOR, COORDINATOR, ETHICS, ADMIN, PARTNER
-  doctorId     String? // DOCTOR rolündeki kullanıcının hekim profili
-  partnerId    String? // PARTNER rolündeki kullanıcının Partner Doktor profili (M5 Faz 3)
-  sessionVersion Int    @default(0) // JWT iptali: token'daki `sv` claim'i ile karşılaştırılır; artınca eski oturumlar düşer (logout-all / gelecekte şifre değişikliği)
-  patientJourney String? // hasta yolculuğu — başvurulan akışta damgalanır (lib/patient-journey): GENERAL | SECOND_OPINION | FREE_CARE | HEALTH_TOURISM; null = henüz başvurmadı → GENERAL nav
+  id                     String    @id @default(cuid())
+  email                  String    @unique
+  passwordHash           String
+  name                   String
+  role                   String // PATIENT, DOCTOR, COORDINATOR, ETHICS, ADMIN, PARTNER
+  doctorId               String? // DOCTOR rolündeki kullanıcının hekim profili
+  partnerId              String? // PARTNER rolündeki kullanıcının Partner Doktor profili (M5 Faz 3)
+  sessionVersion         Int       @default(0) // JWT iptali: token'daki `sv` claim'i ile karşılaştırılır; artınca eski oturumlar düşer (logout-all / gelecekte şifre değişikliği)
+  patientJourney         String? // hasta yolculuğu — başvurulan akışta damgalanır (lib/patient-journey): GENERAL | SECOND_OPINION | FREE_CARE | HEALTH_TOURISM; null = henüz başvurmadı → GENERAL nav
   // Profil hafızası (basitleştirme Faz 0, 2026-07-12): "bir kez sor, her yerde kullan" — intake'te
   // girilen değerler buraya yaz-geri edilir (son değer kazanır), sonraki intake'ler prefill eder.
   // Yalnız PATIENT rolünde dolar; telefon KİMLİK verisi → at-rest ŞİFRELİ (lib/crypto encryptField).
-  patientCountry     String? // ISO ülke kodu (DZ, TR, ...)
-  patientLanguage    String? // dil ADI (air_lang ile aynı sözlük: "Türkçe", "Arapça", ...)
-  patientPhone       String? // ŞİFRELİ (enc:v1:...) — decryptField ile okunur
-  patientContactPref String? // APP | SMS | EMAIL
+  patientCountry         String? // ISO ülke kodu (DZ, TR, ...)
+  patientLanguage        String? // dil ADI (air_lang ile aynı sözlük: "Türkçe", "Arapça", ...)
+  patientPhone           String? // ŞİFRELİ (enc:v1:...) — decryptField ile okunur
+  patientContactPref     String? // APP | SMS | EMAIL
   // Sağlık beyanı profil hafızası (sigorta risk formu, 2026-07-20): son beyanın kopyası — sonraki
   // vakada prefill. Özel nitelikli sağlık verisi → at-rest ŞİFRELİ JSON (encryptField).
-  patientHealthHistory String? // ŞİFRELİ JSON {chronic:string[], meds:bool, smoking:bool, majorSurgery:bool}
+  patientHealthHistory   String? // ŞİFRELİ JSON {chronic:string[], meds:bool, smoking:bool, majorSurgery:bool}
   // E-posta doğrulama (Auth Faz 5, v5.6 — RESEND_API_KEY yoksa DORMANT): null = doğrulanmamış YENİ
   // e-posta kaydı (girişi engellenir). Mevcut hesaplar migration'da damgalandı; dormant modda ve
   // Google girişlerinde kayıt anında damgalanır (Google e-postayı zaten doğrulamış olur).
-  emailVerifiedAt      DateTime?
-  emailVerifyTokenHash String? // aktif doğrulama token'ının sha256'sı (ham token yalnız e-postadaki bağlantıda)
-  emailVerifySentAt    DateTime? // son doğrulama e-postası zamanı (yeniden-gönder soğuması + 24s token TTL tabanı)
+  emailVerifiedAt        DateTime?
+  emailVerifyTokenHash   String? // aktif doğrulama token'ının sha256'sı (ham token yalnız e-postadaki bağlantıda)
+  emailVerifySentAt      DateTime? // son doğrulama e-postası zamanı (yeniden-gönder soğuması + 24s token TTL tabanı)
   /// Parola sıfırlama (v6.194) — "şifremi unuttum" akışı. Doğrulama alanlarıyla AYNI desen ama
   /// AYRI kolonlar: iki akışın TTL'i (24s ↔ 1s) ve anlamı farklı; tek kolonu paylaşsalardı
   /// doğrulama bağlantısı sıfırlama bağlantısını sessizce geçersizleştirirdi.
@@ -48,42 +48,42 @@ model User {
   /// Parolasız GİRİŞ BAĞLANTISI (Doctorium deneme üyeliği, 2026-09-05 — plan frolicking-knitting-globe A2/A3).
   /// Doğrulama/sıfırlama alanlarıyla AYNI desen, AYRI kolonlar (TTL 20 dk). Bağlantı yalnız passwordSetAt=null
   /// hesaplara oturum açar: parolalı hesapta posta kutusu anında erişim OLMAZ (reset-password kararıyla tutarlı).
-  loginTokenHash   String? // aktif giriş bağlantısı token'ının sha256'sı (ham token yalnız e-postadaki bağlantıda)
-  loginTokenSentAt DateTime? // son bağlantı e-postası (20 dk TTL tabanı + yeniden-gönder soğuması)
+  loginTokenHash         String? // aktif giriş bağlantısı token'ının sha256'sı (ham token yalnız e-postadaki bağlantıda)
+  loginTokenSentAt       DateTime? // son bağlantı e-postası (20 dk TTL tabanı + yeniden-gönder soğuması)
   /// Apple ile Giriş (v6.82) — Apple'ın kalıcı kullanıcı kimliği (ID token `sub`). E-POSTA DEĞİL:
   /// kullanıcı "E-postamı Gizle"yi seçerse bize @privaterelay.appleid.com adresi gelir ve o adres,
   /// uygulama Apple ID'den kaldırılıp yeniden bağlanınca DEĞİŞİR → yalnız e-postaya bakan eşleme
   /// aynı kişiye ikinci hesap açardı. `sub` opaktır, kimlik taşımaz (şifrelenmez — unique index gerekir).
   /// ⚠️ Hesap silmede NULL'lanır (lib/account-deletion): aksi halde silinmiş kabuk, Apple girişiyle canlanırdı.
-  appleSub             String?   @unique
+  appleSub               String?   @unique
   // Hesap silme (v6.11 — lib/account-deletion): damgalıysa kişisel alanlar (email/name/patient*) ZATEN
   // boşaltılmış + parola çöpe atılmış + sessionVersion artırılmıştır → giriş imkânsız, kişisel veri gitmiştir.
   // ⚠️ Satır neden hemen SİLİNMİYOR: sakladığımız klinik kayıtların RIZASINI ispat eden ConsentRecord.userId
   // bağı kopmasın (yasal saklama süresi boyunca "bu kaydı neden tutuyoruz"un kanıtı). Süre dolunca
   // (Case.purgeAfter) kabuk da imha edilir → o an gerçekten hiçbir şey kalmaz.
-  deletedAt    DateTime?
+  deletedAt              DateTime?
   // Kurumsal üyelik doğrulaması (2026-08-12): PARTNER/AGENCY/HEALTH_PRO self-signup hesapları null
   // açılır; /admin/personel-onay insan onayı damgalar. Damgasız hesap rol paneline giremez
   // (/kayit/durum'a iner). DOCTOR bu alana BAKMAZ (kendi damga sistemi: verified/diplomaVerifiedAt/
   // activatedAt). Mevcut personel hesapları migration'da damgalandı (demo/seed kırılmasın).
-  staffVerifiedAt DateTime?
+  staffVerifiedAt        DateTime?
   /// Kullanıcının BİLDİĞİ bir parola belirlenmiş mi (v6.187 — Doctorium "Hesabım").
   /// Google/Apple ile açılan hesaplara rastgele gölge-hash yazılır (auth callback'leri); o hash
   /// hiçbir parolayla eşleşmez ve kullanıcı onu bilmez. Bu alan olmadan "mevcut şifrenizi girin"
   /// formu OAuth üyesine geçilemez bir kapı gösterirdi. Dolu = parola değiştirme formu; null =
   /// "parola belirle" yolu. Parola belirlendiğinde/değiştirildiğinde damgalanır.
-  passwordSetAt DateTime?
+  passwordSetAt          DateTime?
   /// Pasiflik süpürmesi (A06 madde 3.1b, kod Paket C — 2026-09-18): son LOGIN olayında lib/login-activity.ts
   /// recordLogin() damgalar (Doctor.lastLoginAt ile aynı tek dokunuş noktası — 4 giriş yolu). null = kolon
   /// açıldığından beri giriş yok → lib/aura-abandoned-sweep.ts createdAt'i taban alır (migration AccessLog LOGIN
   /// satırlarından geri doldurdu). DOCTOR rolünde de damgalanır ama o rol AURA süpürmesinin DIŞINDADIR
   /// (Doctorium süpürmesi + 3.17 elle kapatma).
-  lastLoginAt           DateTime?
+  lastLoginAt            DateTime?
   /// "Hesabınız 30 gün içinde silinecek" bildiriminin gönderildiği an (lib/aura-abandoned-sweep.ts) —
   /// Doctor.abandonedNoticeSentAt eşleniği. Giriş yapılınca recordLogin NULL'lar: yeni bir pasiflik döneminde
   /// bildirim yeniden gönderilir (aksi hâlde eski damga 3 yıl sonra bildirimsiz imhaya yol açardı).
-  abandonedNoticeSentAt DateTime?
-  createdAt    DateTime @default(now())
+  abandonedNoticeSentAt  DateTime?
+  createdAt              DateTime  @default(now())
 
   @@index([deletedAt]) // imha cron'u: süresi dolan silinmiş hesapları tarar
   @@index([lastLoginAt]) // aura-abandoned-sweep cron taraması: pasif hesap adayları (kod Paket C, 2026-09-18)
@@ -95,43 +95,43 @@ model User {
 /// Uzaktan sağlık hizmeti VERMEZ ve platform hasta veritabanına ERİŞEMEZ (ayrı tablo, ilişki yok).
 /// Tek yetkisi: kendi yönlendirdiği hastanın bilgisini ANONİMLEŞTİREREK konsültasyon talebi açmak.
 model PartnerDoctor {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
-  title       String   @default("Dr.")
+  title       String    @default("Dr.")
   country     String // ISO ülke kodu (yurtdışı) — DE, RU, AT ...
   institution String? // kurum/klinik adı
   branch      String? // ana branş (varsa)
-  email       String   @unique
+  email       String    @unique
   phone       String?
-  language    String?  @default("İngilizce") // partner doktorun kendi okuma dili (haber akışı + arayüz çevirisi)
-  verified    Boolean  @default(false)
+  language    String?   @default("İngilizce") // partner doktorun kendi okuma dili (haber akışı + arayüz çevirisi)
+  verified    Boolean   @default(false)
   lastSeenAt  DateTime? // Faz 3 presence/heartbeat — son aktiflik (online tespiti için)
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 }
 
 /// KVKK/açık onam kaydı — kullanıcı bazlı, sürümlü (Consent Manager Faz 0).
 /// Bir kez alınır; CONSENT_VERSION (lib/consent-config) artarsa kullanıcı bir kez yeniden onaylar.
 /// scope ileride genişleyebilir (ör. ülkeye/işleme özel ayrı kapsamlar).
 model ConsentRecord {
-  id        String   @id @default(cuid())
-  userId    String
-  scope     String   @default("GENERAL_KVKK")
-  version   Int
-  grantedAt DateTime @default(now())
-  ip        String?
+  id            String    @id @default(cuid())
+  userId        String
+  scope         String    @default("GENERAL_KVKK")
+  version       Int
+  grantedAt     DateTime  @default(now())
+  ip            String?
   // İspat & bütünlük katmanı (RFC 3161 onam-ispat — dijital-onam-zaman-damgasi). Eski kayıtlar null (geriye dönük backfill yok).
-  textHash    String? // onaylanan metnin (CONSENT_TEXT, o sürüm) SHA-256 hash'i
-  userAgent   String? // cihaz / tarayıcı (User-Agent)
-  channel     String  @default("WEB") // WEB | MOBILE | SMS_OTP ... (çok-kanallı onam)
-  prevHash    String? // bir önceki kaydın entryHash'i (append-only hash-zinciri) — GENESIS=ilk
-  entryHash   String? // SHA-256(userId|scope|version|textHash|ip|ua|grantedAt|prevHash) — bu kaydın mührü
-  tsAuthority String? // zaman damgası otoritesi (şimdilik SIMULATED-LOCAL; üretim = RFC 3161 TSA — hukuk)
-  tsTime      DateTime? // TSA'nın güvenilir zamanı
-  tsToken     String? // imzalı zaman damgası token'ı (entryHash üzerinde)
+  textHash      String? // onaylanan metnin (CONSENT_TEXT, o sürüm) SHA-256 hash'i
+  userAgent     String? // cihaz / tarayıcı (User-Agent)
+  channel       String    @default("WEB") // WEB | MOBILE | SMS_OTP ... (çok-kanallı onam)
+  prevHash      String? // bir önceki kaydın entryHash'i (append-only hash-zinciri) — GENESIS=ilk
+  entryHash     String? // SHA-256(userId|scope|version|textHash|ip|ua|grantedAt|prevHash) — bu kaydın mührü
+  tsAuthority   String? // zaman damgası otoritesi (şimdilik SIMULATED-LOCAL; üretim = RFC 3161 TSA — hukuk)
+  tsTime        DateTime? // TSA'nın güvenilir zamanı
+  tsToken       String? // imzalı zaman damgası token'ı (entryHash üzerinde)
   // Bağ-koruyan imha (kabuk purge'u): damgalıysa ip/userAgent BOŞALTILMIŞTIR (kişisel veri imhası;
   // kalan userId cuid'i User satırı silindiği için anonimdir). Satır zincir HALKASI olarak durur —
   // fiziksel silme append-only zinciri kırardı. verifyConsentChain purged satırda mührü atlar, bağı sürdürür.
-  purgedAt    DateTime?
+  purgedAt      DateTime?
   // Paket 7 (v6.285, 2026-09-20): kapıda GÖSTERİLEN bilgilendirme çevirisi — dil adı ("Rusça") + o çeviri metninin SHA-256'sı.
   // Kanonik metin hash'i textHash'te ve mühürde DEĞİŞMEZ; bu ikisi ispat ekidir (hasta hangi dilde hangi metni okudu).
   // TR/EN okuyanlarda ve eski kayıtlarda null. Mühür formülüne dahil değil (v2 imzası korunur).
@@ -199,63 +199,63 @@ model KvkkApplication {
 
 /// Platformdaki uzman hekim
 model Doctor {
-  id            String         @id @default(cuid())
-  name          String
-  title         String // Prof. Dr., Doç. Dr., Op. Dr., Uzm. Dr.
-  branch        String
-  city          String
-  languages     String // CSV: "Türkçe,Rusça,İngilizce"
-  markets         String? // M5: hekimin hizmet verdiği pazarlar — CSV ISO kod "RU,DE,DZ" (boş = tümü)
+  id                         String           @id @default(cuid())
+  name                       String
+  title                      String // Prof. Dr., Doç. Dr., Op. Dr., Uzm. Dr.
+  branch                     String
+  city                       String
+  languages                  String // CSV: "Türkçe,Rusça,İngilizce"
+  markets                    String? // M5: hekimin hizmet verdiği pazarlar — CSV ISO kod "RU,DE,DZ" (boş = tümü)
   // v4.19 veri dürüstlüğü: pazarlama-değerli uydurma @default'lar KALDIRILDI (yeni doktor "4.7★/JCI'lı"
   // doğmasın — sağlık reklamı mevzuatı). null = "veri yok" → UI gizler, eşleştirme metriği inactive olur.
   // Mevcut (demo) satırların değerleri migration'da KORUNDU; demo zenginliği seed'in AÇIK değerlerinden gelir.
-  verified        Boolean        @default(false) // güvenlik kapısı — yalnız admin onayı true yapar (kazara-doğrulanmış create riski kapandı)
-  bio             String?
-  color           String         @default("#16467a")
-  rating          Float? // gerçek Review agregasyonu bağlanana kadar yalnız seed/elle veri
-  successRate     Int?
-  experienceYears Int?
-  jci             Boolean? // doğrulanmış akreditasyon belgesi girilince true — asla varsayılan değil
-  capacity        Int            @default(20) // aylık işlem kapasitesi (operasyonel varsayılan; preferences 1-200 clamp'li)
-  procedures      String? // M5: doktorun yaptığı işlemler + kendi fiyatı — JSON {"<kod>": <fiyat₺>}
-  licenseNo       String? // FHIR Faz 0: hekim diploma/tescil no → Practitioner.identifier
+  verified                   Boolean          @default(false) // güvenlik kapısı — yalnız admin onayı true yapar (kazara-doğrulanmış create riski kapandı)
+  bio                        String?
+  color                      String           @default("#16467a")
+  rating                     Float? // gerçek Review agregasyonu bağlanana kadar yalnız seed/elle veri
+  successRate                Int?
+  experienceYears            Int?
+  jci                        Boolean? // doğrulanmış akreditasyon belgesi girilince true — asla varsayılan değil
+  capacity                   Int              @default(20) // aylık işlem kapasitesi (operasyonel varsayılan; preferences 1-200 clamp'li)
+  procedures                 String? // M5: doktorun yaptığı işlemler + kendi fiyatı — JSON {"<kod>": <fiyat₺>}
+  licenseNo                  String? // FHIR Faz 0: hekim diploma/tescil no → Practitioner.identifier
   // M6 Akademik & Eğitim — kalıcı profil (boşsa lib/doctor-profile.ts deterministik üretim fallback eder)
-  eduSchool       String? // mezun olunan tıp fakültesi
-  eduYear         Int? // mezuniyet yılı
-  specBoard       String? // uzmanlık belgesi / yan dal adı
-  specYear        Int? // uzmanlık (belge) yılı
-  certifications  String? // JSON string[] — mesleki sertifika/üyelikler
-  publications    String? // JSON [{title,venue,year}] — akademik yayın/çalışmalar
-  photo           String? // profil fotoğrafı yolu (ör. /photos/pool/p07.jpg ya da public Blob URL'i); yoksa cinsiyet-fallback (DoctorArt)
+  eduSchool                  String? // mezun olunan tıp fakültesi
+  eduYear                    Int? // mezuniyet yılı
+  specBoard                  String? // uzmanlık belgesi / yan dal adı
+  specYear                   Int? // uzmanlık (belge) yılı
+  certifications             String? // JSON string[] — mesleki sertifika/üyelikler
+  publications               String? // JSON [{title,venue,year}] — akademik yayın/çalışmalar
+  photo                      String? // profil fotoğrafı yolu (ör. /photos/pool/p07.jpg ya da public Blob URL'i); yoksa cinsiyet-fallback (DoctorArt)
   /// Profil tanıtım videosu (2026-08-14) — YouTube/Vimeo URL'i YA DA public Blob URL'i (client-upload).
   /// ≤60 sn kuralı İSTEMCİDE doğrulanır (sunucu süre ölçemez — ffmpeg yok); gerçek tavan Blob 50MB sınırı.
-  introVideo      String?
+  introVideo                 String?
   // M5 Doktor Ana Sayfa onboarding & pencere görünürlüğü (lib/doctor-home.ts)
-  onboardedAt        DateTime? // ilk-giriş onboarding kapısı tamamlandı mı (null = /doktor/baslangic'a yönlendir)
-  freeCareOptIn      Boolean   @default(false) // Ücretsiz Sağlık Hizmeti vakası kabul ediyor mu → Ana Sayfa penceresi görünürlüğü (anlık müsaitlik = freeCareState ayrı)
-  consultOptIn       Boolean   @default(false) // Partner konsültasyon taleplerini yanıtlıyor mu → Konsültasyon Talepleri penceresi görünürlüğü (yanıt başına ödeme, simüle)
+  onboardedAt                DateTime? // ilk-giriş onboarding kapısı tamamlandı mı (null = /doktor/baslangic'a yönlendir)
+  freeCareOptIn              Boolean          @default(false) // Ücretsiz Sağlık Hizmeti vakası kabul ediyor mu → Ana Sayfa penceresi görünürlüğü (anlık müsaitlik = freeCareState ayrı)
+  consultOptIn               Boolean          @default(false) // Partner konsültasyon taleplerini yanıtlıyor mu → Konsültasyon Talepleri penceresi görünürlüğü (yanıt başına ödeme, simüle)
   /// v6.105 (kullanıcı kararı 2026-08-17): İkinci Görüş ve Sağlık Turizmi panelleri de TERCİHE
   /// bağlandı (önce so=ünvanla otomatik, tourism=koşulsuz açıktı). ⚠️ REGRESYON KORUMASI: varsayılan
   /// false ama migration MEVCUT satırları true damgalar — eski doktorlar sahip oldukları paneli
   /// kaybetmez, seçim yalnız yeni kayıtlar için anlam taşır (m5-doctor-signup "Ders 1").
   /// soOptIn ünvan kapısını KALDIRMAZ: panel = soEligible(title) && soOptIn (iki şart birlikte).
-  soOptIn            Boolean   @default(false) // İkinci Görüş panelini istiyor mu (Doç./Prof. şartı AYRICA aranır)
-  tourismOptIn       Boolean   @default(false) // Sağlık Turizmi panelini istiyor mu (her branşa açık — ünvan şartı yok)
+  soOptIn                    Boolean          @default(false) // İkinci Görüş panelini istiyor mu (Doç./Prof. şartı AYRICA aranır)
+  tourismOptIn               Boolean          @default(false) // Sağlık Turizmi panelini istiyor mu (her branşa açık — ünvan şartı yok)
   /// Doctorium (v6.48) — hekimin haber akışında görmek istediği branş SLUG'ları. JSON string[].
   /// null/boş = yalnız kendi branşı (varsayılan davranış, tercih ekranına hiç girmemiş hekim).
-  newsBranches       String?
+  newsBranches               String?
   /// Doctorium Akış Tercihleri (Faz 2, 2026-08-14) — Akışım'a hangi BÖLÜMLER girsin. JSON string[]
   /// ("akademik" | "sektorel" | "ilac" | "mevzuat" | "kongre" | "kariyer"). null/boş = TÜMÜ
   /// (tercih ekranına hiç girmemiş hekim her bölümü görür — daraltma bilinçli seçimdir).
-  feedModules        String?
+  feedModules                String?
   /// Doctorium kongre alarmı (v6.49): takip edilen kongrenin BAŞLANGICINDAN kaç gün önce
   /// hatırlatılsın. null = alarm kapalı. Hatırlatma günlük bakım cron'unda gönderilir.
-  congressAlertDays  Int?
+  congressAlertDays          Int?
   /// Doctorium kongre alarmı (v6.49): bildiri teslim / erken kayıt SON TARİHİNDEN kaç gün önce.
   /// null = kapalı. Son tarih alarmı ayrı tutulur — kongreye 30 gün varken bildiri süresi dolabilir.
   /// 🔄 v6.62'de İKİYE AYRILDI (aşağıdaki iki alan). Bu alan geriye-uyum için DURUYOR: eski değer
   /// migration'da iki yeni alana kopyalandı; yeni kod yalnız yeni alanları okur.
-  congressDeadlineAlertDays Int?
+  congressDeadlineAlertDays  Int?
   /// v6.62: BİLDİRİ son gönderim tarihinden kaç gün önce uyarılsın. null = kapalı.
   /// Ayrı eşik: bildiri hazırlamak haftalar sürer, erken kayıt ise tek işlemdir — aynı gün sayısı
   /// ikisine de doğru gelmiyordu (kullanıcı isteği). Eşik her kongrenin KENDİ tarihine uygulanır.
@@ -267,10 +267,10 @@ model Doctor {
   /// parseEventTypes). Önceden yalnız URL'de (?t=) yaşıyordu, sekmeden çıkınca unutuluyordu;
   /// tercihler sayfasına taşınınca KALICI olması gerekti. Boş dizi = "hepsi" DEĞİL, geçersiz —
   /// hepsi için "hepsi" anahtarı yazılır (URL sözleşmesiyle aynı dil).
-  congressEventTypes String?
+  congressEventTypes         String?
   /// v6.132: etkinlik KAPSAM tercihi — "ulusal" | "uluslararasi" | null (tümü).
   /// URL'deki ?s= ile aynı değerler (lib/doctorium parseScope).
-  congressScope String?
+  congressScope              String?
   /// Doctorium GÖRÜNÜM SÜZGEÇLERİ kalıcı varsayılanı (v6.142, kullanıcı kararı 2026-08-23):
   /// Sektörel/İlaç & Cihaz/Mevzuat sekmelerindeki Kaynak/Geriye-dönük/Kategori artık kalıcı
   /// tercih — etkinlik türü/kapsamının (yukarıdaki iki alan) v6.132'de aldığı yolu izler.
@@ -280,13 +280,13 @@ model Doctor {
   /// varsayılan (lib/doctorium parseViewPrefs — DEFAULT_RANGE + kategori/kaynak "tümü").
   /// URL parametresi (?s=/?d=/?c=) tercihi yalnız o GÖRÜNÜM için ezer, kalıcı tercihi
   /// DEĞİŞTİRMEZ (v6.132'nin congressEventTypes/congressScope sözleşmesiyle aynı).
-  doctoriumViewPrefs String?
+  doctoriumViewPrefs         String?
   /// Doctorium Post — günlük özet aboneliği (2026-08-24): null = kapalı (varsayılan; abonelik
   /// AÇIK SEÇİMDİR — ⚖️ ETK/İYS değerlendirmesi bu opt-in'e dayanır, varsayılanı açma) ·
   /// "app" = uygulama içi bildirim · "email" = e-posta + uygulama içi. E-posta kanalı Resend
   /// dormant'ken de seçilebilir (kayıt tutulur, gönderim simüle edilir — lib/email.ts deseni).
   /// E-postadaki tek-tık çıkış (RFC 8058) bu alanı null'a çeker (lib/daily-digest.ts).
-  digestChannel String?
+  digestChannel              String?
   /// Post bülteni tek-tık çıkış anahtarı (v6.198) — doktor başına RASTGELE, İLK bültende üretilip
   /// kalıcı saklanır (eski e-postalardaki bağlantılar çalışmaya devam etsin).
   /// ⚠️ NEDEN DB'DE, TÜRETİLMİŞ DEĞİL: token önce SESSION_SECRET'lı HMAC'ti; bülten AURA
@@ -295,35 +295,35 @@ model Doctor {
   /// oturum çerezi doctorium.tr'de doğrulanmıyor) → çıkış bağlantısı 403 verirdi. Veritabanı iki
   /// marka arasında ZATEN ORTAK olduğu için token'ı buraya taşımak env paritesi ihtiyacını
   /// tamamen kaldırır.
-  digestUnsubToken String?
-  dailyDigests  DailyDigest[]
+  digestUnsubToken           String?
+  dailyDigests               DailyDigest[]
   /// Doctorium sponsorlu içerik KİŞİSELLEŞTİRME açık rızası (v6.68 Faz 1): dolu = rıza verildi
   /// (verildiği an); null = yok/geri alındı → doktora yalnız hedefsiz (bağlamsal) kampanya gösterilir.
   /// Durumun tek kaynağı bu alan; İSPAT izi ConsentRecord'da (scope SPONSOR_TARGETING — grant/revoke
   /// ayrı satırlar, lib/sponsor.ts). Reklamverene hiçbir kişisel veri gitmez (agregat sayaç yalnız).
-  sponsorPersonalizationAt DateTime?
+  sponsorPersonalizationAt   DateTime?
   /// AŞAMA 1 damgası (v6.124): DIPLOMA belgesi ACCEPTED olduğunda dolar (e-Devlet barkod okuması
   /// otomatik VEYA incelemeci onayı — refreshActivation eşitler; belge düşer/reddedilirse damga da
   /// düşer). Doctorium kapısının TEK doktor-yolu budur (öğrenci yolu studentVerifiedAt).
   /// Klinik kapı (activatedAt) AYRIDIR: diploma + Aşama 2 katmanları (§8.2 — SMS OTP + kurum bağı;
   /// katmanlar inene dek yalnız diploma).
-  diplomaVerifiedAt        DateTime?
+  diplomaVerifiedAt          DateTime?
   // ── AŞAMA 2 güvenlik katmanları (v6.126, Doximity uyarlaması — vault §8.2; kullanıcı kararı
   //    2026-08-19). Kapı kuralı KODDA: SMS ZORUNLU + [iş e-postası ∨ klinik telefonu] (kurum
   //    bağından biri yeterli — lib/doctor-verify.ts hasStage2Layers). Şart yalnız
   //    AURA_LAYER_GATE=1 iken uygulanır (dormant — kanallar aktive olmadan kapı sıkılaşmaz).
   /// Cep telefonu SMS OTP doğrulaması (hedef: Doctor.phone — zaten at-rest şifreli).
-  smsVerifiedAt            DateTime?
+  smsVerifiedAt              DateTime?
   /// Kurumsal iş e-postası (at-rest şifreli — encryptField). Serbest e-posta sağlayıcıları
   /// REDDEDİLİR (lib/doctor-verify.ts FREE_MAIL listesi); tam kurum-alan-adı kürasyonu todo.
-  workEmail                String?
+  workEmail                  String?
   /// İş e-postası OTP doğrulaması.
-  workEmailVerifiedAt      DateTime?
+  workEmailVerifiedAt        DateTime?
   /// Klinik/hastane telefonu geri-arama teyidi — İNSAN-İŞLETİMLİ: koordinatör, HealthTürkiye'deki
   /// RESMÎ tesis numarasını arayıp doktoru teyit eder ve damgalar (audit: CLINIC_PHONE_VERIFY).
-  clinicPhoneVerifiedAt    DateTime?
+  clinicPhoneVerifiedAt      DateTime?
   /// Geri-aramada teyit edilen tesisin adı (HealthTürkiye kaydından; kamuya açık dizin verisi).
-  clinicPhoneEstablishment String?
+  clinicPhoneEstablishment   String?
   /// Tıp/Diş Hekimliği öğrencisi damgası (v6.95; **v6.147'de MEKANİZMA DEĞİŞTİ** — kullanıcı
   /// kararı): eskiden STUDENT_CERT belgesi yüklenince dolardı (barkod sonucu hiç okunmuyordu —
   /// gerçek güvenlik sağlamıyordu, bkz. wiki/kavramlar/doktor-kimlik-dogrulama.md). Artık kurumsal
@@ -333,94 +333,94 @@ model Doctor {
   /// ve pazarlama yüzeyleri (sponsor/anket/ödül — isStudentOnly süzgeci) KAPALI kalır: öğrenci
   /// sağlık meslek mensubu değildir, tanıtım rejimi ona uygulanamaz. Mezuniyette diploma+MMSS
   /// yüklenince activatedAt dolar → süzgeç kendiliğinden kalkar.
-  studentVerifiedAt        DateTime?
+  studentVerifiedAt          DateTime?
   /// Doctorium üyeliğinden çıkış damgası (v6.187 — "Hesabım" bölümü, kullanıcı kararı 2026-08-29).
   /// AURA klinik hesabı da olan (Aşama 2) doktor üyelikten çıkarsa hesabı KAPANMAZ: yalnız
   /// Doctorium katmanı (kaydettikleri/takip/takvim/puan/tercih) silinir ve erişim kapanır.
   /// Ayrı damga şart — diplomaVerifiedAt/studentVerifiedAt üyelikten çıkışta silinmez (diploma
   /// doğrulaması klinik tarafın da dayanağıdır), dolayısıyla hasDoctoriumAccess tek başına
   /// kapanmazdı. Yeniden üye olunca null'lanır.
-  doctoriumOptOutAt        DateTime?
+  doctoriumOptOutAt          DateTime?
   /// DENEME ÜYELİĞİ (üç katman, kullanıcı kararı 2026-09-05 — lib/doctorium-tiers.ts): hesap açılırken
   /// (DOCTORIUM_TRIAL_ENABLED=1 ve öğrenci-dışı) ikisi birlikte dolar; süre TRIAL_DAYS=30. Katman çözücüsü
   /// trialEndsAt>now → TRIAL (içerik açık, pazarlama yüzeyleri kapalı), ≤now → LOCKED (portal kapalı, kilit ekranı).
   /// Diploma doğrulanınca VERIFIED baskındır; damgalar SİLİNMEZ (tarihsel iz). Doğrulanmayan hesap bitimden
   /// LOCKED_PURGE_DAYS=90 gün sonra, 30 gün önce bildirimle silinir (trial-sweep cron). null = deneme yolu değil.
-  trialStartedAt           DateTime?
-  trialEndsAt              DateTime?
+  trialStartedAt             DateTime?
+  trialEndsAt                DateTime?
   /// Gönderilen deneme uyarıları — JSON string[]: "7" | "3" | "1" | "ended" | "purge-notice"
   /// (CongressFollow.sentAlerts deseni: açık kayıt, bildirim satırından türetmeye göre daha okunaklı). İmha
   /// FAIL-CLOSED: "purge-notice" burada yoksa süre dolsa da silinmez (lib/doctorium-tiers shouldPurgeLockedTrial).
-  trialAlertsSent          String?
+  trialAlertsSent            String?
   /// v6.147 — öğrencinin kayıtta beyan ettiği üniversite (lib/universities.ts UNIVERSITIES'ten,
   /// resmî ad) + bölüm ("tip" | "dis-hekimligi"). Yalnız KAYIT ANINDA yazılır (sonradan
   /// düzenlenemez); domain eşleşmesi signup-student route'unda ZATEN doğrulanmış olarak buraya
   /// düşer — bu iki alan aynı zamanda "domain kontrolünden geçti" kanıtıdır.
-  studentUniversity        String?
-  studentDepartment        String?
+  studentUniversity          String?
+  studentDepartment          String?
   /// v6.147 — öğrenci e-postası doğrulama token'ı (email-verification.ts ile AYNI desen, ayrı
   /// alan çifti: bu güvenlik-kritik kapı genel hesap-doğrulamasının dormant-bypass'ından İZOLE).
   /// Ham token yalnız e-postadaki bağlantıda; DB'de yalnız sha256 hash'i.
-  studentVerifyTokenHash   String?
-  studentVerifySentAt      DateTime?
+  studentVerifyTokenHash     String?
+  studentVerifySentAt        DateTime?
   /// Öğrenci YOLU işareti (v6.95): /ogrenci hunisinden açılan hesap true doğar — belge henüz
   /// yüklenmemişken bile onboarding öğrenci modunda kalır (klinik belge/MMSS blokları HİÇ
   /// gösterilmez) ve HealthTürkiye dizin doğrulaması atlanır (öğrenci dizinde olmaz — yanlış
   /// NOT_FOUND bayrağı üretme). Erişimi AÇMAZ (kapı daima studentVerifiedAt/activatedAt).
-  studentTrack             Boolean   @default(false)
+  studentTrack               Boolean          @default(false)
   /// İnsan kaynakları iletişim izni (v6.87, opt-in — hizmete ŞART DEĞİL): dolu = doktor, İK
   /// uzmanlarının kendisiyle iletişime geçmesine açık onam verdi; null = yok/geri alındı.
   /// İSPAT izi ConsentRecord'da (scope HR_CONTACT / HR_CONTACT_REVOKE — lib/hr-consent.ts).
   /// İK modülü henüz YOK — onam şimdiden toplanır, modül geldiğinde yalnız dolu olanlar listelenir.
-  hrContactOptInAt         DateTime?
+  hrContactOptInAt           DateTime?
   // Ücretsiz Sağlık Hizmeti — anlık müsaitlik + kontenjan (gönüllü ücretsiz konsültasyon).
-  freeCareState       String    @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
-  freeCareQuota       Int       @default(10) // dönem (takvim haftası) başına kontenjan
-  freeCareUsed        Int       @default(0)
-  freeCareResetAt     DateTime? // kontenjan dönem başlangıcı
-  freeCareAvailableAt DateTime? // en son AVAILABLE olunan an (eşleştirme sırası / stale tespiti)
+  freeCareState              String           @default("OFFLINE") // OFFLINE | AVAILABLE | IN_SESSION
+  freeCareQuota              Int              @default(10) // dönem (takvim haftası) başına kontenjan
+  freeCareUsed               Int              @default(0)
+  freeCareResetAt            DateTime? // kontenjan dönem başlangıcı
+  freeCareAvailableAt        DateTime? // en son AVAILABLE olunan an (eşleştirme sırası / stale tespiti)
   // Klinik nöbet/müsaitlik — 3-seçenek kapısı (§8 mahremiyet/akış): Branş online · İcapçı (icap) · Nöbetçi (7/24 genel)
-  clinicalState       String    @default("OFFLINE") // OFFLINE | ONLINE | IN_SESSION — Branş/Nöbetçi gerçek-zaman klinik mevcudiyeti
-  onCall              Boolean   @default(false) // İcapçı: offline ama randevu (icap) açık
-  sentinel            Boolean   @default(false) // Nöbetçi yetkisi (7/24 genel/Dahiliye/Acil havuzu)
-  clinicalAvailableAt DateTime? // en son ONLINE olma anı (eşleştirme sırası)
+  clinicalState              String           @default("OFFLINE") // OFFLINE | ONLINE | IN_SESSION — Branş/Nöbetçi gerçek-zaman klinik mevcudiyeti
+  onCall                     Boolean          @default(false) // İcapçı: offline ama randevu (icap) açık
+  sentinel                   Boolean          @default(false) // Nöbetçi yetkisi (7/24 genel/Dahiliye/Acil havuzu)
+  clinicalAvailableAt        DateTime? // en son ONLINE olma anı (eşleştirme sırası)
   // CRM eşleştirme kalite indikatörleri (metadata; klinik içerik değil → şifreleme uyumlu) — lib/match-score.ts
-  icapNotified    Int            @default(0) // İcapçı olarak alınan randevu talebi bildirimi sayısı
-  icapOffered     Int            @default(0) // bu taleplere verilen randevu teklifi sayısı → icap dönüş oranı = offered/notified
+  icapNotified               Int              @default(0) // İcapçı olarak alınan randevu talebi bildirimi sayısı
+  icapOffered                Int              @default(0) // bu taleplere verilen randevu teklifi sayısı → icap dönüş oranı = offered/notified
   // Yanıt süresi (duyarlılık) — İcapçı talebe ne kadar hızlı teklif veriyor: ort = respTotalSec/respCount (additive sayaç)
-  respCount       Int            @default(0) // yanıtlanan (teklif verilen) İcapçı talebi sayısı
-  respTotalSec    Int            @default(0) // toplam yanıt süresi (saniye) — talep→teklif
-  lastSeenAt      DateTime? // Faz 3 presence/heartbeat — son aktiflik (konsültasyon video online tespiti)
+  respCount                  Int              @default(0) // yanıtlanan (teklif verilen) İcapçı talebi sayısı
+  respTotalSec               Int              @default(0) // toplam yanıt süresi (saniye) — talep→teklif
+  lastSeenAt                 DateTime? // Faz 3 presence/heartbeat — son aktiflik (konsültasyon video online tespiti)
   // M5 — Mesleki belge yükleme + aktivasyon kapısı (diploma + MMSS zorunlu; yüklemeden hesap aktifleşmez)
-  activatedAt          DateTime? // zorunlu belgeler tamam → hesap aktif; null = /doktor/baslangic'a yönlendir
+  activatedAt                DateTime? // zorunlu belgeler tamam → hesap aktif; null = /doktor/baslangic'a yönlendir
   // Zorunlu Mesleki Mali Sorumluluk Sigortası (MMSS) özeti — M3 Katman 3 malpraktis ek-prim girdisi
-  mmssInsurer          String? // sigorta şirketi
-  mmssPolicyNo         String? // poliçe no (at-rest şifreli — encryptField)
-  mmssCoverageLimit    Int? // teminat limiti (mmssCoverageCurrency biriminde)
-  mmssCoverageCurrency String?   @default("TRY") // "TRY" | "USD" — hesapta canlı kurla USD'ye normalize edilir
+  mmssInsurer                String? // sigorta şirketi
+  mmssPolicyNo               String? // poliçe no (at-rest şifreli — encryptField)
+  mmssCoverageLimit          Int? // teminat limiti (mmssCoverageCurrency biriminde)
+  mmssCoverageCurrency       String?          @default("TRY") // "TRY" | "USD" — hesapta canlı kurla USD'ye normalize edilir
   /// Faz 1b kararları (2026-08-14 — vault output/doktor-belge-kontrol-tasarimi): ROZET-ONLY —
   /// süre dolunca sistem ENGELLEMEZ, hekim-onay ekranı uyarı rozeti gösterir. Yalnız YENİ kayıtta
   /// zorunlu (form alanı beklemede; /api/doctor/mmss zaten opsiyonel kabul eder); mevcut hekimde
   /// boş kalabilir — doldurma bildirimi/yaptırımı bilinçli YOK (kullanıcı kararı).
-  mmssValidUntil       DateTime? // poliçe geçerlilik bitişi
-  mmssVerifiedAt       DateTime? // operasyon/admin doğrulaması (ileride; şimdilik yüklemeyle damgalanır)
+  mmssValidUntil             DateTime? // poliçe geçerlilik bitişi
+  mmssVerifiedAt             DateTime? // operasyon/admin doğrulaması (ileride; şimdilik yüklemeyle damgalanır)
   // 2026-07-10 — bildirim kanalı tercihi + HealthTürkiye kayıt doğrulaması
-  phone             String? // cep telefonu (at-rest şifreli, encryptField) — WhatsApp/SMS bildirim hedefi
-  notifyChannel     String    @default("APP") // bildirim kanalı: APP | WHATSAPP | SMS (WA/SMS dormant — env yoksa simülasyon)
-  registryStatus    String? // healthturkiye.gov.tr doğrulaması: FOUND | NOT_FOUND (null = henüz bakılmadı) → etik kurul onay bayrağı
-  registryCheckedAt DateTime? // son doğrulama zamanı
+  phone                      String? // cep telefonu (at-rest şifreli, encryptField) — WhatsApp/SMS bildirim hedefi
+  notifyChannel              String           @default("APP") // bildirim kanalı: APP | WHATSAPP | SMS (WA/SMS dormant — env yoksa simülasyon)
+  registryStatus             String? // healthturkiye.gov.tr doğrulaması: FOUND | NOT_FOUND (null = henüz bakılmadı) → etik kurul onay bayrağı
+  registryCheckedAt          DateTime? // son doğrulama zamanı
   /// Terk edilmiş hesap süpürmesi (05 madde 3.1b, Paket 2 — 2026-09-09): en son LOGIN olayında
   /// lib/login-activity.ts recordLogin() damgalar (tek dokunuş noktası — 4 giriş yolunun hepsi
   /// bunu çağırır). null = hiç giriş yapmamış → lib/abandoned-sweep.ts createdAt'i taban alır.
-  lastLoginAt            DateTime?
+  lastLoginAt                DateTime?
   /// "Hesabınız 30 gün içinde silinecek" bildiriminin gönderildiği an (lib/abandoned-sweep.ts) —
   /// trial-sweep.ts'in trialAlertsSent'inden farklı olarak tek bildirim olduğu için tarih yeterli.
-  abandonedNoticeSentAt  DateTime?
-  cases           Case[]
-  consultations   Consultation[]
-  reviews         Review[]
-  documents       DoctorDocument[]
-  createdAt       DateTime       @default(now())
+  abandonedNoticeSentAt      DateTime?
+  cases                      Case[]
+  consultations              Consultation[]
+  reviews                    Review[]
+  documents                  DoctorDocument[]
+  createdAt                  DateTime         @default(now())
 
   @@index([trialEndsAt]) // trial-sweep cron taraması: bitişi dolmuş/yaklaşan denemeler (2026-09-05)
   @@index([lastLoginAt]) // abandoned-sweep cron taraması: terk edilmiş hesap adayları (2026-09-09)
@@ -442,80 +442,80 @@ model Review {
 
 /// Triyajdan geçen hasta vakası
 model Case {
-  id                  String         @id @default(cuid())
-  userId              String? // vaka sahibi hasta (User.id) — hasta yalnız kendi vakalarını görür
-  patientName         String
-  country             String // DZ, LY, RU, KZ, KG, TR ...
-  language            String
+  id                    String         @id @default(cuid())
+  userId                String? // vaka sahibi hasta (User.id) — hasta yalnız kendi vakalarını görür
+  patientName           String
+  country               String // DZ, LY, RU, KZ, KG, TR ...
+  language              String
   // FHIR Faz 0: hasta stabil kimliği → Patient.identifier (içsel cuid korunur)
   patientIdentifier     String? // TC Kimlik / pasaport no (varsa)
   patientIdentifierType String? // "TC" | "PASSPORT" | ...
-  symptoms            String
-  durationText        String?
-  extra               String? // branşa özel yanıtların JSON'u
-  attachments         String? // CSV dosya adları
-  branch              String
-  urgency             Int // 1-5
-  reasoning           String
-  confidence          Int            @default(70) // 0-100
-  status              String         @default("NEW") // NEW, IN_REVIEW, IN_CONSULT, DONE
+  symptoms              String
+  durationText          String?
+  extra                 String? // branşa özel yanıtların JSON'u
+  attachments           String? // CSV dosya adları
+  branch                String
+  urgency               Int // 1-5
+  reasoning             String
+  confidence            Int            @default(70) // 0-100
+  status                String         @default("NEW") // NEW, IN_REVIEW, IN_CONSULT, DONE
   // Ön-konsültasyon ücret/sigorta kapısı (Modül 1)
-  consultFee          Int? // tahsil edilen görüşme ücreti (USD)
-  payStatus           String         @default("PENDING") // PENDING, PAID, INSURED
-  payMethod           String? // PAYMENT | INSURANCE
-  policyNo            String? // sigorta poliçe no (INSURANCE ise)
-  payRef              String? // ödeme referansı (PAYMENT ise, simüle)
+  consultFee            Int? // tahsil edilen görüşme ücreti (USD)
+  payStatus             String         @default("PENDING") // PENDING, PAID, INSURED
+  payMethod             String? // PAYMENT | INSURANCE
+  policyNo              String? // sigorta poliçe no (INSURANCE ise)
+  payRef                String? // ödeme referansı (PAYMENT ise, simüle)
   // AI Epikriz / Taburcu Raporu — hastanın tüm yolculuğunun klinik döküman sentezi
-  dischargeReport     String? // AI ile üretilen epikriz tam metni (başlık + bölümler)
-  dischargeStructured String? // JSON: yapılandırılmış bölümler (tanı, anamnez, ...)
-  dischargeAt         DateTime? // epikrizin oluşturulma zamanı
-  icd10Code           String? // FHIR Faz 0: tanı ICD-10 kodu → Condition.code (kodlu; yoksa metin)
-  labResults          String? // FHIR Faz 2: laboratuvar sonuçları JSON [{loinc,name,value,unit}] → Observation
+  dischargeReport       String? // AI ile üretilen epikriz tam metni (başlık + bölümler)
+  dischargeStructured   String? // JSON: yapılandırılmış bölümler (tanı, anamnez, ...)
+  dischargeAt           DateTime? // epikrizin oluşturulma zamanı
+  icd10Code             String? // FHIR Faz 0: tanı ICD-10 kodu → Condition.code (kodlu; yoksa metin)
+  labResults            String? // FHIR Faz 2: laboratuvar sonuçları JSON [{loinc,name,value,unit}] → Observation
   // M2→M3: doktorun görüşmede tavsiye ettiği tedaviler (KSHFT kodları + doktorun ₺ fiyatı)
   recommendedProcedures String? // JSON [{code,name,priceTRY}]
   // Ücretsiz Sağlık Hizmeti — ücretsiz konsültasyon akışı (mevcut Case yeniden kullanılır; normal vakada false/null).
-  freeCare            Boolean        @default(false)
-  freeCareStatus      String? // WAITING|MATCHED|IN_CONSULT|CONSULT_DONE|TREATMENT_NEEDED|ETHICS_REVIEW|ETHICS_REJECTED|ETHICS_APPROVED|COMPLETED|CANCELLED (hasta sıradan çekildi, Faz 4)
+  freeCare              Boolean        @default(false)
+  freeCareStatus        String? // WAITING|MATCHED|IN_CONSULT|CONSULT_DONE|TREATMENT_NEEDED|ETHICS_REVIEW|ETHICS_REJECTED|ETHICS_APPROVED|COMPLETED|CANCELLED (hasta sıradan çekildi, Faz 4)
   // Sağlık Turizmi (Faz 2) — hasta /saglik-turizmi tercihleri JSON {tier,nights,country,branch}; normal vakada null.
   // LOJİSTİK tercih (PHI DEĞİL, düz metin — decryptCaseFields kapsamı DIŞI); doktor PackageBuilder'ı ön-doldurur.
   // tourismPlan != null aynı zamanda "turizm vakası" ayırt edicisidir (ek boolean gereksiz).
-  tourismPlan         String?
+  tourismPlan           String?
   // Belge-bekleyen başvuru (2026-07-24, kullanıcı kararı): triyajda eksik zorunlu belgeyle (docAck)
   // oluşturulan aciliyet ≤3 vaka status=DOCS_PENDING doğar ve doktor havuzuna DÜŞMEZ; hasta vaka
   // merkezinde kalemleri yükleyip işaretleyince NEW'e geçer (bildirimler o anda). Bekleyen kalem
   // ETİKETLERİNİN JSON dizisi (requiredDocs kataloğu — PHI değil, düz; branch ile aynı sınıf). null = yok.
-  pendingDocs         String?
+  pendingDocs           String?
   // 2026-07-10 değişiklik paketi — hasta iletişim + tedavi kararı + STA iletimi + epikriz talebi
-  patientPhone         String? // hasta telefonu (kimlik → at-rest şifreli, encryptField)
-  contactPreference    String? // hastanın iletişim tercihi: APP | SMS | EMAIL
+  patientPhone          String? // hasta telefonu (kimlik → at-rest şifreli, encryptField)
+  contactPreference     String? // hastanın iletişim tercihi: APP | SMS | EMAIL
   // Sağlık beyanı (sigorta risk formu, 2026-07-20): hastanın paket ekranında verdiği beyan — prim
   // hesabına endikatif risk çarpanı olarak girer (lib/pricing computeHealthRiskMult). Vaka anına
   // SABİT (denetlenebilirlik: prim hangi beyanla hesaplandı); profil kopyası User.patientHealthHistory.
   // Özel nitelikli sağlık verisi → at-rest ŞİFRELİ JSON (decryptCaseFields kapsamında).
-  healthDeclaration    String? // ŞİFRELİ JSON {chronic:string[], meds:bool, smoking:bool, majorSurgery:bool}
-  healthDeclaredAt     DateTime? // beyanın verildiği/güncellendiği an (null = beyansız → çarpan 1.0)
-  treatmentDaysMin     Int? // doktorun öngördüğü tedavi süresi — alt sınır (gün)
-  treatmentDaysMax     Int? // üst sınır (gün); örn. 3–7 gün
-  hospitalRegistryId   Int? // tedavi için seçilen hastane (RegistryHospital.id — gevşek bağ, FK yok)
-  hospitalName         String? // hastane adı snapshot'ı (registry kaydı kalksa da dosyada kalır)
-  agencySentAt         DateTime? // tedavi kararının Sağlık Turizmi Acentesine iletildiği an (null = iletilmedi)
-  dischargeRequestedAt DateTime? // hastanın post-op ekranından epikriz/taburcu raporu talebi
+  healthDeclaration     String? // ŞİFRELİ JSON {chronic:string[], meds:bool, smoking:bool, majorSurgery:bool}
+  healthDeclaredAt      DateTime? // beyanın verildiği/güncellendiği an (null = beyansız → çarpan 1.0)
+  treatmentDaysMin      Int? // doktorun öngördüğü tedavi süresi — alt sınır (gün)
+  treatmentDaysMax      Int? // üst sınır (gün); örn. 3–7 gün
+  hospitalRegistryId    Int? // tedavi için seçilen hastane (RegistryHospital.id — gevşek bağ, FK yok)
+  hospitalName          String? // hastane adı snapshot'ı (registry kaydı kalksa da dosyada kalır)
+  agencySentAt          DateTime? // tedavi kararının Sağlık Turizmi Acentesine iletildiği an (null = iletilmedi)
+  dischargeRequestedAt  DateTime? // hastanın post-op ekranından epikriz/taburcu raporu talebi
   // Hesap silme (v6.11 — lib/account-deletion). Hasta hesabını silince klinik kayıt SİLİNMEZ (yasal
   // saklama yükümlülüğü) ama ERİŞİME KAPANIR: deletionLockedAt damgalıysa canCaseBeAccessedBy HERKESE
   // false döner (ADMIN/COORDINATOR/ETHICS geniş dalları dahil). purgeAfter = saklama süresi sonu →
   // cron o tarihten sonra kaydı GERÇEKTEN imha eder (satır + belgeler + rıza + hesap kabuğu).
   // Post-op daraltmadan (postop-access, Faz 2A) FARKI: bu geri alınamaz ve hastayı da kapsar.
-  deletionLockedAt     DateTime?
-  purgeAfter           DateTime?
-  doctor              Doctor?        @relation(fields: [doctorId], references: [id])
-  doctorId            String?
-  consultations       Consultation[]
-  bookings            Booking[]
-  recovery            Recovery?
-  complaints          Complaint[]
-  shareLinks          ShareLink[]
-  documents           CaseDocument[]
-  createdAt           DateTime       @default(now())
+  deletionLockedAt      DateTime?
+  purgeAfter            DateTime?
+  doctor                Doctor?        @relation(fields: [doctorId], references: [id])
+  doctorId              String?
+  consultations         Consultation[]
+  bookings              Booking[]
+  recovery              Recovery?
+  complaints            Complaint[]
+  shareLinks            ShareLink[]
+  documents             CaseDocument[]
+  createdAt             DateTime       @default(now())
 
   @@index([userId])
   @@index([purgeAfter]) // imha cron'u: süresi dolan kayıtları tarar
@@ -529,32 +529,32 @@ model Case {
 /// Hiçbir kişisel veri taşımaz (lib/deidentify.ts ile arındırılır); kayıtlı hekimler görüş verir.
 /// clinicalSummary + answerText klinik içerik → at-rest şifreli (lib/crypto encryptField).
 model ConsultationRequest {
-  id                 String    @id @default(cuid())
-  sourceCaseId       String? // iç izlenebilirlik (hangi vakadan türetildi) — yanıtlayan hekime ASLA gösterilmez
+  id                   String                        @id @default(cuid())
+  sourceCaseId         String? // iç izlenebilirlik (hangi vakadan türetildi) — yanıtlayan hekime ASLA gösterilmez
   requestedByPartnerId String? // talebi açan Partner doktor (M5 Faz 3) — kendi taleplerini/yanıtlarını görür
-  requestedByDoctorId String? // talebi İÇ VAKADAN açan platform doktoru (v6.33 Faz 3) — kendi talebi havuzunda GÖSTERİLMEZ; yanıt vaka sayfasına düşer
-  requestedByName    String? // talebi açan doktorun görünen adı (UI gösterimi)
-  branch             String? // null = genel havuz · dolu = yalnız bu branş hekimleri görür
-  region             String // ülke/bölge (kaba bağlam; bireysel tanımlayıcı değil)
-  language           String
-  urgency            Int       @default(3)
-  icd10Code          String? // tanı kodu (varsa)
-  clinicalSummary    String // anonim klinik özet (at-rest şifreli)
-  summaryTr          String? // klinik özetin Türkçe çevirisi — yanıtlayan hekim için (at-rest şifreli, cache)
-  status             String    @default("OPEN") // OPEN | IN_DISCUSSION | ANSWERED (Faz 2: hekim soru sorunca sahiplenir)
-  engagedByDoctorId  String? // talebi ilk sahiplenen hekim (soru sorunca; answer'da answeredByDoctorId ile aynı) — Faz 2 chat
-  answeredByDoctorId String? // görüş veren hekim
-  answerText         String? // hekim görüşü (at-rest şifreli)
-  answerTr           String? // hekim görüşünün hasta diline çevirisi — partnere dönüş (at-rest şifreli)
+  requestedByDoctorId  String? // talebi İÇ VAKADAN açan platform doktoru (v6.33 Faz 3) — kendi talebi havuzunda GÖSTERİLMEZ; yanıt vaka sayfasına düşer
+  requestedByName      String? // talebi açan doktorun görünen adı (UI gösterimi)
+  branch               String? // null = genel havuz · dolu = yalnız bu branş hekimleri görür
+  region               String // ülke/bölge (kaba bağlam; bireysel tanımlayıcı değil)
+  language             String
+  urgency              Int                           @default(3)
+  icd10Code            String? // tanı kodu (varsa)
+  clinicalSummary      String // anonim klinik özet (at-rest şifreli)
+  summaryTr            String? // klinik özetin Türkçe çevirisi — yanıtlayan hekim için (at-rest şifreli, cache)
+  status               String                        @default("OPEN") // OPEN | IN_DISCUSSION | ANSWERED (Faz 2: hekim soru sorunca sahiplenir)
+  engagedByDoctorId    String? // talebi ilk sahiplenen hekim (soru sorunca; answer'da answeredByDoctorId ile aynı) — Faz 2 chat
+  answeredByDoctorId   String? // görüş veren hekim
+  answerText           String? // hekim görüşü (at-rest şifreli)
+  answerTr             String? // hekim görüşünün hasta diline çevirisi — partnere dönüş (at-rest şifreli)
   // Yapılandırılmış FHIR öneriler (hekim görüşe ek olarak verir) — JSON, kodlu
-  recommendedLabs    String? // JSON [{loinc,name}] → FHIR ServiceRequest (lab order, LOINC)
-  recommendedImaging String? // JSON [{code,system,name}] → FHIR ServiceRequest (görüntüleme)
-  medications        String? // JSON [{atc,name,dose,route,freq}] → FHIR MedicationRequest (ATC zorunlu)
-  paymentSim         Int? // yanıt başına ödeme (USD, simüle)
-  answeredAt         DateTime?
-  createdAt          DateTime  @default(now())
-  documents          ConsultationRequestDocument[]
-  messages           ConsultationMessage[]
+  recommendedLabs      String? // JSON [{loinc,name}] → FHIR ServiceRequest (lab order, LOINC)
+  recommendedImaging   String? // JSON [{code,system,name}] → FHIR ServiceRequest (görüntüleme)
+  medications          String? // JSON [{atc,name,dose,route,freq}] → FHIR MedicationRequest (ATC zorunlu)
+  paymentSim           Int? // yanıt başına ödeme (USD, simüle)
+  answeredAt           DateTime?
+  createdAt            DateTime                      @default(now())
+  documents            ConsultationRequestDocument[]
+  messages             ConsultationMessage[]
 
   @@index([status, branch])
   @@index([requestedByPartnerId])
@@ -730,24 +730,24 @@ model CaseDocument {
 /// Diploma ZORUNLU (v6.105'ten beri MMSS İHTİYARİ); sertifika/akademik ihtiyari.
 /// İçerik base64 data URI + at-rest şifreli (CaseDocument deseni; gerçek object storage TODO).
 model DoctorDocument {
-  id        String   @id @default(cuid())
-  doctor    Doctor   @relation(fields: [doctorId], references: [id])
-  doctorId  String
-  type      String // DIPLOMA | MMSS | CERTIFICATE | ACADEMIC
-  label     String // dosya adı
-  mimeType  String // application/pdf | image/jpeg | image/png | ...
-  content   String // base64 data URI — at-rest şifreli (encryptField)
-  createdAt DateTime @default(now())
+  id             String    @id @default(cuid())
+  doctor         Doctor    @relation(fields: [doctorId], references: [id])
+  doctorId       String
+  type           String // DIPLOMA | MMSS | CERTIFICATE | ACADEMIC
+  label          String // dosya adı
+  mimeType       String // application/pdf | image/jpeg | image/png | ...
+  content        String // base64 data URI — at-rest şifreli (encryptField)
+  createdAt      DateTime  @default(now())
   /// İnceleme durumu (Faz 2, 2026-08-14): PENDING (yüklendi, incelenmedi) | ACCEPTED | REJECTED.
   /// 🔴 v6.119 (2026-08-19) — ARTIK AKTİVASYONA DOKUNUR (eski "dokunmaz" notu SÜPERSEDE):
   /// zorunlu belge (DIPLOMA) yalnız ACCEPTED iken Doctor.activatedAt damgalanır (canActivate).
   /// ACCEPTED iki yoldan gelir: (a) e-Devlet barkod okuması otomatik geçti · (b) incelemeci onayladı.
   /// Yeni sürüm yüklenince satır PENDING'e döner → kapı yeniden kapanır (kasıtlı: tazelenen belge
   /// yeniden doğrulanır).
-  status     String  @default("PENDING")
+  status         String    @default("PENDING")
   /// REJECTED gerekçesi (incelemeci yazar, doktora bildirimle gider). DIPLOMA ret şablonu NİHAİ (belge 11 §C.4,
   /// v6.212); klinik belge tipleri (MMSS/CERTIFICATE/ACADEMIC) AURA hukuk paketiyle.
-  reviewNote String?
+  reviewNote     String?
   /// e-Devlet barkodlu belge doğrulaması (v6.119) — lib/edevlet-belge.ts. Barkod belgenin METİN
   /// KATMANINDAN sunucuda okunur; turkiye.gov.tr'ye istek YAPILMAZ (hukuki karar — modül başlığı).
   /// Kod tek başına belgeyi açmaz (resmî doğrulama ekranı ayrıca TC ister, o bizde YOK) ama yine
@@ -782,16 +782,16 @@ model VerificationChallenge {
 
 /// Post-Op iyileşme takibi (Modül 4)
 model Recovery {
-  id        String    @id @default(cuid())
-  case      Case      @relation(fields: [caseId], references: [id])
-  caseId    String    @unique
-  branch    String
-  status    String    @default("ACTIVE") // ACTIVE, COMPLETED — COMPLETED = post-op erişim daraltma (E2EE Faz 2A): klinik personel erişimi kapanır, hasta-only
-  startedAt DateTime  @default(now())
+  id          String    @id @default(cuid())
+  case        Case      @relation(fields: [caseId], references: [id])
+  caseId      String    @unique
+  branch      String
+  status      String    @default("ACTIVE") // ACTIVE, COMPLETED — COMPLETED = post-op erişim daraltma (E2EE Faz 2A): klinik personel erişimi kapanır, hasta-only
+  startedAt   DateTime  @default(now())
   completedAt DateTime? // post-op takip tamamlandı (manuel kapatma zamanı; otomatik süre-aşımı kapanması hesaplanır, null kalır)
-  completedBy String?   // tamamlayan User.id (manuel doktor) — denetim
+  completedBy String? // tamamlayan User.id (manuel doktor) — denetim
   reopenedAt  DateTime? // hasta erişimi yeniden açtı (geri-alma, E2EE Faz 2A) — otomatik kapanma penceresi buradan yeniden başlar; null = hiç yeniden açılmadı
-  checkIns  CheckIn[]
+  checkIns    CheckIn[]
 }
 
 /// Günlük iyileşme kontrolü
@@ -824,26 +824,26 @@ model Signal {
 
 /// Etik Kurul / Tahkim başvurusu (Modül 7)
 model Complaint {
-  id          String    @id @default(cuid())
-  case        Case      @relation(fields: [caseId], references: [id])
-  caseId      String
-  bookingId   String? // ilgili rezervasyon (iade için)
-  subject     String
-  description String
-  requestType String // REFUND, DOCTOR_CHANGE, HOSPITAL_CHANGE, OTHER
+  id             String    @id @default(cuid())
+  case           Case      @relation(fields: [caseId], references: [id])
+  caseId         String
+  bookingId      String? // ilgili rezervasyon (iade için)
+  subject        String
+  description    String
+  requestType    String // REFUND, DOCTOR_CHANGE, HOSPITAL_CHANGE, OTHER
   // Hastanın bildirdiği ilgili/karşı taraf (v6.79) — kurulun savunma/bilgi talebi bu tarafa
   // yönlenir (lib/system-messages resolveDefenseTarget). Kurul kimlik DEĞİL yalnız tipi görür.
   respondentType String? // DOCTOR | AGENCY | HOSPITAL | OTHER
-  evidence    String?
-  status      String    @default("PENDING") // PENDING, RESOLVED
+  evidence       String?
+  status         String    @default("PENDING") // PENDING, RESOLVED
   // Kurul kararı
-  verdict      String? // FAVOR, PARTIAL, REJECT
-  action       String? // REFUND_FULL, REFUND_PARTIAL, SUPPLIER_CHANGE, ACCREDITATION_WARN, NONE
-  refundAmount Int?
-  rationale    String?
-  decidedBy    String?
-  decidedAt    DateTime?
-  createdAt    DateTime  @default(now())
+  verdict        String? // FAVOR, PARTIAL, REJECT
+  action         String? // REFUND_FULL, REFUND_PARTIAL, SUPPLIER_CHANGE, ACCREDITATION_WARN, NONE
+  refundAmount   Int?
+  rationale      String?
+  decidedBy      String?
+  decidedAt      DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 /// Güvenli dijital sağlık paylaşımı linki (Modül 4 — hasta kontrolünde veri paylaşımı)
@@ -1009,16 +1009,16 @@ model ShareAccess {
 
 /// Tek bir ikinci görüş talebi = bir vaka (§1). 11-durumlu yaşam döngüsü (§4).
 model SecondOpinionCase {
-  id               String  @id @default(cuid())
-  patientId        String // vaka sahibi hasta (User.id)
-  branch           String // 30 branştan biri (lib/triage BRANCHES.key)
-  diagnosisSummary String // hastanın mevcut tanı özeti (serbest metin)
-  country          String? // hasta ülkesi (COUNTRIES.code) — veri ikametgâhı/yönlendirme sinyali (geo-routing)
-  language         String? // hastanın tercih ettiği iletişim dili (LANGUAGES) — eşleştirme + sunum dili
-  patientPhone      String? // hasta telefonu (kimlik → at-rest şifreli, encryptField) — 2026-07-10
-  contactPreference String? // hastanın iletişim tercihi: APP | SMS | EMAIL
-  status           String  @default("DRAFT") // bkz. lib/second-opinion SO_STATUSES
-  assignedDoctorId String? // atanan hekim (Doctor.id) — §10: tek doktor
+  id                 String    @id @default(cuid())
+  patientId          String // vaka sahibi hasta (User.id)
+  branch             String // 30 branştan biri (lib/triage BRANCHES.key)
+  diagnosisSummary   String // hastanın mevcut tanı özeti (serbest metin)
+  country            String? // hasta ülkesi (COUNTRIES.code) — veri ikametgâhı/yönlendirme sinyali (geo-routing)
+  language           String? // hastanın tercih ettiği iletişim dili (LANGUAGES) — eşleştirme + sunum dili
+  patientPhone       String? // hasta telefonu (kimlik → at-rest şifreli, encryptField) — 2026-07-10
+  contactPreference  String? // hastanın iletişim tercihi: APP | SMS | EMAIL
+  status             String    @default("DRAFT") // bkz. lib/second-opinion SO_STATUSES
+  assignedDoctorId   String? // atanan hekim (Doctor.id) — §10: tek doktor
   // SLA zaman damgaları — hesap TEK KAYNAK lib/second-opinion (§11)
   consentAt          DateTime? // KVKK açık rıza (§8) — başvuru başında alınır
   paidAt             DateTime? // peşin ödeme onayı
@@ -1066,16 +1066,16 @@ model SecondOpinionDocument {
 
 /// Hasta talebi — Talep A (eksik belge) ve Talep B (ek tetkik) aynı varlığın iki tipi (§3.1/§6).
 model SecondOpinionRequest {
-  id          String            @id @default(cuid())
-  case        SecondOpinionCase @relation(fields: [caseId], references: [id])
-  caseId      String
-  type        String // MISSING_DOCUMENT (Talep A) | ADDITIONAL_EXAMINATION (Talep B)
-  description String
-  requestedBy String // "coordinator" | "doctor"
+  id            String            @id @default(cuid())
+  case          SecondOpinionCase @relation(fields: [caseId], references: [id])
+  caseId        String
+  type          String // MISSING_DOCUMENT (Talep A) | ADDITIONAL_EXAMINATION (Talep B)
+  description   String
+  requestedBy   String // "coordinator" | "doctor"
   requestedById String? // işlemi açan User.id (audit)
-  status      String            @default("PENDING") // PENDING | FULFILLED
-  createdAt   DateTime          @default(now())
-  fulfilledAt DateTime?
+  status        String            @default("PENDING") // PENDING | FULFILLED
+  createdAt     DateTime          @default(now())
+  fulfilledAt   DateTime?
 
   @@index([caseId])
 }
@@ -1153,16 +1153,16 @@ model AccessLog {
   userAgent     String?
   createdAt     DateTime  @default(now())
   // İspat & bütünlük (v2.72 deseni): append-only hash-zinciri + (test) RFC 3161 zaman damgası
-  prevHash    String? // önceki kaydın entryHash'i (GENESIS = ilk)
-  entryHash   String? // SHA-256(actorId|action|resourceType|resourceId|subjectUserId|createdAt|prevHash) — bu kaydın mührü
-  tsAuthority String? // zaman damgası otoritesi (şimdilik SIMULATED-LOCAL)
-  tsTime      DateTime? // TSA'nın güvenilir zamanı
-  tsToken     String? // imzalı zaman damgası token'ı (entryHash üzerinde)
+  prevHash      String? // önceki kaydın entryHash'i (GENESIS = ilk)
+  entryHash     String? // SHA-256(actorId|action|resourceType|resourceId|subjectUserId|createdAt|prevHash) — bu kaydın mührü
+  tsAuthority   String? // zaman damgası otoritesi (şimdilik SIMULATED-LOCAL)
+  tsTime        DateTime? // TSA'nın güvenilir zamanı
+  tsToken       String? // imzalı zaman damgası token'ı (entryHash üzerinde)
   /// İşlem güvenliği kayıtlarında IP/cihaz 2 yıl sonra boşaltma (05 madde 3.10, Paket 2 — 2026-09-09).
   /// consent.ts ConsentRecord.purgedAt İLE AYNI desen: ip/userAgent NULL'lanınca mühür (entryHash)
   /// kendi alanlarından yeniden hesaplanamaz → verifyAccessChain bu satırda mühür kontrolünü ATLAR
   /// (purgedSeals sayacı), ama prevHash BAĞI aynen sürer — zincir kırılmaz, kurcalama gizlenmez.
-  purgedAt    DateTime?
+  purgedAt      DateTime?
 
   @@index([subjectUserId, createdAt])
   @@index([resourceType, resourceId])
@@ -1229,35 +1229,35 @@ model RegistryDoctor {
 /// languages/accreditations/facilities liste API'sinde yalnız sayı olarak var → JSON alanlar detay
 /// zenginleştirmesiyle (establishment-detail) aşamalı dolar; boş = henüz zenginleştirilmedi.
 model RegistryHospital {
-  id                 Int       @id // kaynak kayıt id'si
-  name               String
-  slug               String?
-  cityName           String? // Şehir
-  cityCode           String?
-  cityHasAirport     Boolean? // Havalimanı filtresi
-  address            String?
-  phone              String?
-  totalPersonnel     Int? // Minimum Sağlık Profesyoneli Sayısı filtresi
-  unitCapacity       Int?
-  facilityTypeId     Int?
-  facilityTypeName   String? // Sağlık Tesisi Türü / Tesis Çeşidi (Facility Type)
-  accreditationCount Int? // Akreditasyonlar (sayı; adlar detay zenginleştirmesiyle)
-  certificationCount Int?
-  insuranceCount     Int?
-  doctorCount        Int?
-  foundationYear     Int?
-  latitude           String?
-  longitude          String?
-  branches           String? // JSON [{id,name}] — Branş filtresi
-  treatments         String? // JSON — hizmet verilen tedaviler
-  languages          String? // JSON — Hizmet Verilen Diller (detay zenginleştirme)
-  accreditations     String? // JSON — akreditasyon adları (detay zenginleştirme)
-  facilities         String? // JSON — Tesis Olanakları (detay zenginleştirme)
+  id                  Int       @id // kaynak kayıt id'si
+  name                String
+  slug                String?
+  cityName            String? // Şehir
+  cityCode            String?
+  cityHasAirport      Boolean? // Havalimanı filtresi
+  address             String?
+  phone               String?
+  totalPersonnel      Int? // Minimum Sağlık Profesyoneli Sayısı filtresi
+  unitCapacity        Int?
+  facilityTypeId      Int?
+  facilityTypeName    String? // Sağlık Tesisi Türü / Tesis Çeşidi (Facility Type)
+  accreditationCount  Int? // Akreditasyonlar (sayı; adlar detay zenginleştirmesiyle)
+  certificationCount  Int?
+  insuranceCount      Int?
+  doctorCount         Int?
+  foundationYear      Int?
+  latitude            String?
+  longitude           String?
+  branches            String? // JSON [{id,name}] — Branş filtresi
+  treatments          String? // JSON — hizmet verilen tedaviler
+  languages           String? // JSON — Hizmet Verilen Diller (detay zenginleştirme)
+  accreditations      String? // JSON — akreditasyon adları (detay zenginleştirme)
+  facilities          String? // JSON — Tesis Olanakları (detay zenginleştirme)
   authorizationNumber String? // Sağlık turizmi YETKİ BELGE NO (ör. "ST-0292"; detaydan — "" = kontrol edildi, dizinde belge yok; null = henüz bakılmadı)
-  fingerprint        String? // liste-API alanlarının kısa hash'i (v5.4 alan-güncelleme; detay/enrichment alanları DAHİL DEĞİL)
-  firstSeenAt        DateTime  @default(now())
-  lastSeenAt         DateTime  @default(now())
-  removedAt          DateTime? // kaynaktan çıkarıldığı senkron (null = halen kayıtlı)
+  fingerprint         String? // liste-API alanlarının kısa hash'i (v5.4 alan-güncelleme; detay/enrichment alanları DAHİL DEĞİL)
+  firstSeenAt         DateTime  @default(now())
+  lastSeenAt          DateTime  @default(now())
+  removedAt           DateTime? // kaynaktan çıkarıldığı senkron (null = halen kayıtlı)
 
   @@index([cityCode]) // Şehir filtresi
   @@index([facilityTypeId]) // Tesis türü filtresi
@@ -1289,36 +1289,36 @@ model RegistryReport {
 /// (istek-anında dış API'ye gitmez → hızlı + NCBI'ya nazik + arama/filtre mümkün).
 /// İçerik HERKESE AÇIK literatür/mevzuattır — PHI DEĞİLDİR, şifrelenmez (bilinçli).
 model NewsArticle {
-  id            String   @id @default(cuid())
-  source        String // "pubmed" | "resmi-gazete" | "titck" | ... (kaynak sistemi)
-  externalId    String // pmid / rss guid — kaynak içinde benzersiz (yeniden çekimde tekrar yazılmaz)
-  module        String // "akademik" | "mevzuat" | "sektorel" | "ilac" (v6.50: mevzuat/sektörel/ilaç ayrıştı)
+  id              String   @id @default(cuid())
+  source          String // "pubmed" | "resmi-gazete" | "titck" | ... (kaynak sistemi)
+  externalId      String // pmid / rss guid — kaynak içinde benzersiz (yeniden çekimde tekrar yazılmaz)
+  module          String // "akademik" | "mevzuat" | "sektorel" | "ilac" (v6.50: mevzuat/sektörel/ilaç ayrıştı)
   /// Sektörel alt kategori (v6.50) — yalnız module="sektorel"/"mevzuat"/"ilac" için:
   /// "mevzuat" | "sut" | "turizm" | "yonetim" | "teknoloji" | "ilac-cihaz". null = kategorisiz.
-  category      String?
+  category        String?
   /// JSON string[] — ilgili branş SLUG'ları (lib/triage BRANCHES key'leri). Boş dizi = genel akış.
-  branchSlugs   String   @default("[]")
-  kind          String // makale | ilac | mevzuat | haber
-  title         String // gösterim başlığı (çevrilmişse Türkçe)
-  titleOriginal String? // özgün dildeki başlık (çeviri uygulandıysa)
-  summary       String // özet/abstract — gösterim metni (çeviri cron'undan geçtiyse Türkçe GİRİŞ, ~700 kar. — v6.206)
+  branchSlugs     String   @default("[]")
+  kind            String // makale | ilac | mevzuat | haber
+  title           String // gösterim başlığı (çevrilmişse Türkçe)
+  titleOriginal   String? // özgün dildeki başlık (çeviri uygulandıysa)
+  summary         String // özet/abstract — gösterim metni (çeviri cron'undan geçtiyse Türkçe GİRİŞ, ~700 kar. — v6.206)
   /// v6.206 — özgün dildeki özet TAM metni (giriş çevirisi uygulandıysa). NULL = henüz api/cron/translate-news'ten
   /// geçmedi (Türkçe doğan kaynaklar hiç seçilmez → NULL kalır). AI özetleri (ensureClinicalSummary /
   /// ensureRegulationSummary) kaynak metin olarak BUNU (varsa) okur — çevrilmiş kesik girişten üretilmesin.
   summaryOriginal String?
   /// AI klinik özet — JSON {takeaways: string[], design: string, limits: string}. Null = henüz üretilmedi.
   /// ⚠️ Klinik karar aracı DEĞİL; arayüzde bu uyarı ile birlikte gösterilir.
-  aiSummary     String?
-  sourceName    String // dergi/kurum adı (JAMA · Resmî Gazete ...)
-  authors       String? // "Yılmaz A, Chen B, ve ark."
-  url           String? // kalıcı adres (DOI varsa doi.org)
-  doi           String?
+  aiSummary       String?
+  sourceName      String // dergi/kurum adı (JAMA · Resmî Gazete ...)
+  authors         String? // "Yılmaz A, Chen B, ve ark."
+  url             String? // kalıcı adres (DOI varsa doi.org)
+  doi             String?
   /// v6.99.2 — kaynak sayfanın kendi görseli (og:image / RSS media). YALNIZ NEWS_IMAGE_HOSTS
   /// allowlist'inden yazılır (CSP img-src ile sözleşme testli); hotlink — görsel BARINDIRILMAZ.
   /// null = üretilmiş kapak (CoverArt). Detay sayfasında kaynak atfıyla gösterilir.
-  imageUrl      String?
-  publishedAt   DateTime
-  createdAt     DateTime @default(now())
+  imageUrl        String?
+  publishedAt     DateTime
+  createdAt       DateTime @default(now())
 
   @@unique([source, externalId]) // idempotent ingestion
   @@index([module, publishedAt]) // modül akışı (yeni→eski)
@@ -1377,11 +1377,11 @@ model MedicalCongress {
   // ── v6.62 küratörlü veritabanı alanları ───────────────────────────────────
   /// Kaynak kimliği — idempotent seed/tazeleme için. Elle girilen kayıtlarda null kalır
   /// (bu yüzden nullable + kompozit unique: null'lar Postgres'te çakışmaz).
-  source            String?
-  externalId        String?
+  source     String?
+  externalId String?
   /// "ulusal" | "uluslararasi" | "uluslararasi-katilimli" — doktorun ilk süzdüğü eksen
   /// (v6.62 filtre; üçüncü değer v6.120'de TTB kaydından geldi: "Uluslararası Katılımlı").
-  scope             String    @default("ulusal")
+  scope      String  @default("ulusal")
 
   // ── v6.120 etkinlik türü (TTB taksonomisi) ────────────────────────────────
   /// TTB'nin etkinlik türü, Türkçe slug olarak: kongre | sempozyum | kurs | egitim |
@@ -1543,20 +1543,20 @@ model SponsorCampaign {
 /// "ödenir" vaadi verilmez. Alan şemada hazır ki kurgu netleşince migration gerekmesin.
 /// Sonuçlar sponsora/ekrana yalnız TOPLU dağılım olarak çıkar (kimlikli tekil yanıt paylaşılmaz).
 model Survey {
-  id             String   @id @default(cuid())
-  kind           String   @default("COMMUNITY") // COMMUNITY | SPONSORED
+  id             String           @id @default(cuid())
+  kind           String           @default("COMMUNITY") // COMMUNITY | SPONSORED
   sponsor        String? // SPONSORED'da zorunlu (API doğrular) — kartta "Sponsorlu · <sponsor>"
   question       String
   options        String // JSON string[] — 2-6 kapalı şık; serbest metin bilinçli YOK (agregat disiplin)
   honorarium     Int? // kuruş; null/0 = ödemesiz. >0 iken ACTIVE kilidi (ödeme kurgusu parkı)
-  points         Int      @default(0) // v6.88 ödül puanı — yanıt anında PointEntry'ye bir kez yazılır (0 = puansız; nakit honorarium'dan AYRI ve ondan bağımsız)
+  points         Int              @default(0) // v6.88 ödül puanı — yanıt anında PointEntry'ye bir kez yazılır (0 = puansız; nakit honorarium'dan AYRI ve ondan bağımsız)
   targetBranches String? // JSON string[] branş slug — COMMUNITY'de içerik süzmesi, SPONSORED'da rıza-şartlı hedef
   targetCities   String? // JSON string[] — yalnız SPONSORED'da anlamlı (rıza-şartlı)
   startsAt       DateTime
   endsAt         DateTime
-  status         String   @default("DRAFT") // DRAFT | ACTIVE | PAUSED | ENDED
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  status         String           @default("DRAFT") // DRAFT | ACTIVE | PAUSED | ENDED
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   responses      SurveyResponse[]
 
   @@index([status, startsAt, endsAt])
@@ -1746,5 +1746,31 @@ model AiUsageDaily {
   updatedAt        DateTime @updatedAt
 
   @@unique([day, feature, model])
+  @@index([day])
+}
+
+/// v6.351 (2026-10-17) — SOSYAL MEDYA GÜNLÜK ÖLÇÜLERİ (👤 "/admin/pano: paylaşımlar kaç kişiye ulaşmış, kaç beğeni almış").
+/// Platform jetonları n8n'de (Hetzner) kalır; n8n günlük hesap toplamını POST /api/social-metrics ile İTER (Bearer
+/// SOCIAL_METRICS_TOKEN), pano buradan okur. Satır = platform (lib/admin-social SocialPlatformKey) × Türkiye takvim günü.
+/// Ölçüler o GÜNÜN etkinliğidir; `followers` gün sonu anlık sayısıdır. null = "platform bu ölçüyü vermedi" (0 DEĞİL).
+/// KİŞİSEL VERİ YOK: yalnız hesap toplamları; ham API yanıtı, yorum metni, takipçi listesi TUTULMAZ (bilinçli: raw kolonu yok).
+/// Aynı gün yeniden gönderilirse yalnız gönderilen alanlar güncellenir (Instagram ölçüleri 48 saate kadar gecikir).
+model SocialMetricDaily {
+  id            String   @id @default(cuid())
+  platform      String // instagram | facebook | linkedin | x | youtube
+  day           String // Türkiye takvim günü "YYYY-MM-DD"
+  followers     Int?
+  reach         Int?
+  views         Int?
+  likes         Int?
+  comments      Int?
+  saves         Int?
+  shares        Int?
+  profileClicks Int?
+  posts         Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([platform, day])
   @@index([day])
 }
