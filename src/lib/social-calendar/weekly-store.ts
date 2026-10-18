@@ -3,7 +3,7 @@ import type { Prisma, ContentPlanItem } from "@prisma/client";
 import { db } from "../db";
 import { recordAccess } from "../audit";
 import type { SessionUser } from "../session";
-import { evaluateGates } from "./gates";
+import { evaluateGates, type GateReport } from "./gates";
 import { parsePayload, payloadHash } from "./payload";
 import { loadSourceTexts, PlanError } from "./plan";
 import { seriesByKey, isDayString } from "./series";
@@ -65,6 +65,7 @@ async function lockedPackage(tx: Tx, id: string) {
 }
 async function snapshots(tx: Tx, manifest: WeeklyManifest, lock: boolean, reviewAttestation = false) {
   const rows: ContentPlanItem[] = [], views: WeeklySnapshot[] = [];
+  const reports = new Map<string, GateReport>();
   for (const e of [...manifest.entries].sort((a, b) => a.id.localeCompare(b.id))) {
     if (lock) await tx.$queryRaw`SELECT "id" FROM "ContentPlanItem" WHERE "id"=${e.id} FOR UPDATE`;
     const row = await tx.contentPlanItem.findUnique({ where: { id: e.id } });
@@ -78,9 +79,10 @@ async function snapshots(tx: Tx, manifest: WeeklyManifest, lock: boolean, review
     // confirmation supplies the human attestation at approval; dispatch uses DB state.
     const report = evaluateGates({ series, payload, attestIdentity: reviewAttestation ? true : row.attestIdentity, sourceIds: ids, sourceTexts: await loadSourceTexts(series, ids, tx) });
     views.push({ id: row.id, version: row.updatedAt.toISOString(), seriesKey: row.seriesKey, slotDay: row.slotDay, payload, gatesPassed: report.ok });
+    reports.set(row.id, report);
     rows.push(row);
   }
-  return { rows, views };
+  return { rows, views, reports };
 }
 function reviewOrThrow(manifest: WeeklyManifest, views: WeeklySnapshot[], now: Date) {
   const errors = reviewWeeklyPackage(manifest, views, now);
@@ -116,7 +118,7 @@ export async function approveWeeklyPackage(input: Actor & { id: string; version:
     if (p.status !== "DRAFT" || p.updatedAt.toISOString() !== input.version || p.manifestHash !== input.hash) conflict("Görüntülenen paket değişti veya onaylanabilir durumda değil.");
     const manifest = normalizeWeeklyManifest(JSON.parse(p.manifest));
     if (weeklyManifestHash(manifest) !== input.hash) conflict("Paket mührü geçersiz.");
-    const { rows, views } = await snapshots(tx, manifest, true, input.confirmed);
+    const { rows, views, reports } = await snapshots(tx, manifest, true, input.confirmed);
     const now = new Date();
     reviewOrThrow(manifest, views, now);
     for (const row of rows) {
@@ -125,6 +127,7 @@ export async function approveWeeklyPackage(input: Actor & { id: string; version:
       const updated = await tx.contentPlanItem.updateMany({ where: { id: row.id, status: "DRAFT", weeklyPackageId: null, updatedAt: new Date(e.version) }, data: {
         status: "APPROVED", weeklyPackageId: p.id, approvedAt: now, approvedById: input.actor.id,
         attestIdentity: seriesByKey(row.seriesKey)?.attestIdentity ? true : row.attestIdentity,
+        gateReport: JSON.stringify(reports.get(row.id)),
         approvedBy: input.actor.name || input.actor.email, approvedHash: e.contentHash,
       } });
       if (updated.count !== 1) conflict("Taslak onay sırasında değişti.");

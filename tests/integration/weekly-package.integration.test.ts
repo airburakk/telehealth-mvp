@@ -67,7 +67,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("weekly package real DB integrit
       const input = { actor, id: p.id, version: p.updatedAt.toISOString(), hash: p.manifestHash, confirmed: true };
       const results = await Promise.allSettled([approveWeeklyPackage(input), approveWeeklyPackage(input)]);
       expect(results.filter(r => r.status === "fulfilled")).toHaveLength(1);
-      expect((await db.contentPlanItem.findUniqueOrThrow({ where: { id: f.ids[1] } })).attestIdentity).toBe(true);
+      const approvedLegal = await db.contentPlanItem.findUniqueOrThrow({ where: { id: f.ids[1] } });
+      expect(approvedLegal.attestIdentity).toBe(true);
+      expect(JSON.parse(approvedLegal.gateReport!).ok).toBe(true);
       expect(await db.weeklyChannelDelivery.count({ where: { packageId: p.id } })).toBe(15);
       await db.contentPlanItem.update({ where: { id: f.ids[0] }, data: { payload: JSON.stringify({ ...JSON.parse((await db.contentPlanItem.findUniqueOrThrow({ where: { id: f.ids[0] } })).payload!), caption: "Edited after approval" }) } });
       expect((await db.weeklyContentPackage.findUniqueOrThrow({ where: { id: p.id } })).status).toBe("REVOKED");
