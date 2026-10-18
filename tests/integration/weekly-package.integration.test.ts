@@ -6,6 +6,7 @@ import { payloadHash, type PlanPayload } from "@/lib/social-calendar/payload";
 import { WEEKLY_CHANNELS, type WeeklyManifest } from "@/lib/social-calendar/weekly-package";
 import { slotsOfWeek, weekStart } from "@/lib/social-calendar/series";
 import type { SessionUser } from "@/lib/session";
+import { parsePublication } from "@/lib/social-calendar/publication";
 vi.mock("@/lib/audit", () => ({ recordAccess: vi.fn() }));
 
 const actor: SessionUser = { id: "itest-week-reviewer", name: "Test reviewer", email: "weekly@itest.local", role: "ADMIN" };
@@ -91,8 +92,16 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("weekly package real DB integrit
       await reconcileWeeklyDelivery({ actor, id: second.id, version: current.updatedAt.toISOString(), outcome: "FOUND", evidence: "Checked the test platform account and found the already uploaded post.", platformId: "found-post" });
       expect((await db.weeklyChannelDelivery.findUniqueOrThrow({ where: { id: second.id } })).state).toBe("SUCCEEDED");
       expect(await db.weeklyDeliveryEvent.count({ where: { deliveryId: second.id } })).toBe(4);
+      const entry = f.manifest.entries.find(e => e.id === f.ids[0])!;
+      for (const d of ds.slice(2)) {
+        const claimed = await claimWeeklyDelivery({ id: d.id, hash: p.manifestHash, accountId: d.accountId, assetHashes: Object.fromEntries(entry.assets.filter(a => a.channel === d.channel).map(a => [a.name, a.sha256])) });
+        await completeWeeklyDelivery({ id: d.id, claimToken: claimed.claimToken, result: "SUCCEEDED", platformId: `post-${d.channel}` });
+      }
+      const finished = await db.contentPlanItem.findUniqueOrThrow({ where: { id: f.ids[0] } });
+      expect(finished.status).toBe("PUBLISHED");
+      expect(parsePublication(finished.publishedRefs)?.channels).toHaveLength(5);
     } finally { await f.cleanup(); }
-  });
+  }, 120000);
   it("blocks wrong account/media and backdating; revocation releases only unattempted drafts", async () => {
     const f = await fixture();
     try {

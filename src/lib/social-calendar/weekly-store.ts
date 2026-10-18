@@ -204,10 +204,20 @@ export async function claimWeeklyDelivery(input: { id: string; hash: string; acc
     const token = randomUUID();
     const changed = await tx.weeklyChannelDelivery.updateMany({ where: { id: input.id, state: "PENDING" }, data: { state: "CLAIMED", claimToken: token, claimedAt: now, attempt: { increment: 1 }, resultNote: null } });
     if (changed.count !== 1) conflict("Kanal daha önce alınmış; başarı veya belirsiz sonuç doğrulanmadan tekrar alınamaz.");
-    await tx.contentPlanItem.updateMany({ where: { id: initial.itemId, status: "APPROVED", weeklyPackageId: p.id }, data: { status: "PUBLISHING" } });
+    await tx.contentPlanItem.updateMany({ where: { id: initial.itemId, status: "APPROVED", weeklyPackageId: p.id }, data: { status: "PUBLISHING", publishedRefs: JSON.stringify({ v: 1, manual: false, channels: [], at: now.toISOString() }) } });
     await tx.weeklyDeliveryEvent.create({ data: { deliveryId: input.id, state: "CLAIMED", note: "ASSETS_AND_ACCOUNT_MATCHED" } });
     return { id: input.id, claimToken: token, manifestHash: p.manifestHash, accountId: initial.accountId, channel: initial.channel, entry: e };
   });
+}
+
+async function finalizeItem(tx: Tx, itemId: string, packageId: string) {
+  const deliveries = await tx.weeklyChannelDelivery.findMany({ where: { itemId }, select: { state: true, channel: true } });
+  if (deliveries.length !== WEEKLY_CHANNELS.length || deliveries.some(d => d.state !== "SUCCEEDED")) return;
+  const now = new Date();
+  await tx.contentPlanItem.updateMany({ where: { id: itemId, status: "PUBLISHING", weeklyPackageId: packageId }, data: {
+    status: "PUBLISHED", publishedAt: now,
+    publishedRefs: JSON.stringify({ v: 1, manual: false, channels: deliveries.map(d => ({ channel: d.channel })), at: now.toISOString(), weeklyPackageId: packageId }),
+  } });
 }
 
 export async function completeWeeklyDelivery(input: { id: string; claimToken: string; result: "SUCCEEDED" | "FAILED" | "UNKNOWN"; platformId?: string; noRequestSent?: boolean }) {
@@ -227,8 +237,7 @@ export async function completeWeeklyDelivery(input: { id: string; claimToken: st
     }
     await tx.weeklyChannelDelivery.update({ where: { id: d.id }, data: { state, platformId, resultNote: state === "UNKNOWN" ? "VERIFY_PLATFORM_BEFORE_RETRY" : state === "FAILED" ? "NO_REQUEST_SENT" : "PLATFORM_ID_RECORDED" } });
     await tx.weeklyDeliveryEvent.create({ data: { deliveryId: d.id, state, note: state === "SUCCEEDED" ? "PLATFORM_ID_RECORDED" : "VERIFY_PLATFORM_BEFORE_RETRY" } });
-    const remaining = await tx.weeklyChannelDelivery.count({ where: { itemId: d.itemId, state: { not: "SUCCEEDED" } } });
-    if (remaining === 0) await tx.contentPlanItem.updateMany({ where: { id: d.itemId, status: "PUBLISHING", weeklyPackageId: d.packageId }, data: { status: "PUBLISHED", publishedAt: new Date(), publishedRefs: JSON.stringify({ v: 1, manual: false, weeklyPackageId: d.packageId }) } });
+    await finalizeItem(tx, d.itemId, d.packageId);
     return { state, repeated: false };
   });
 }
@@ -252,8 +261,7 @@ export async function reconcileWeeklyDelivery(input: Actor & { id: string; versi
     const state = input.outcome === "FOUND" ? "SUCCEEDED" : "PENDING";
     await tx.weeklyChannelDelivery.update({ where: { id: d.id }, data: { state, platformId, claimToken: null, resultNote: evidence, reconciledAt: new Date(), reconciledById: input.actor.id } });
     await tx.weeklyDeliveryEvent.create({ data: { deliveryId: d.id, state, note: evidence, actorId: input.actor.id } });
-    if (state === "SUCCEEDED" && await tx.weeklyChannelDelivery.count({ where: { itemId: d.itemId, state: { not: "SUCCEEDED" } } }) === 0)
-      await tx.contentPlanItem.updateMany({ where: { id: d.itemId, status: "PUBLISHING", weeklyPackageId: d.packageId }, data: { status: "PUBLISHED", publishedAt: new Date(), publishedRefs: JSON.stringify({ v: 1, manual: false, weeklyPackageId: d.packageId }) } });
+    if (state === "SUCCEEDED") await finalizeItem(tx, d.itemId, d.packageId);
     return { state };
   });
 }
