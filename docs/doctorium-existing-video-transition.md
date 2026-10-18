@@ -4,6 +4,11 @@ Read-only observations supplied by the parent browser worker. No workflow was
 executed, saved, published, activated or disabled. No production deployment or
 migration occurred. Raw exports/credentials are excluded from this repository.
 
+Son doğrulama: günlük serving workflow IjTiPqpVbOktWXBb weekly-* dosyaları404 ile
+reddeder; HTTP upload API'si yoktur. Bu günlük allowlist/workflow değiştirilmeyecek.
+Ayrı haftalık write path/serving taslağı ve gerekli deployment erişimi
+[doctorium-weekly-media-deployment.md](doctorium-weekly-media-deployment.md) içindedir.
+
 ## 18 Ekim 2026 günlük akış kanıtları ve geçiş sınırı
 
 Parent'ın mevcut oturumla yaptığı salt okunur n8n incelemesinden aktarılmıştır.

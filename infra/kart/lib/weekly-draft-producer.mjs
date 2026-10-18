@@ -6,6 +6,7 @@ import { renderRubrik, rubrikGovdeDogrula } from "./social-rubrik.mjs";
 import { renderYoutubeReview } from "./review-video.mjs";
 import { renderVideoReviewAdaptations } from "./video-adaptations.mjs";
 import { validateWeeklyVideo } from "./weekly-video-media.mjs";
+import { writeWeeklyMedia } from "./weekly-media.mjs";
 
 const CHANNELS = ["facebook", "instagram", "linkedin", "x", "youtube"];
 const hash = b => createHash("sha256").update(b).digest("hex");
@@ -92,9 +93,8 @@ export function createWeeklyArchive({ root, publicBaseUrl, mappingVerified = fal
       if (!/^[a-f0-9]{64}$/.test(a.sha256) || !["video.mp4", "post.json", "captions.srt"].includes(a.name)) fail("INVALID_ARCHIVE_ASSET");
       const bytes = fs.readFileSync(a.localPath);
       if (hash(bytes) !== a.sha256) fail("LOCAL_ASSET_CHANGED");
-      const name = `weekly-${a.sha256}.${a.name.split(".").at(-1)}`, target = path.join(destination, name);
-      try { fs.writeFileSync(target, bytes, { flag: "wx" }); }
-      catch (e) { if (e.code !== "EEXIST" || hash(fs.readFileSync(target)) !== a.sha256) fail("ARCHIVE_WRITE_FAILED"); }
+      const name = `weekly-${a.sha256}.${a.name.split(".").at(-1)}`;
+      try { writeWeeklyMedia({ root: destination, name, bytes }); } catch { fail("ARCHIVE_WRITE_FAILED"); }
       const url = new URL(name, base).href;
       let r, content;
       try { r = await fetchImpl(url, { redirect: "error", signal: AbortSignal.timeout(90000) });

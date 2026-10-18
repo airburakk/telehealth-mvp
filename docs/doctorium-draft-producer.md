@@ -3,6 +3,12 @@
 Status: code only, default disabled. No production variables, public mount,
 cron, n8n workflow, credentials or provider records were changed.
 
+Confirmed later: the existing daily serving allowlist rejects weekly-* names,
+and no HTTP upload API exists. Its daily writer cannot be assumed no-clobber.
+The separate weekly writer/reader and blocked n8n drafts require a reviewed
+deployment described in [doctorium-weekly-media-deployment.md](doctorium-weekly-media-deployment.md).
+Do not point the weekly archive at the existing daily bulten/:dosya route.
+
 ## Implemented and tested boundaries
 
 `weekly-draft-producer.mjs` composes the existing `renderRubrik` card renderer,

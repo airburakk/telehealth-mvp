@@ -1,5 +1,10 @@
 # Haftalık ikinci katman: doğrulama matrisi
 
+Son medya audit düzeltmesi: mevcut günlük `bulten/:dosya` allowlist'i weekly
+hash adlarını404 ile reddeder; HTTP upload API'si yoktur. Ayrı weekly writer ve
+serving route deployment taslağı [doctorium-weekly-media-deployment.md](doctorium-weekly-media-deployment.md)
+içindedir. Mevcut günlük workflow değiştirilmez; yeni taslaklar aktive edilmedi.
+
 Kullanıcının kesin sınırı: mevcut Günlük Seçki ve n8n yayınlarına dokunulmaz.
 Haftalık hazırlık ayrı workflow/katman, medya adları ve idempotency alanındadır.
 Mevcut render kodu ve medya hostu yeniden kullanılabilir; günlük dosya, guard,
@@ -53,19 +58,18 @@ onaylandı; sosyal yayın veya production deploy izni verilmedi.
 
 ## Güvenli uygulanabilir sonraki adım ve gerçek bağımlılık
 
-Mevcut n8n salt okunur incelemesinden dosyaservisinin bağlı arşiv dizini,
-doğrulanmış yazma/yükleme yolu, kabul edilen dosya adı deseni, MIME eşlemesi ve
-saklama süresi alınmalı. Tamamı mevcut bağlantının metadata/sözleşme bilgisidir;
-parola, token içeriği veya genel kurulum onayı istenmiyor. Bu worker ortamında
-SSH hedefi/oturumu veya desteklenen n8n upload bağlantısı bulunmadığı için gerçek
-haftalık dosya yazma/HTTPS geri okuma/DRAFT bağlama henüz çalıştırılamadı.
+Mevcut writer `/data/bulten/{{ $json.ad }}` ve günlük serving allowlist'i
+doğrulandı; bu sözleşme weekly-* için kullanılamaz. Saklama garantisi yoktur.
+Gerekli salt okunur metadata artık mevcut volume'un host/container mount eşlemesi,
+günlük recursive cleanup sınırı ve mevcut kart process'inin ayrı weekly köke
+erişimidir. Parola/token veya genel kurulum onayı istenmiyor.
 
-Mevcut desteklenen yol doğrulanırsa yalnız weekly-* adlı TEST medyayı aynı hosta
-yazıp Content-Type + SHA256 + değişmezlik geri okuması doğrulanabilir. Günlük
-workflow çalıştırmak, yeni endpoint uydurmak veya erişim genişletmek çözüm değildir.
-İhtiyaç yeni weekly servis kodunun production deploy'unu gerektirirse bunun somut
-diff'i ayrıca onaya sunulur; mevcut izin bu deploy'u kapsamıyor. Şu anda
-production migration/deploy/aktivasyon veya sosyal publish/queue/cancel yoktur.
+Ayrı weekly mount + yeni kod + ayrı n8n route için somut deployment/activation
+diff'i gereklidir; mevcut izin bunu kapsamıyor. Bu koşullar karşılandıktan sonra
+yalnız TEST dosyasıyla HTTPS/MIME/hash/immutable geri okuma ve DRAFT binding
+sınanabilir. Mevcut günlük route üzerine weekly URL uydurulmaz; günlük workflow,
+izin veya credential değiştirilmez. Şu anda gerçek weekly upload/E2E,
+production deployment/aktivasyon veya sosyal publish/queue/cancel yoktur.
 
 Yerel kök: `C:\Users\A.Burak KARADERİ\Desktop\Air\Doctorium Haftalık Paylaşımlar`.
 Hiyerarşi ay → hafta; ayı aşan hafta pazartesinin ayında tek klasörde tutulur.

@@ -26,6 +26,7 @@ import * as video from "./lib/social-video.mjs";
 import * as carousel from "./lib/social-carousel.mjs";
 import { createRubrikYayin } from "./lib/rubrik-yayin.mjs";
 import { createWeeklyDraftWorker } from "./lib/weekly-draft-worker.mjs";
+import { createWeeklyMediaHandler } from "./lib/weekly-media.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const TOKEN = process.env.SOCIAL_DIGEST_TOKEN ?? "";
@@ -180,8 +181,13 @@ const weeklyDraft = createWeeklyDraftWorker({
   mesgul: () => sosyal.durum().durum === "calisiyor",
 });
 
+const weeklyMedia = createWeeklyMediaHandler({ root: process.env.WEEKLY_DRAFT_ARCHIVE_ROOT,
+  enabled: process.env.WEEKLY_MEDIA_SERVING_ENABLED === "true",
+  draftStagingAllowed: process.env.WEEKLY_MEDIA_DRAFT_STAGING_ALLOWED === "true" });
+
 http.createServer(async (req, res) => {
   if (req.url === "/saglik") { res.writeHead(200); return res.end("ok"); }
+  if (await weeklyMedia(req, res)) return;
   if (await weeklyDraft.handle(req, res)) return;
   if (await rubrik.handle(req, res)) return;
   if (await rubrikYayin.handle(req, res)) return;
