@@ -3,6 +3,8 @@ import { cronGate, errText } from "@/lib/cron-guard";
 import { recordAccess } from "@/lib/audit";
 import { sendAlert } from "@/lib/alerts";
 import { rubrikHatirlatmasi } from "@/lib/social-calendar/reminder-run";
+import { prepareEventDraft } from "@/lib/social-calendar/prepare-events";
+import { prepareStudentDraft } from "@/lib/social-calendar/prepare-students";
 
 // GET /api/cron/rubrik-hatirlatma — içerik takvimi rubrik HATIRLATMASI (v6.345, 2026-10-10; 👤 "hatırlatma ile devam et").
 // Her gün 09:00 TR: BUGÜN rubrik günüyse ve yuva hazır değilse ACİL (12:00 yayını o gün hiçbir mecraya gitmez), YARIN rubrik günüyse
@@ -17,6 +19,23 @@ export async function GET(req: Request) {
   if (gate) return gate;
 
   try {
+    // Preparation must never suppress the existing reminder if a source or DB call fails.
+    let preparation: Awaited<ReturnType<typeof prepareEventDraft>> | { status: "error" };
+    try { preparation = await prepareEventDraft(); }
+    catch {
+      preparation = { status: "error" };
+      void sendAlert("cron-rubrik-taslak", "Etkinlik taslağı hazırlanamadı", "rubrik-hatirlatma: preparation-error");
+    }
+    await recordAccess({ actor: null, action: "CRON_MAINTENANCE", resourceType: "SYSTEM", resourceId: "rubrik-taslak",
+      subjectUserId: null, detail: JSON.stringify(preparation) });
+    let studentPreparation: Awaited<ReturnType<typeof prepareStudentDraft>> | { status: "error" };
+    try { studentPreparation = await prepareStudentDraft(); }
+    catch {
+      studentPreparation = { status: "error" };
+      void sendAlert("cron-ogrenci-taslak", "Öğrenci taslağı hazırlanamadı", "rubrik-hatirlatma: student-preparation-error");
+    }
+    await recordAccess({ actor: null, action: "CRON_MAINTENANCE", resourceType: "SYSTEM", resourceId: "ogrenci-taslak",
+      subjectUserId: null, detail: JSON.stringify(studentPreparation) });
     const r = await rubrikHatirlatmasi();
     const ozet = r.maddeler.map((m) => `${m.seviye}:${m.seriesKey}@${m.slotDay}`).join(",") || "yok";
     await recordAccess({
@@ -30,7 +49,7 @@ export async function GET(req: Request) {
     if (r.atlama === "gonderim-hatasi") {
       void sendAlert("cron-rubrik-hatirlatma", "rubrik hatırlatması e-postası GİDEMEDİ (Resend reddetti)", ozet);
     }
-    return NextResponse.json({ ok: true, ...r });
+    return NextResponse.json({ ok: true, preparation, studentPreparation, ...r });
   } catch (e) {
     void sendAlert("cron-rubrik-hatirlatma", "rubrik-hatirlatma cron BAŞARISIZ — hatırlatma gitmedi", errText(e, "bilinmeyen hata"));
     return NextResponse.json({ error: "rubrik-hatirlatma başarısız." }, { status: 500 });
