@@ -200,7 +200,11 @@ export async function getWeeklyDrafts(week: string) {
   if (!isDayString(week) || new Date(`${week}T00:00:00Z`).getUTCDay() !== 1) throw new PlanError("Pazartesi tarihi gerekli.");
   const slots = slotsOfWeek(week);
   const rows = await db.contentPlanItem.findMany({ where: { slotDay: { in: slots.map(s => s.slotDay) }, status: "DRAFT", weeklyPackageId: null } });
-  const items = [];
+  const items: Array<{
+    id: string; version: string; seriesKey: string; slotDay: string; contentHash: string;
+    payload: NonNullable<ReturnType<typeof parsePayload>>; render: ReturnType<typeof renderRequestBody>;
+    gates: GateReport; state: "DRAFT_REVIEW_ONLY";
+  }> = [];
   for (const { series, slotDay } of slots) {
     const row = rows.find(r => r.seriesKey === series.key && r.slotDay === slotDay), payload = parsePayload(row?.payload);
     if (!row || !payload) continue;
