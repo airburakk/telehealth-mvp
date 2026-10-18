@@ -125,6 +125,17 @@ the credentials target the intended accounts or have all required permissions.
 No save, publish, execution, deployment or live change was performed. Raw exports
 may contain credentials: keep them out of Git, user artifacts and logs.
 
+The subsequent read-only inventory contains 13 workflows. Published entries
+include YouTube Shorts (Buffer), LinkedIn video (Buffer), X video (Reel A),
+Facebook Reels (Reel A), Instagram Günlük Kart (feed), and Sabah Hikâye + Reels
+(üret + arşivle + yayın). The earlier absence of video/Instagram nodes applies
+only to TnY74Tf0YUtMXxyR, not the entire n8n installation. Inspect the existing
+YouTube workflow and shared producer before deciding where to attach the weekly
+approval/claim boundary. Reuse those existing production/distribution branches;
+do not create a parallel video publisher. Detailed node wiring, execution evidence
+and independent target-account verification are still pending. No live pipeline
+was created or replaced by the offline preview code in this PR.
+
 Before any live n8n edit, retain the actual backup in access-controlled storage and
 recheck that these revision IDs, active state and node/connection equality still
 hold. Do not rewire the dynamic daily news workflow into a weekly package. Build
