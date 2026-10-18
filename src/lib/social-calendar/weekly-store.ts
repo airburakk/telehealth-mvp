@@ -340,7 +340,7 @@ export async function getWeeklyQueueTasks(week: string) {
 /** Record a verified remote observation, not a cancellation-request acknowledgement.
  * Unsupported/unverified provider read/cancel capabilities must report UNKNOWN or use ADMIN checks.
  */
-export async function observeWeeklyQueue(input: { id: string; providerQueueId: string; observation: "QUEUED" | "CANCELLED" | "UNKNOWN" | "PUBLISHED"; observedAt: string; platformId?: string; publishedUrl?: string; publishedAt?: string }) {
+export async function observeWeeklyQueue(input: { id: string; providerQueueId: string; observation: "QUEUED" | "CANCELLED" | "UNKNOWN" | "PUBLISHED"; observedAt: string; dueAt?: string; platformId?: string; publishedUrl?: string; publishedAt?: string }) {
   const queueId = opaqueId(input.providerQueueId), observedAt = observedTime(input.observedAt);
   return transaction(async tx => {
     const initial = await tx.weeklyChannelDelivery.findUnique({ where: { id: input.id } });
@@ -353,6 +353,8 @@ export async function observeWeeklyQueue(input: { id: string; providerQueueId: s
     if (d.queuedAt && observedAt < d.queuedAt) conflict("Gözlem kuyruk kabulünden eski.");
     let state = d.state;
     let evidence: ReturnType<typeof publicProof> | undefined;
+    const actualDue = input.observation === "QUEUED" ? new Date(input.dueAt ?? "") : undefined;
+    if (actualDue && !Number.isFinite(actualDue.getTime())) throw new PlanError("Kuyruk gözleminde gerçek sağlayıcı yayın zamanı gerekli.");
     if (input.observation === "PUBLISHED") {
       evidence = publicProof(d.channel, input.platformId ?? "", input.publishedUrl ?? "", input.publishedAt ?? "");
       if (d.queuedAt && evidence.remotePublishedAt.getTime() < d.queuedAt.getTime() - 5000) conflict("Yayın teyidi kuyruk kabulünden eski.");
@@ -370,7 +372,9 @@ export async function observeWeeklyQueue(input: { id: string; providerQueueId: s
     } else {
       state = p.status !== "APPROVED" || d.cancelRequestedAt ? "CANCEL_PENDING" : "QUEUED";
     }
+    if (actualDue && actualDue.getTime() !== d.scheduledAt.getTime()) state = "CANCEL_PENDING";
     await tx.weeklyChannelDelivery.update({ where: { id: d.id }, data: { state, remoteObservedAt: observedAt, ...evidence,
+      ...(actualDue ? { providerDueAt: actualDue } : {}),
       ...(["CANCEL_PENDING", "CANCEL_UNKNOWN"].includes(state) ? { cancelRequestedAt: d.cancelRequestedAt ?? new Date() } : {}),
       ...(state === "CANCELLED" ? { cancelConfirmedAt: observedAt } : {}), resultNote: state === "PUBLISHED_RISK" ? "PUBLICATION_AFTER_REVOKE_CANCEL_OR_EARLY_SCHEDULE" : `REMOTE_OBSERVED_${input.observation}` } });
     await tx.weeklyDeliveryEvent.create({ data: { deliveryId: d.id, state, note: `REMOTE_OBSERVED_${input.observation}` } });

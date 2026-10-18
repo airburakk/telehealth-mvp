@@ -147,7 +147,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("weekly package real DB integrit
       await expect(claimWeeklyDelivery(input)).rejects.toThrow();
       vi.setSystemTime(new Date(d.enqueueAt!.getTime() + 2 * 3600000));
       expect((await getWeeklyPackage(f.manifest.week))!.deliveries.find(v => v.id === d.id)!.effectiveState).toBe("QUEUED");
-      await revokeWeeklyPackage({ actor, id: p.id, version: p.updatedAt.toISOString() });
+      const edited = await db.contentPlanItem.findUniqueOrThrow({ where: { id: f.ids[2] } });
+      await db.contentPlanItem.update({ where: { id: edited.id }, data: { payload: JSON.stringify({ ...JSON.parse(edited.payload!), caption: "Changed after the reviewed queue was accepted" }) } });
+      expect((await db.weeklyContentPackage.findUniqueOrThrow({ where: { id: p.id } })).status).toBe("REVOKED");
       expect((await db.weeklyChannelDelivery.findUniqueOrThrow({ where: { id: d.id } })).state).toBe("CANCEL_PENDING");
       expect((await getWeeklyQueueTasks(f.manifest.week)).some(v => v.id === d.id)).toBe(true);
       expect((await getWeeklyPackage(f.manifest.week))!.deliveries.find(v => v.id === d.id)!.remoteRisk).toBe(true);
@@ -155,6 +157,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("weekly package real DB integrit
       await observeWeeklyQueue({ id: d.id, providerQueueId: queueId, observation: "UNKNOWN", observedAt: new Date().toISOString() });
       expect((await db.weeklyChannelDelivery.findUniqueOrThrow({ where: { id: d.id } })).state).toBe("CANCEL_UNKNOWN");
       const unknown = await db.weeklyChannelDelivery.findUniqueOrThrow({ where: { id: d.id } });
+      await expect(observeWeeklyQueue({ id: d.id, providerQueueId: queueId, observation: "CANCELLED", observedAt: new Date(Date.now() - 60000).toISOString() })).rejects.toThrow();
       await expect(reconcileWeeklyDelivery({ actor, id: d.id, version: unknown.updatedAt.toISOString(), outcome: "NOT_FOUND", evidence: "No public post was found but the remote queue remains unverified." })).rejects.toThrow();
       vi.setSystemTime(new Date(Date.now() + 60000));
       await observeWeeklyQueue({ id: d.id, providerQueueId: queueId, observation: "CANCELLED", observedAt: new Date().toISOString() });

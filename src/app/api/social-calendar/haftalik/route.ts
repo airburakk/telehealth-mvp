@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (b.action === "queue-observation") {
       if (!["QUEUED", "CANCELLED", "UNKNOWN", "PUBLISHED"].includes(str(b.observation))) throw new PlanError("Uzak kuyruk gözlemi geçersiz.");
       if (["CANCELLED", "PUBLISHED"].includes(str(b.observation)) && process.env.WEEKLY_REMOTE_OBSERVER_VERIFIED !== "true") return NextResponse.json({ error: "Sağlayıcı teyit yeteneği doğrulanmadı; insan incelemesi gerekli." }, { status: 503 });
-      return NextResponse.json({ ok: true, ...(await observeWeeklyQueue({ id: str(b.id), providerQueueId: str(b.providerQueueId), observation: b.observation as "QUEUED" | "CANCELLED" | "UNKNOWN" | "PUBLISHED", observedAt: str(b.observedAt), platformId: str(b.platformId), publishedUrl: str(b.publishedUrl), publishedAt: str(b.publishedAt) })) });
+      return NextResponse.json({ ok: true, ...(await observeWeeklyQueue({ id: str(b.id), providerQueueId: str(b.providerQueueId), observation: b.observation as "QUEUED" | "CANCELLED" | "UNKNOWN" | "PUBLISHED", observedAt: str(b.observedAt), dueAt: str(b.dueAt), platformId: str(b.platformId), publishedUrl: str(b.publishedUrl), publishedAt: str(b.publishedAt) })) });
     }
     if (b.action === "drafts") return NextResponse.json({ ok: true, ...(await getWeeklyDrafts(str(b.week))) });
     if (b.action === "prepare") {

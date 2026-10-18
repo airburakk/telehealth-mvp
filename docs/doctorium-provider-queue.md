@@ -45,7 +45,8 @@ The existing CONTENT_PLAN_TOKEN surface adds:
 - `queued`: id, attempt claimToken, providerQueueId, dueAt; records acceptance only.
 - `queue-tasks`: week; read recovery jobs including revoked packages, without tokens.
 - `queue-observation`: id, matching providerQueueId, observation and observedAt.
-  PUBLISHED additionally requires platformId, publishedUrl and publishedAt.
+  QUEUED also requires the actual observed dueAt; a changed remote schedule
+  becomes CANCEL_PENDING. PUBLISHED requires platformId, publishedUrl and publishedAt.
 
 These are internal recording contracts, not Buffer API methods. No provider SDK
 or read/delete endpoint is invented or called. Definitive machine CANCELLED or
