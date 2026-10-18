@@ -23,6 +23,38 @@ only a review utility using the existing ffmpeg runner, not a new live video
 pipeline. Prefer extending the existing rubric/card renderer with readable timing,
 subtitles and optional reviewed narration over building a second backend.
 
+### Existing service contracts observed in the UI
+
+| Request | Observed contract and safe handling |
+|---|---|
+| GET http://kart:3000/bulten.png | Binary PNG; existing request timeout 90 seconds |
+| POST http://kart:3000/sosyal/uret | No explicit body in the existing node. 202/409 mean waiting/busy with gun/durum, not permission to force a second job. 200 bos_gun=true means skip; 200 durum=hazir means prepared, not published. |
+| GET http://kart:3000/sosyal/durum | durum, gun, dosyalar, kapsam; optional hata/adim/asama/gecen_sn. The requested Turkey day must match gun. Existing polling interval 15 seconds, total budget about 15 minutes. |
+| GET http://kart:3000/sosyal/dosya/{gun}/{ad} | Existing archived MP4 download. Validate day, safe filename, actual MP4 bytes and expected asset hash; do not infer valid video from URL extension alone. |
+
+`dosyalar` entries contain ad, tur, sira and boyut. `kapsam` contains akislar,
+ogeSayisi and yedekSayisi. Preserve that established schema and MP4-only contract;
+do not add weekly PNG/SRT/JSON files to the daily download list. The old producer
+request does not accept an observed weekly payload/body: reuse its implementation
+in a separately scoped draft render job rather than pretending that endpoint is
+already a generic weekly renderer. Do not expose internal service endpoints or
+invent new credentials to reach them.
+
+The observed YouTube Buffer createPost request uses customScheduled dueAt, video
+asset, title, category 27, public visibility, madeForKids=false,
+notifySubscribers=true and isAiGenerated=false. These are the existing daily
+request's values, not automatically approved defaults for every weekly video.
+Keep title, audience/visibility, notification, schedule and disclosure choices in
+the exact reviewed post.json. If realistic generated/altered AI scenes are later
+introduced, assess the disclosure choice against current provider requirements
+and include the resulting flag in human review; do not blindly copy false.
+No AI scenes or paid generation were created by this change.
+
+The YouTube daily marker youtubeShortsGunu is written after a Buffer post ID and
+force can bypass it. This is not an atomic durable delivery ledger and a Buffer
+ID does not prove public publication. Preserve it for the existing daily path,
+but never use force or reset that marker to push an approved weekly item through.
+
 ## Proposed first stage: preserve daily, add reviewed weekly content
 
 This is a proposal for an explicit transition decision, not permission to toggle
@@ -107,6 +139,35 @@ versus actual publication is an integration blocker, not evidence that the curre
 daily YouTube workflow is missing or broken.
 
 ## Reviewable live-change boundary and rollback
+
+### Dry-run and preview acceptance, without posts
+
+Use fixtures or a separately isolated draft render namespace. No request below
+authorizes running the full existing producer/sender workflows. In dry-run mode,
+the send/enqueue nodes must be unreachable and no daily static-data guard may be
+written. Record the exact source/manifest version, safe status/date/asset metadata
+and test outcome; keep raw exports, headers and responses out of user artifacts.
+
+| Check | Expected result before any send node |
+|---|---|
+| 202/409 producer response | Wait/poll within budget; never force or start another overlapping render |
+| 200 bos_gun=true | Explicit EMPTY/SKIPPED preparation result; no claim/enqueue/post |
+| Waiting status | Poll every 15 seconds, at most about 15 minutes; timeout is visible, not success |
+| Wrong/missing gun | Stop; never download or share another day's daily video |
+| Error/unknown status, malformed files/scope | Stop and record a safe failure classification; no raw credentials/error response in reports |
+| READY with files | Validate file order/type/size, MP4 container/streams/duration, intended day and SHA256 before review |
+| Weekly media | Dedicated package-hash/item namespace, not reels-a-YYYY-MM-DD.mp4 or the daily completion marker |
+| Review preview | Actual final images, MP4, SRT and any narration, plus exact per-channel post.json/accounts/times; clearly DRAFT/unpublished |
+| Modified media/account/time/disclosure | Manifest changes; old approval/claim rejected |
+| Missing human approval or disabled weekly flag | No claim or send; automatic preparation remains DRAFT only |
+| Duplicate/unknown provider queue or delivery | No second enqueue/upload; reconcile provider ID and ledger first |
+| Buffer accepted scheduled post | QUEUED evidence only; never SUCCEEDED/PUBLISHED solely from queue acceptance |
+
+The repository unit/real-testDB tests validate the approval/ledger contracts, not
+the live n8n topology or actual MP4/Buffer execution. Actual final-video preview,
+isolated renderer validation, provider queue reconciliation and the dry-run branch
+mapping remain required integration checks. Do not run the current daily producer
+just to obtain a preview, because it also publishes Instagram media.
 
 Before any edit, retain access-controlled exports/revision IDs for the producer,
 YouTube and each affected sender; compare their currently published and draft
