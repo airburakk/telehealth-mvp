@@ -130,7 +130,7 @@ export async function approveWeeklyPackage(input: Actor & { id: string; version:
         if (previous && (previous.attempt !== 0 || previous.state !== "CANCELLED")) conflict("Bu içerik/kanal için önceki yayın denemesi var; yeniden paketlenemez.");
         const data = {
         id: weeklyDeliveryKey(p.manifestHash, row.id, c), packageId: p.id, itemId: row.id, channel: c,
-        accountId: e.accounts![c]!, scheduledAt: new Date(e.scheduledAt), state: "PENDING",
+        accountId: e.accounts![c]!, scheduledAt: new Date(e.scheduledAt), state: "PENDING", resultNote: null,
         events: { create: { state: "PENDING", note: `HUMAN_WEEK_APPROVAL:${p.id}:${p.manifestHash}`, actorId: input.actor.id } },
         };
         if (previous) await tx.weeklyChannelDelivery.update({ where: { id: previous.id }, data });
