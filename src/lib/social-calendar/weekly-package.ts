@@ -16,8 +16,9 @@ export interface WeeklyEntry {
   contentHash: string;
   scheduledAt: string;
   channels: WeeklyChannel[];
+  accounts?: Partial<Record<WeeklyChannel, string>>;
   /** Final rendered files, including MP4, audio, captions and channel-specific text. */
-  assets: { channel: WeeklyChannel; name: string; sha256: string }[];
+  assets: { channel: WeeklyChannel; name: string; sha256: string; url?: string }[];
 }
 export interface WeeklyManifest { v: 1; week: string; entries: WeeklyEntry[] }
 export interface WeeklySnapshot {
@@ -37,8 +38,9 @@ export function weeklyManifestHash(manifest: WeeklyManifest): string {
       id: e.id, version: e.version, seriesKey: e.seriesKey, slotDay: e.slotDay,
       contentHash: e.contentHash, scheduledAt: e.scheduledAt,
       channels: [...e.channels].sort(),
+      accounts: e.accounts ? Object.fromEntries([...e.channels].sort().map(c => [c, e.accounts?.[c]])) : undefined,
       assets: [...e.assets].sort((a, b) => `${a.channel}/${a.name}`.localeCompare(`${b.channel}/${b.name}`))
-        .map(a => ({ channel: a.channel, name: a.name, sha256: a.sha256 })),
+        .map(a => ({ channel: a.channel, name: a.name, sha256: a.sha256, url: a.url })),
     })),
   }));
 }

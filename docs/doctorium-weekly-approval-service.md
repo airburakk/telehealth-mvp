@@ -1,0 +1,108 @@
+# Weekly approval service: review-only rollout
+
+Implemented on the PR branch, not production. No production migration or social
+upload occurred. The existing dynamic Daily Selection is a different workflow.
+
+## Schema and review
+
+Migration `20261018050000_weekly_content_package` adds WeeklyContentPackage,
+WeeklyChannelDelivery and WeeklyDeliveryEvent, plus ContentPlanItem.weeklyPackageId.
+The PostgreSQL update trigger revokes an approved package and cancels PENDING
+deliveries in the same transaction when an item's payload, source, attestation,
+approval hash, slot or editable state changes. Claim transitions preserve the seal.
+
+`/admin/icerik-takvimi/haftalik?hafta=YYYY-MM-DD` shows the reviewed week, Turkey
+times, text, explicit target accounts and final media. One checkbox/button approves
+that exact package. ADMIN session required; cross-origin writes are rejected.
+The page explicitly says the n8n weekly integration has not been activated.
+
+`POST /api/admin/icerik-takvimi/haftalik` actions:
+
+| Action | Input and effect |
+|---|---|
+| prepare | manifest; store DRAFT only, no approval |
+| approve | id/version/hash/confirmed:true; atomic approval of all items |
+| revoke | id/version; stop pending jobs and release unattempted items |
+| reconcile | delivery id/version, FOUND/NOT_FOUND, evidence and platformId when found |
+
+The manifest must contain the three existing Monday/Wednesday/Friday rubric slots,
+item versions/content hashes, five channels, exact future UTC timestamps falling
+on each Turkey slot day, target account IDs and final public HTTPS asset URLs/
+SHA256 values. Each channel requires `post.json` containing the exact final
+caption/title/thread/description request data. YouTube also requires MP4. List all
+other files used by the upload: images, PDF, SRT, audio, thumbnail when applicable.
+URLs cannot carry query tokens or embedded credentials. The final rendered assets
+and their producer/account mapping remain a real integration dependency.
+
+Approval is SERIALIZABLE, locks the package/items, rechecks the preview version
+and hash, reads current source texts and runs existing editorial gates. It reserves
+and stamps all three items and creates all 15 channel jobs in one transaction.
+Any failed gate or concurrent change rolls back the whole approval. Karar masası
+still requires its existing identity, exact-quote and human-note gates. A separate
+source-literacy alternative cannot silently replace that registered legal item.
+
+Package receipts survive revocation. A new revision requires revoking the open
+package first and reviewing the new item versions/assets/accounts/schedule.
+Only items with no attempted channel jobs can be released/repackaged. A unique
+item/channel constraint prevents a revised package from repeating a previous
+upload. Unattempted cancelled histories are retained when moved to a new revision.
+
+## Dormant worker surface
+
+`POST /api/social-calendar/haftalik` uses the existing kart-held CONTENT_PLAN_TOKEN;
+no new secret or OAuth grant is created. It cannot approve. Actions:
+
+| Action | Contract |
+|---|---|
+| inspect | Read an approved week/manifest/jobs; no drafts or claim tokens |
+| claim | id, package hash, actual accountId, downloaded assetHashes by filename |
+| result | id, attempt claimToken, SUCCEEDED/FAILED/UNKNOWN; platformId for success |
+
+Claims require `WEEKLY_PUBLISH_ENABLED=true`, absent/false by default (503).
+Inspection and in-flight result reporting remain available without enabling new
+claims. No scheduler, kart bridge or live n8n node invokes this endpoint yet.
+
+The connected worker must resolve the actual credential's account and hash every
+downloaded final file, including post.json, before claiming once. The server checks
+the stored human approval, current content/gates, account and exact media hashes.
+Claims are limited to 15 minutes after the approved timestamp: no early posts or
+backdated catch-up. Items owned by weekly packages are excluded from legacy bak/al,
+manual publish, legacy result/failure and retry paths to prevent two publishers.
+
+SUCCEEDED needs a real platform ID, is terminal and cannot be reset by retry.
+Identical callbacks are idempotent; conflicting results are rejected. FAILED
+without explicit noRequestSent:true becomes UNKNOWN. A lost CLAIMED result is
+displayed UNKNOWN after 20 minutes but never automatically recycled. A human must
+inspect the platform and record evidence before reset; UNKNOWN/CLAIMED NOT_FOUND
+requires at least 20 minutes. FOUND records the existing platform ID without an
+upload. FAILED also requires human verification. New claims must still match the
+original account/files/time window; missed windows need a new operational review.
+One failed channel never requeues another successful channel. Events persist in
+WeeklyDeliveryEvent; raw platform responses/tokens are not stored.
+
+These source gates do not fetch fresh internet facts. The producer/worker must
+recheck externally changing dates/withdrawals and stop for revised review rather
+than silently rewriting approved content.
+
+## Live boundary and rollback
+
+Run the migration and concurrency/trigger tests only on TEST_DATABASE_URL first.
+Apply additive schema before code only after production approval; keep the publish
+flag disabled. Test explicit review, stale edits, rollback of all item approvals,
+legacy exclusion, concurrent claims, uncertain callbacks and human reconciliation.
+
+Before any live n8n edit, back up/export verified workflow TnY74Tf0YUtMXxyR,
+record its active and published/draft revision state, nodes/connections/schedules
+and credential references in access-controlled storage. The browser's toolbar
+changed from Published to Publish without a reported edit; resolve that difference
+before saving/publishing. Do not rewire the dynamic daily news workflow into a
+weekly package. Build a separate inactive rubric flow and report the exact diff/
+effect for approval. Verify actual platform account scopes and test failures before
+separately approving activation. The manual dry-review JSON is not a live backup.
+
+Rollback starts by disabling new weekly claims; leave result reporting available
+for in-flight reconciliation. Revoke packages and ensure unattempted items are
+DRAFT before reverting to code that lacks weekly ownership checks. Preserve all
+attempted/uncertain evidence; never reset or repost successful deliveries. Restore
+n8n's original verified published revision if needed. Retain the additive schema/
+trigger and ledger: no destructive database rollback is necessary or authorized.

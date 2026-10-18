@@ -945,6 +945,8 @@ model LegalTranslationApproval {
 /// JSON alanlar String (branchSlugs deseni). İçerik PHI DEĞİL — kamuya açık, anonim karar/etkinlik metadata'sı + editör metni → şifresiz.
 /// Onay / onayı kaldırma / atlama audit zincirine yazılır.
 model ContentPlanItem {
+  weeklyPackageId String?
+  weeklyPackage WeeklyContentPackage? @relation(fields: [weeklyPackageId], references: [id], onDelete: Restrict)
   id             String    @id @default(cuid())
   seriesKey      String // lib/social-calendar/series SeriesKey: karar-masasi | etkinlik-radari | ogrenci-kosesi
   slotDay        String // yayın günü, Türkiye takvim günü "YYYY-AA-GG" (saat dilimi kayması yok)
@@ -967,6 +969,59 @@ model ContentPlanItem {
   @@unique([seriesKey, slotDay])
   @@index([slotDay])
   @@index([status, slotDay])
+}
+
+/// Immutable once approved. No social credentials or personal audience data.
+model WeeklyContentPackage {
+  id String @id @default(cuid())
+  week String
+  status String @default("DRAFT")
+  manifest String
+  manifestHash String
+  approvedAt DateTime?
+  approvedById String?
+  approvedBy String?
+  revokedReason String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items ContentPlanItem[]
+  deliveries WeeklyChannelDelivery[]
+  @@index([week, createdAt])
+}
+
+/// One delivery per item/channel across package revisions, including uncertain outcomes.
+model WeeklyChannelDelivery {
+  id String @id
+  packageId String
+  package WeeklyContentPackage @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  itemId String
+  channel String
+  accountId String
+  state String @default("PENDING")
+  scheduledAt DateTime
+  attempt Int @default(0)
+  claimToken String?
+  claimedAt DateTime?
+  platformId String?
+  resultNote String?
+  reconciledById String?
+  reconciledAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  events WeeklyDeliveryEvent[]
+  @@unique([itemId, channel])
+  @@index([packageId, state, scheduledAt])
+}
+
+model WeeklyDeliveryEvent {
+  id String @id @default(cuid())
+  deliveryId String
+  delivery WeeklyChannelDelivery @relation(fields: [deliveryId], references: [id], onDelete: Restrict)
+  state String
+  note String
+  actorId String?
+  createdAt DateTime @default(now())
+  @@index([deliveryId, createdAt])
 }
 
 /// Web Push aboneliği — kullanıcının cihazı (tarayıcı kapalıyken bildirim)

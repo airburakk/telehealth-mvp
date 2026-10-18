@@ -1,9 +1,11 @@
 # Weekly review and YouTube preparation
 
-Status: preparation only. No new approval endpoint, database migration, publisher,
-credential, scheduled trigger or live n8n modification is included in this change.
-The existing editor and Daily Selection continue to work as before. This PR does
-**not** make one-click weekly approval available in the site yet.
+Status: branch implementation, not deployed. The weekly approval database/API/UI
+and durable delivery ledger are now implemented; see
+[service contract and rollout](doctorium-weekly-approval-service.md).
+Final production media, account mapping and the live n8n integration are still
+pending. No credential, scheduled trigger, social upload or live n8n modification
+was performed. Daily Selection remains separate.
 
 ## Evidence and access boundary
 
@@ -13,7 +15,13 @@ of the active workflow. The documented `output/n8n-akislari` scripts are absent.
 No connected n8n tool or configured `doctorium-n8n` SSH alias was available here.
 The user supplied workflow `TnY74Tf0YUtMXxyR` at `otomasyon.doctorium.tr`;
 another worker owns its read-only browser inspection. Its actual nodes,
-credentials, executions and active state have not been verified by this change.
+credentials and executions were not accessed by this repository worker. The
+parent's read-only worker subsequently verified a 24-node Daily Selection flow
+with 07:45 Europe/Istanbul scheduling, X/Facebook images and immediate LinkedIn
+Buffer publishing. No YouTube, Instagram or approval nodes were observed. The
+toolbar changed from Published to Publish for an unknown reason; compare the
+published/draft revisions before any live save or publish. No export is available
+here, and no live mutation is authorized by this implementation.
 
 Daily Selection uses `/bulten.png`, `/sosyal/uret`, `/sosyal/durum` and the
 existing MP4-only `dosyalar` field. Rubric publishing has a separate
@@ -35,8 +43,8 @@ asset hashes. It seals content, item version, schedule, platform list and media.
 A changed file, voice track, caption, schedule or payload requires another review.
 The per-channel delivery key includes package hash, item and channel.
 
-The remaining authenticated service/UI must be implemented after mapping the
-actual n8n workflow. In one database transaction it must:
+The authenticated service/UI implements the following contract. The actual n8n
+connection still needs separate verification and activation:
 
 1. Load every item and its current source text; run the existing `evaluateGates`.
    Karar masası still requires its identity attestation, exact source quotations
