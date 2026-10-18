@@ -50,7 +50,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("weekly package real DB integrit
   it("rejects stale preview atomically without approving any item", async () => {
     const f = await fixture();
     try {
-      const p = await prepareWeeklyPackage({ actor, manifest: f.manifest });
+      const p = await prepareWeeklyPackage({ actor: null, manifest: f.manifest });
+      expect(p.status).toBe("DRAFT"); expect(p.approvedAt).toBeNull();
+      expect((await prepareWeeklyPackage({ actor: null, manifest: f.manifest })).id).toBe(p.id);
       await db.contentPlanItem.update({ where: { id: f.ids[2] }, data: { attestIdentity: false } });
       await expect(approveWeeklyPackage({ actor, id: p.id, version: p.updatedAt.toISOString(), hash: p.manifestHash, confirmed: true })).rejects.toThrow();
       expect(await db.contentPlanItem.count({ where: { id: { in: f.ids }, status: "APPROVED" } })).toBe(0);

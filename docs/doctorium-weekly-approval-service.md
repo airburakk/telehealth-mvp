@@ -62,6 +62,7 @@ no new secret or OAuth grant is created. It cannot approve. Actions:
 
 | Action | Contract |
 |---|---|
+| prepare | Save a prepared DRAFT manifest as automation; no approval or attestation, even if the caller supplies such flags |
 | inspect | Read an approved week/manifest/jobs; no drafts or claim tokens |
 | claim | id, package hash, actual accountId, downloaded assetHashes by filename |
 | result | id, attempt claimToken, SUCCEEDED/FAILED/UNKNOWN; platformId for success |
@@ -69,6 +70,13 @@ no new secret or OAuth grant is created. It cannot approve. Actions:
 Claims require `WEEKLY_PUBLISH_ENABLED=true`, absent/false by default (503).
 Inspection and in-flight result reporting remain available without enabling new
 claims. No scheduler, kart bridge or live n8n node invokes this endpoint yet.
+Automatic preparation uses that same token-authenticated surface, not a retained
+human session. It never records the human identity attestation or creates delivery
+jobs. The final-media producer still needs to be connected after real access,
+storage and account mapping are verified.
+Repeating preparation with the same DRAFT manifest hash returns the existing
+package, including after a lost response. Different manifests never overwrite an
+open review or an approved package silently.
 
 The connected worker must resolve the actual credential's account and hash every
 downloaded final file, including post.json, before claiming once. The server checks

@@ -11,6 +11,7 @@ import { WEEKLY_CHANNELS, reviewWeeklyPackage, weeklyDeliveryKey, weeklyManifest
 
 type Tx = Prisma.TransactionClient;
 type Actor = { actor: SessionUser; ip?: string | null; userAgent?: string | null };
+type PreparationActor = Omit<Actor, "actor"> & { actor: SessionUser | null };
 function conflict(message: string): never { throw new PlanError(message, 409); }
 const requireAdmin = (actor: SessionUser) => { if (actor.role !== "ADMIN") throw new PlanError("Yetkisiz.", 401); };
 const asString = (s: unknown) => typeof s === "string" ? s : "";
@@ -95,17 +96,20 @@ function reviewOrThrow(manifest: WeeklyManifest, views: WeeklySnapshot[], now: D
   const errors = reviewWeeklyPackage(manifest, views, now);
   if (errors.length) throw new PlanError(errors.join("; "), 422);
 }
-async function audit(input: Actor, action: string, id: string, hash: string) {
+async function audit(input: PreparationActor, action: string, id: string, hash: string) {
   await recordAccess({ ...input, action, resourceType: "weekly-content-package", resourceId: id, subjectUserId: null, detail: hash.slice(0, 16) });
 }
 
 /** Authenticated preparation saves a draft bundle. It cannot approve anything. */
-export async function prepareWeeklyPackage(input: Actor & { manifest: unknown }) {
-  requireAdmin(input.actor);
+export async function prepareWeeklyPackage(input: PreparationActor & { manifest: unknown }) {
+  // actor:null is reserved for the token-authenticated preparation endpoint/internal worker.
+  // This path cannot save attestation, approval, or a delivery claim.
+  if (input.actor) requireAdmin(input.actor);
   const manifest = normalizeWeeklyManifest(input.manifest), hash = weeklyManifestHash(manifest);
   const p = await transaction(async tx => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('doctorium-week'), hashtext(${manifest.week}))`;
     const existing = await tx.weeklyContentPackage.findFirst({ where: { week: manifest.week, status: { in: ["DRAFT", "APPROVED"] } } });
+    if (existing?.status === "DRAFT" && existing.manifestHash === hash) return existing;
     if (existing) conflict("Bu hafta için açık paket var; değiştirmeden önce geri çekin.");
     const { rows, views } = await snapshots(tx, manifest, true, true);
     reviewOrThrow(manifest, views, new Date());

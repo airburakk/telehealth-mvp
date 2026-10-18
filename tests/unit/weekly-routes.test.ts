@@ -34,6 +34,14 @@ describe("weekly API authorization boundaries", () => {
     expect((await machine(request({ action: "approve" }, "test-weekly-token"))).status).toBe(400);
     expect(state.approve).not.toHaveBeenCalled(); expect(state.inspect).not.toHaveBeenCalled();
   });
+  it("allows automatic DRAFT preparation without a human session but cannot attest or approve", async () => {
+    state.prepare.mockResolvedValue({ id: "p", status: "DRAFT", manifestHash: "h" });
+    const res = await machine(request({ action: "prepare", manifest: { v: 1 }, approved: true, confirmed: true }, "test-weekly-token"));
+    expect(res.status).toBe(200);
+    expect(state.prepare).toHaveBeenCalledWith({ manifest: { v: 1 }, actor: null, ip: null, userAgent: null });
+    expect(state.approve).not.toHaveBeenCalled(); expect(state.claim).not.toHaveBeenCalled();
+    expect((await res.json()).package.status).toBe("DRAFT");
+  });
   it("claims stay dormant by default; enabling requires explicit reviewed activation", async () => {
     const body = { action: "claim", id: "d", hash: "h", accountId: "x:account", assetHashes: { "post.txt": "a".repeat(64) } };
     expect((await machine(request(body, "test-weekly-token"))).status).toBe(503); expect(state.claim).not.toHaveBeenCalled();

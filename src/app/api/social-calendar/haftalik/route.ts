@@ -1,7 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { reqMeta } from "@/lib/audit";
 import { PlanError } from "@/lib/social-calendar/plan";
-import { getWeeklyPackage, claimWeeklyDelivery, completeWeeklyDelivery } from "@/lib/social-calendar/weekly-store";
+import { prepareWeeklyPackage, getWeeklyPackage, claimWeeklyDelivery, completeWeeklyDelivery } from "@/lib/social-calendar/weekly-store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -13,12 +14,16 @@ export async function POST(req: Request) {
   const given = Buffer.from(header.startsWith("Bearer ") ? header.slice(7) : ""), expected = Buffer.from(secret);
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   const text = await req.text();
-  if (text.length > 32768) return NextResponse.json({ error: "İstek çok büyük." }, { status: 413 });
+  if (text.length > 262144) return NextResponse.json({ error: "İstek çok büyük." }, { status: 413 });
   let b: Record<string, unknown>;
   try { b = JSON.parse(text); if (!b || Array.isArray(b) || typeof b !== "object") throw new Error(); }
   catch { return NextResponse.json({ error: "Geçersiz JSON." }, { status: 400 }); }
   const str = (s: unknown) => typeof s === "string" ? s : "";
   try {
+    if (b.action === "prepare") {
+      const p = await prepareWeeklyPackage({ manifest: b.manifest, actor: null, ...reqMeta(req) });
+      return NextResponse.json({ ok: true, package: { id: p.id, status: p.status, hash: p.manifestHash } });
+    }
     if (b.action === "inspect") {
       const p = await getWeeklyPackage(str(b.week));
       if (!p || p.status !== "APPROVED") return NextResponse.json({ ok: true, package: null });
