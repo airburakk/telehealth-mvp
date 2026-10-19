@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 type Row = {
+  weeklyPackageId?: string | null;
   id: string;
   seriesKey: string;
   slotDay: string;
@@ -39,6 +40,7 @@ const tick = () => new Date(Date.UTC(2026, 9, 6, 12, 0, 0) + ++state.clock * 100
 function matches(r: Row, where: Record<string, unknown> | undefined): boolean {
   if (!where) return true;
   for (const [k, v] of Object.entries(where)) {
+    if (k === "weeklyPackageId" && v === null && r.weeklyPackageId == null) continue;
     if (k === "id" && v && typeof v === "object" && "not" in (v as object)) {
       if (r.id === (v as { not: string }).not) return false;
     } else if (k === "id") {
@@ -163,6 +165,20 @@ Temyiz olunan kararın ONANMASINA,
 const NOTE = "1) Aydınlatma belgesi her işlemde dosyada bulunmalı\n2) Komplikasyon kaydı hasta dosyasına işlenmeli\n3) Bilgilendirme işlemden önce ve anlaşılır yapılmalı";
 
 const WEDNESDAY = "2026-10-07";
+
+it("weekly-owned content is excluded from legacy read/claim/result/retry paths", async () => {
+  const d = await draftedKarar();
+  const ready = await saveDraft({ id: d.id, expectedVersion: d.version, editorNote: NOTE, attestIdentity: true, ...A });
+  const a = await approve({ id: ready.id, expectedVersion: ready.version, ...A });
+  const row = rows().find(r => r.id === a.id)!;
+  row.weeklyPackageId = "weekly-receipt";
+  expect((await dueForDay(WEDNESDAY)).items).toEqual([]);
+  expect((await claimForPublish({ gun: WEDNESDAY, bugun: WEDNESDAY, ...M })).items).toEqual([]);
+  await expect(markPublished({ id: a.id, expectedVersion: a.version, channels: [{ channel: "instagram", url: "https://example.com/post" }], ...A })).rejects.toThrow(/Haftalık/);
+  row.status = "PUBLISHING";
+  await expect(markPublishFailed({ id: a.id, expectedVersion: a.version, error: "test", ...M })).rejects.toThrow(/Haftalık/);
+  await expect(retryPublish({ id: a.id, expectedVersion: a.version, ...A })).rejects.toThrow(/Haftalık/);
+});
 
 function article(id: string, esas: string, text = KARAR_TEXT) {
   return { id, externalId: `e${id}`, title: `Yargıtay 3. Hukuk Dairesi · E. ${esas}, K. 2026/1817`, summary: text, publishedAt: new Date("2026-05-13T00:00:00Z") };
