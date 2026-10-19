@@ -1,5 +1,11 @@
 # Ayrı haftalık medya: doğrulanmış sınır ve pasif deployment taslağı
 
+SSH erişimi çözüldü; canlı mount/UID/cleanup/disk bulguları artık doğrulandı.
+Aşağıdaki eski erişim bağımlılığı bölümünün yerine güncel
+[kurulum planı](doctorium-weekly-installation-plan.md) geçer. Plan mevcut kartı
+yeniden başlatmak yerine ayrı, yalnız medya sunan sınırlı weekly servis önerir;
+entrypoint/overlay ve toplam disk kota guard'ı henüz uygulanmadı. Deploy yapılmadı.
+
 ## Yanlış varsayımın düzeltilmesi
 
 Parent salt okunur n8n audit'i doğruladı:
