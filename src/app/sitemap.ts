@@ -21,7 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Doctorium projesinin kendi kökü (NEXT_PUBLIC_SITE_URL).
   if (IS_DOCTORIUM_DEPLOY) {
     return [
-      entry("/doctorium", 1.0, "weekly"), // kök "/" da buraya rewrite — kanonik tek URL
+      entry("/", 1.0, "weekly"), // landing (/doctorium'a rewrite) — canonical kök (2026-10-26: Google kökü seçiyordu)
       entry("/doctorium/kayit", 0.8, "monthly"),
       entry("/secki", 0.8, "daily"), // Günlük Seçki (v6.315) — bio linki; kısa adres rewrite ile /doctorium/secki'ye gider, canonical bu URL
       // Hukuki belgeler (v6.210, 2026-09-03) — canonical doctorium.tr; AURA sitemap'ine BİLİNÇLİ girmez
@@ -39,8 +39,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry("/how-it-works", 0.9, "monthly"),
     entry("/guven-ve-gizlilik", 0.8, "monthly"), // Güven ve Gizlilik (kanonik; /trust → 301)
     entry("/for-clinicians", 0.7, "monthly"), // doktor-yüzü vitrin (v6.17)
-    entry("/doctorium", 0.7, "monthly"), // Doctorium tanıtım landing'i (2026-08-16)
-    entry("/doctorium/kayit", 0.6, "monthly"), // Doctorium doktor kaydı (ayrışma Faz B, 2026-08-24)
+    // /doctorium ve /doctorium/kayit BİLİNÇLİ YOK (2026-10-26): canonical'ları doctorium.tr — Doctorium sitemap'inde yaşar.
     entry("/giris", 0.7, "monthly"), // hasta giriş kapısı (public)
     entry("/kayit/hasta", 0.7, "monthly"), // hasta üyeliği
     entry("/kayit", 0.6, "monthly"), // doktor kaydı
