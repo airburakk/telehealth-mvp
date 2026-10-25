@@ -34,7 +34,7 @@ export interface SocialPlatform {
   source: string;
   /** Bu platformda okunabilen ölçüler (API kısıtına göre). */
   metrics: SocialMetricSpec["key"][];
-  /** Bağlantı durumu: "n8n" = n8n zaten okuyor (aktarım eksik) · "token" = jeton n8n'de, okuma akışı yok · "izin" = ek API izni gerekir. */
+  /** Bağlantı durumu: "n8n" = n8n toplayıcısı okuyup panoya aktarıyor · "token" = jeton n8n'de, okuma akışı yok · "izin" = ek API izni gerekir. */
   readiness: "n8n" | "token" | "izin";
   readinessNote: string;
 }
@@ -55,14 +55,15 @@ export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
   {
     key: "instagram", name: "Instagram", handle: "@doctoriumtr", url: "https://www.instagram.com/doctoriumtr/", mark: "IG",
     schedule: [{ time: "07:50", what: "Kart" }, { time: "07:55", what: "Hikâye + Reel" }],
-    source: "Instagram Graph API", metrics: ["followers", "reach", "likes", "comments", "saves", "profileClicks"],
-    readiness: "token", readinessNote: "Sayfa jetonu n8n'de; içgörü izni (instagram_manage_insights) doğrulanmalı",
+    // Profil tıklaması YOK: IG'de güvenilir karşılık yok (profile_links_taps ≠ profil ziyareti) → kart hep "—" kalırdı.
+    source: "Instagram Graph API", metrics: ["followers", "reach", "views", "likes", "comments", "saves"],
+    readiness: "n8n", readinessNote: "Meta toplayıcısı günlük 09:20 (erişim/görüntülenme/kaydetme = hesap içgörüsü; beğeni/yorum = gönderinin yayın günü)",
   },
   {
     key: "facebook", name: "Facebook", handle: "/doctoriumtr", url: "https://www.facebook.com/doctoriumtr", mark: "f",
     schedule: [{ time: "07:45", what: "Kart" }, { time: "08:25", what: "Reel" }],
-    source: "Graph API · Sayfa içgörüleri", metrics: ["followers", "reach", "likes", "comments"],
-    readiness: "token", readinessNote: "Sayfa jetonu n8n'de; 'impressions' ölçüleri Meta'da 'views' ile değişti",
+    source: "Graph API · Sayfa içgörüleri", metrics: ["followers", "reach", "views", "likes", "comments"],
+    readiness: "n8n", readinessNote: "Meta toplayıcısı günlük 09:20 (erişim/görüntülenme = Sayfa içgörüsü; beğeni/yorum = gönderinin yayın günü)",
   },
   {
     key: "linkedin", name: "LinkedIn", handle: "/company/doctoriumtr", url: "https://www.linkedin.com/company/doctoriumtr", mark: "in",
@@ -74,13 +75,14 @@ export const SOCIAL_PLATFORMS: readonly SocialPlatform[] = [
     key: "x", name: "X", handle: "@Doctoriumtr", url: "https://x.com/Doctoriumtr", mark: "X",
     schedule: [{ time: "07:45", what: "Kart" }, { time: "20:30", what: "Video" }],
     source: "X API (kullanım başına)", metrics: ["followers", "views", "likes", "comments", "saves", "profileClicks"],
-    readiness: "n8n", readinessNote: "Haftalık metrik nöbetçisi (Pzt 09:10) okuyor; pano gövdesi KURU modda hazırlanıyor, gönderim için anahtar bekleniyor",
+    readiness: "n8n", readinessNote: "Haftalık metrik nöbetçisi (Pzt 09:10): gönderinin yayın gününe göre gösterim/beğeni/kaydetme",
   },
   {
-    key: "youtube", name: "YouTube", handle: null, url: null, mark: "▶",
+    // Paylaşım Buffer üzerinden gider (n8n'de YouTube yetkisi YOK); okuma = Data API v3 + API anahtarı (OAuth yok, herkese açık sayılar).
+    key: "youtube", name: "YouTube", handle: "@Doctoriumtr", url: "https://www.youtube.com/@Doctoriumtr", mark: "▶",
     schedule: [{ time: "20:30", what: "Short" }],
-    source: "YouTube Data + Analytics API", metrics: ["followers", "reach", "likes", "comments"],
-    readiness: "token", readinessNote: "Yükleme yetkisi n8n'de; okuma kapsamı (yt-analytics.readonly) eklenmeli",
+    source: "YouTube Data API v3", metrics: ["followers", "views", "likes", "comments"],
+    readiness: "n8n", readinessNote: "Meta toplayıcısı günlük 09:20 (abone + son 25 yüklemenin izlenme/beğeni/yorum, yayın günü)",
   },
 ];
 

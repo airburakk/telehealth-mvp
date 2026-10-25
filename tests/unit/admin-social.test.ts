@@ -22,4 +22,13 @@ describe("admin-social — pano kart kayıt defteri", () => {
     expect(x.metrics).not.toContain("reach");
     expect(SOCIAL_METRIC_LABEL.views).toBe("Görüntülenme");
   });
+
+  it("kart yalnız toplayıcının gerçekten yazdığı ölçüleri çizer (26.10 durumu)", () => {
+    const m = (k: string) => SOCIAL_PLATFORMS.find((p) => p.key === k)!.metrics;
+    // IG'de profil tıklaması karşılığı yok (toplayıcı yazmaz) → kartta da yok; YouTube'da erişim yok, görüntülenme var.
+    expect(m("instagram")).not.toContain("profileClicks");
+    expect(m("youtube")).toEqual(["followers", "views", "likes", "comments"]);
+    // Yalnız LinkedIn izin bekliyor; diğer dördü n8n toplayıcılarıyla bağlı.
+    expect(SOCIAL_PLATFORMS.filter((p) => p.readiness !== "n8n").map((p) => p.key)).toEqual(["linkedin"]);
+  });
 });
