@@ -42,6 +42,8 @@
 //    · 🔒 İçtihatta HAM KARAR METNİ KULLANILMAZ (taze ya da arşiv): Yargıtay anonimleştirmesi kusurlu ("davacının
 //      Mina'nın…" sızıntısı — İçerik Takvimi notu) → özet yerine sözlükten türeyen "Konu … Dayanak …" satırı
 //      (lib/hukuk-keywords); başlığı kimlik taramasına (social-calendar/identity) takılan karar cephanelikten seçilmez.
+//  · 📰 SEKTÖREL İKİNCİ HABER (2026-10-26, 👤 karar): altı yuva korunur; açık yuvaya İLK donör sektöreldir ve ikinci
+//    haber birincinin karşı kökeninden gelir (biri yerli, biri uluslararası). Sektörel tükenince eski donör sırası.
 import { BRANCHES } from "./triage";
 import { trimSummary } from "./daily-digest";
 import { decodeFeedText } from "./doctorium";
@@ -304,13 +306,27 @@ export function pickSocialDigest(
     slots.push({ stream: s, ordered, pick });
   }
 
-  // Donör sırası: o gün en çok taze başlık gelen akış önce; Array.prototype.sort kararlıdır →
-  // eşitlikte STREAMS sırası korunur. Tazesi olmayan akış (= açık yuvanın kendisi) donör olamaz.
+  // Donör sırası: SEKTÖREL İLK (📰 2026-10-26, 👤 karar — sektörel en hareketli akış, ikinci haberi hak ediyor), sonra
+  // o gün en çok taze başlık gelen akış; Array.prototype.sort kararlıdır → eşitlikte STREAMS sırası korunur. Tazesi
+  // olmayan akış (= açık yuvanın kendisi) donör olamaz. Kart altı yuvada kalır: sektörel ikinci haberini ancak açık
+  // yuva varsa (çoğu gün Mevzuat) alır.
   const freshCount = new Map(STREAMS.map((s) => [s.key, articles.filter((a) => s.match(a) && isFresh(a)).length]));
   const donors = STREAMS
     .filter((s) => (freshCount.get(s.key) ?? 0) > 0)
-    .sort((a, b) => (freshCount.get(b.key) ?? 0) - (freshCount.get(a.key) ?? 0));
+    .sort((a, b) =>
+      Number(b.key === "sektorel") - Number(a.key === "sektorel") ||
+      (freshCount.get(b.key) ?? 0) - (freshCount.get(a.key) ?? 0));
+  // Sektörelin ikinci haberi birincinin KARŞI kökeninden: biri yerli, biri uluslararası (yoksa aynı kökenden en taze).
+  const sektorelPick = slots.find((s) => s.stream.key === "sektorel")?.pick ?? null;
+  const donorOrder = (d: Stream) => {
+    const ordered = orderCandidates(d, articles.filter(d.match), rotation);
+    if (d.key !== "sektorel" || !sektorelPick) return ordered;
+    const firstNative = isNativeTurkishSource(sektorelPick.source);
+    return prioritize(ordered, (a) => isNativeTurkishSource(a.source) !== firstNative);
+  };
 
+  // Sektörel en çok BİR ek yuva alır (kartta toplam 2 sektörel — "1 yerine 2"); sonraki açık yuvalar eski sırayla dolar.
+  let sektorelDonated = 0;
   const items: SocialDigestItem[] = [];
   for (const slot of slots) {
     if (slot.pick) {
@@ -325,10 +341,12 @@ export function pickSocialDigest(
     }
     let filled: SocialDigestItem | null = null;
     for (const d of donors) {
-      const cand = orderCandidates(d, articles.filter(d.match), rotation)
+      if (d.key === "sektorel" && sektorelDonated >= 1) continue;
+      const cand = donorOrder(d)
         .find((a) => isFresh(a) && !used.has(a.id));
       if (!cand) continue;
       used.add(cand.id);
+      if (d.key === "sektorel") sektorelDonated++;
       filled = toItem(cand, d, rotation, { stream: slot.stream.key, streamLabel: slot.stream.label }, false);
       break;
     }

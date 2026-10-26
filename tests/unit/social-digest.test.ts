@@ -365,3 +365,42 @@ describe("🗄️ hukuk cephaneliği", () => {
     expect(isDoctrineArchiveWorthy("Oral İmplantoloji Vakaları")).toBe(false);
   });
 });
+
+// ── 📰 Sektörel ikinci haber (2026-10-26, 👤 karar): altı yuva korunur; açık yuvaya İLK donör sektöreldir ve
+//    ikinci haber birincinin karşı kökeninden gelir (biri yerli, biri uluslararası).
+describe("📰 sektörel ilk donör", () => {
+  const rotS = rotationBranchFor("2026-09-21");
+  const sek = (id: string, source: string, h: number) => art({ id, module: "sektorel", kind: "haber", source, createdAt: ago(h) });
+
+  it("açık Mevzuat yuvası, daha yoğun akademik yerine sektörelin uluslararası haberini alır", () => {
+    const items = pickSocialDigest([
+      ...dolgu("mevzuat", "sektorel"),
+      art({ id: "ak2" }), art({ id: "ak3" }), art({ id: "ak4" }),
+      sek("ttb", "ttb", 1), sek("ttb2", "ttb", 2), sek("ms", "medscape", 3),
+    ], rotS, NOW);
+    expect(items.map((i) => i.id)).toEqual(["dolgu-akademik", "dolgu-ilac", "ttb", "ms", "dolgu-ictihat", "dolgu-doktrin"]);
+    expect(items[3].replaces?.stream).toBe("mevzuat");
+  });
+
+  it("karşı kökenden haber yoksa aynı kökenden en taze; sektörel tükenince eski sıra (en yoğun akış)", () => {
+    const items = pickSocialDigest([
+      ...dolgu("mevzuat", "ictihat", "sektorel"),
+      art({ id: "ak2" }),
+      sek("ttb", "ttb", 1), sek("ttb2", "ttb", 2),
+    ], rotS, NOW, {});
+    expect(items.map((i) => i.id)).toEqual(["dolgu-akademik", "dolgu-ilac", "ttb", "ttb2", "ak2", "dolgu-doktrin"]);
+  });
+});
+
+describe("📰 sektörel en çok bir ek yuva", () => {
+  it("iki açık yuva: ilki sektörel, ikincisi en yoğun diğer akış — kartta en çok 2 sektörel", () => {
+    const sek = (id: string, h: number) => art({ id, module: "sektorel", kind: "haber", source: "medicalxpress", createdAt: ago(h) });
+    const items = pickSocialDigest([
+      ...dolgu("ilac", "mevzuat", "sektorel"),
+      art({ id: "ak2" }),
+      sek("s1", 1), sek("s2", 2), sek("s3", 3), sek("s4", 4),
+    ], rotationBranchFor("2026-09-21"), NOW, {});
+    expect(items.map((i) => i.id)).toEqual(["dolgu-akademik", "s2", "s1", "ak2", "dolgu-ictihat", "dolgu-doktrin"]);
+    expect(items.filter((i) => i.stream === "sektorel")).toHaveLength(2);
+  });
+});
