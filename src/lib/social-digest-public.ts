@@ -15,6 +15,7 @@ import { trDayString } from "./daily-digest";
 import {
   ARCHIVE_MIN_YEAR,
   archiveCutoff,
+  isArchiveDay,
   pickArchiveCandidate,
   pickSocialDigest,
   rotationBranchFor,
@@ -57,6 +58,8 @@ export function loadSocialArticles(from: Date, to?: Date) {
  * FAIL-SOFT: hata → boş cephanelik (yuva eskisi gibi donörden dolar); sabah kartı cephanelik yüzünden düşmez.
  */
 export async function loadSocialArchive(now: Date): Promise<SocialArchive> {
+  // 📅 Arşiv günü değilse (Çarşamba/Cumartesi/Pazar) DB'ye hiç gidilmez.
+  if (!isArchiveDay("ictihat", now) && !isArchiveDay("doktrin", now)) return {};
   try {
     const pool = await db.newsArticle.findMany({
       where: {

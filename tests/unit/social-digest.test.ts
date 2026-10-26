@@ -14,7 +14,7 @@
 import { describe, it, expect } from "vitest";
 import {
   rotationBranchFor, pickSocialDigest, SOCIAL_FRESH_MS, type SocialArticle,
-  pickArchiveCandidate, archiveCutoff, isDoctrineArchiveWorthy, ictihatTopicLine, ARCHIVE_EXCLUDE_RECENT_DAYS, type SocialArchiveRow,
+  pickArchiveCandidate, archiveCutoff, isDoctrineArchiveWorthy, ictihatTopicLine, ARCHIVE_EXCLUDE_RECENT_DAYS, isArchiveDay, type SocialArchiveRow,
 } from "@/lib/social-digest";
 import { BRANCHES } from "@/lib/triage";
 
@@ -206,8 +206,9 @@ describe("pickSocialDigest: tekrar yerine donör (🔁 2026-09-21)", () => {
       art({ id: "dk-dun", module: "mevzuat", kind: "doktrin", createdAt: ago(eski) }),
       ...dolgu("akademik", "ilac", "mevzuat", "ictihat", "doktrin"),
     ], rot, NOW);
-    // ilaç 3 taze (en yoğun) → mevzuat←il2, içtihat←il3; ilaç tükendi → doktrin←ak2 (akademik 2 taze)
-    expect(items.map((i) => i.id)).toEqual(["ak1", "il1", "dolgu-sektorel", "il2", "il3", "ak2"]);
+    // ilaç 3 taze (en yoğun) → mevzuat←il2 (ilaç tavanda: 2); içtihat←ak2 (akademik tavanda: 2);
+    // 📊 herkes tavanda → doktrin en az başlığı olan donörden (eşitlikte donör sırası: ilaç) ← il3 — yuva boş kalmaz
+    expect(items.map((i) => i.id)).toEqual(["ak1", "il1", "dolgu-sektorel", "il2", "ak2", "il3"]);
     expect(items.map((i) => i.replaces?.stream ?? null)).toEqual([null, null, null, "mevzuat", "ictihat", "doktrin"]);
     expect(new Set(items.map((i) => i.id)).size).toBe(items.length); // aynı başlık iki yuvada olmaz
   });
@@ -337,23 +338,26 @@ describe("🗄️ hukuk cephaneliği", () => {
     publishedAt: new Date("2024-01-01T00:00:00Z"), createdAt: new Date("2026-01-01T00:00:00Z"), ...over,
   });
 
-  it("pickArchiveCandidate: aynı TR günü aynı seçim; ertesi gün sıradaki; günün içinde saat değişmez", () => {
+  it("pickArchiveCandidate: aynı TR günü aynı seçim; günün içinde saat değişmez; sıradaki arşiv gününde başka karar", () => {
     const pool = ["a", "b", "c"].map((id) => row({ id }));
-    const sabah = pickArchiveCandidate(pool, "ictihat", new Date("2026-10-26T04:45:00Z"));
-    expect(pickArchiveCandidate(pool, "ictihat", new Date("2026-10-26T20:00:00Z"))).toBe(sabah); // 23:00 TR
-    expect(pickArchiveCandidate(pool, "ictihat", new Date("2026-10-26T21:30:00Z"))).not.toBe(sabah); // 00:30 TR = ertesi gün
-    const gunler = Array.from({ length: 3 }, (_, k) => pickArchiveCandidate(pool, "ictihat", new Date(Date.UTC(2026, 9, 26 + k, 5))));
-    expect(new Set(gunler).size).toBe(3); // üç günde üç farklı karar
+    const sabah = pickArchiveCandidate(pool, "ictihat", new Date("2026-10-27T04:45:00Z")); // Salı
+    expect(sabah).not.toBeNull();
+    expect(pickArchiveCandidate(pool, "ictihat", new Date("2026-10-27T20:00:00Z"))).toBe(sabah); // Salı 23:00 TR
+    // Salı/Perşembe/gelecek Salı → üç farklı karar
+    const gunler = ["2026-10-27", "2026-10-29", "2026-11-03"].map((d) => pickArchiveCandidate(pool, "ictihat", new Date(`${d}T05:00:00Z`)));
+    expect(new Set(gunler).size).toBe(3);
   });
 
   it("pickArchiveCandidate: son 30 gün · eski yıl · başka tür · zayıf doktrin · kimlik isabetli başlık dışlanır", () => {
-    const now = new Date("2026-10-26T04:45:00Z");
-    expect(pickArchiveCandidate([row({ createdAt: new Date("2026-10-10T00:00:00Z") })], "ictihat", now)).toBeNull();
-    expect(pickArchiveCandidate([row({ publishedAt: new Date("2020-06-01T00:00:00Z") })], "ictihat", now)).toBeNull();
-    expect(pickArchiveCandidate([row({ kind: "doktrin" })], "ictihat", now)).toBeNull();
+    const now = new Date("2026-10-26T04:45:00Z"); // Pazartesi — doktrin günü
+    const sali = new Date("2026-10-27T04:45:00Z"); // içtihat günü
+    expect(pickArchiveCandidate([row({})], "ictihat", sali)).toBe("r");
+    expect(pickArchiveCandidate([row({ createdAt: new Date("2026-10-10T00:00:00Z") })], "ictihat", sali)).toBeNull();
+    expect(pickArchiveCandidate([row({ publishedAt: new Date("2020-06-01T00:00:00Z") })], "ictihat", sali)).toBeNull();
+    expect(pickArchiveCandidate([row({ kind: "doktrin" })], "ictihat", sali)).toBeNull();
     expect(pickArchiveCandidate([row({ kind: "doktrin", title: "Adli Diş Vakalarının Prevalansı" })], "doktrin", now)).toBeNull();
     expect(pickArchiveCandidate([row({ kind: "doktrin", title: "AYDINLATILMIŞ ONAM ÜZERİNE" })], "doktrin", now)).toBe("r");
-    expect(pickArchiveCandidate([row({ title: "Davacının Mina'nın davası" })], "ictihat", now)).toBeNull();
+    expect(pickArchiveCandidate([row({ title: "Davacının Mina'nın davası" })], "ictihat", sali)).toBeNull();
     expect(archiveCutoff(now).toISOString()).toBe("2026-09-25T21:00:00.000Z"); // 26.10 TR gün başı − 30 gün
     expect(ARCHIVE_EXCLUDE_RECENT_DAYS).toBe(30);
   });
@@ -402,5 +406,52 @@ describe("📰 sektörel en çok bir ek yuva", () => {
     ], rotationBranchFor("2026-09-21"), NOW, {});
     expect(items.map((i) => i.id)).toEqual(["dolgu-akademik", "s2", "s1", "ak2", "dolgu-ictihat", "dolgu-doktrin"]);
     expect(items.filter((i) => i.stream === "sektorel")).toHaveLength(2);
+  });
+});
+
+describe("📅 arşiv günleri + 📊 akış başı tavan (2026-10-26, 👤)", () => {
+  const rotT = rotationBranchFor("2026-09-21");
+  it("içtihat Salı + Perşembe, doktrin Pazartesi + Cuma — haftada her biri 2; Çarşamba/Cumartesi/Pazar arşiv yok", () => {
+    const hafta = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31"]; // Paz→Cmt
+    const gun = (d: string) => new Date(`${d}T04:45:00Z`);
+    expect(hafta.filter((d) => isArchiveDay("ictihat", gun(d)))).toEqual(["2026-10-27", "2026-10-29"]);
+    expect(hafta.filter((d) => isArchiveDay("doktrin", gun(d)))).toEqual(["2026-10-26", "2026-10-30"]);
+    // TR gece yarısı sınırı: Pazartesi 23:30 TR (20:30 UTC) hâlâ Pazartesi; 00:30 TR (21:30 UTC) Salı
+    expect(isArchiveDay("doktrin", new Date("2026-10-26T20:30:00Z"))).toBe(true);
+    expect(isArchiveDay("ictihat", new Date("2026-10-26T21:30:00Z"))).toBe(true);
+  });
+
+  it("arşivsiz günde hukuk yuvaları başka akışlardan dolar; hiçbir akış 2'yi geçmez (5 akademik YOK)", () => {
+    const items = pickSocialDigest([
+      ...["ak1", "ak2", "ak3", "ak4", "ak5"].map((id) => art({ id })),
+      art({ id: "il1", module: "ilac", kind: "ilac" }), art({ id: "il2", module: "ilac", kind: "ilac" }),
+      art({ id: "s1", module: "sektorel", kind: "haber", source: "ttb" }),
+      art({ id: "s2", module: "sektorel", kind: "haber", source: "medscape" }),
+    ], rotT, NOW, {});
+    expect(items).toHaveLength(6);
+    const say = (k: string) => items.filter((i) => i.stream === k).length;
+    expect([say("akademik"), say("ilac"), say("sektorel")]).toEqual([2, 2, 2]);
+    expect(items[3].id).toBe("s2"); // Mevzuat yuvası: sektörel ilk donör, karşı köken
+  });
+
+  it("tavan herkeste dolduysa yuva yine dolar — en az başlığı olan akıştan", () => {
+    const items = pickSocialDigest([
+      ...["ak1", "ak2", "ak3", "ak4", "ak5"].map((id) => art({ id })),
+      art({ id: "il1", module: "ilac", kind: "ilac" }),
+    ], rotT, NOW, {});
+    // ilaç tek taze → akademik 2'yi aşmak zorunda; kart 5 akademik değil, eldeki kadar dağılır
+    expect(items).toHaveLength(6);
+    expect(items.filter((i) => i.stream === "akademik")).toHaveLength(5);
+  });
+
+  it("tavan aşılacaksa sektörel EN SONA — 25.10 senaryosu: ilaç boş, kartta 3 sektörel değil 3 akademik", () => {
+    const items = pickSocialDigest([
+      ...["ak1", "ak2", "ak3"].map((id) => art({ id })),
+      ...["s1", "s2", "s3"].map((id) => art({ id, module: "sektorel", kind: "haber", source: "medicalxpress" })),
+      art({ id: "mv", module: "mevzuat", kind: "mevzuat" }),
+    ], rotT, NOW, {});
+    expect(items).toHaveLength(6);
+    expect(items.filter((i) => i.stream === "sektorel")).toHaveLength(2);
+    expect(items.filter((i) => i.stream === "akademik")).toHaveLength(3);
   });
 });
