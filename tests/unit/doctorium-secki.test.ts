@@ -165,15 +165,27 @@ describe("loadPublicDigest: sabah kartıyla AYNI seçki", () => {
       publishedAt: new Date("2024-03-01T00:00:00Z"), createdAt: new Date("2026-06-01T00:00:00Z") }),
   ];
 
-  it("🗄️ hukuk tazesi yoksa İçtihat/Doktrin yuvası arşivden dolar; sabah ve akşam AYNI arşiv başlığı", async () => {
-    h.rows = [art({ id: "ak", title: "Akademik", createdAt: new Date(ANCHOR.getTime() - 2 * H) }), ...eskiHukuk];
-    const sabah = await loadPublicDigest(MORNING);
-    const aksam = await loadPublicDigest(EVENING);
+  it("🗄️ hukuk tazesi yoksa yuva arşivden dolar (📅 Perşembe içtihat · Cuma doktrin); sabah ve akşam AYNI arşiv başlığı", async () => {
+    // Perşembe 01.10: içtihat günü
+    const PER_ANCHOR = new Date("2026-10-01T04:45:00Z");
+    h.rows = [art({ id: "ak-per", title: "Akademik", createdAt: new Date(PER_ANCHOR.getTime() - 2 * H) }), ...eskiHukuk];
+    const sabah = await loadPublicDigest(new Date("2026-10-01T04:50:00Z"));
+    const aksam = await loadPublicDigest(new Date("2026-10-01T17:00:00Z"));
     expect(aksam.items).toEqual(sabah.items);
-    const arsiv = sabah.items.filter((i) => i.archive);
-    expect(arsiv.map((i) => i.streamLabel)).toEqual(["Arşivden İçtihat", "Arşivden Doktrin"]);
+    expect(sabah.items.filter((i) => i.archive).map((i) => i.streamLabel)).toEqual(["Arşivden İçtihat"]);
+    // Cuma 02.10: doktrin günü
+    h.rows = [art({ id: "ak", title: "Akademik", createdAt: new Date(ANCHOR.getTime() - 2 * H) }), ...eskiHukuk];
+    const cuma = await loadPublicDigest(MORNING);
+    expect(cuma.items.filter((i) => i.archive).map((i) => i.streamLabel)).toEqual(["Arşivden Doktrin"]);
     // 🔒 ham karar metni (taraf adı) kamuya gitmez
     expect(JSON.stringify(sabah.items)).not.toContain("Mina");
+  });
+
+  it("📅 arşiv günü olmayan günde (Çarşamba) cephanelik sorgusu HİÇ atılmaz", async () => {
+    h.rows = [...eskiHukuk];
+    const d = await loadPublicDigest(new Date("2026-09-30T05:00:00Z")); // Çarşamba
+    expect(d.items.some((i) => i.archive)).toBe(false);
+    expect(h.calls.filter((c) => (c as { where: Where }).where.createdAt?.lt)).toHaveLength(0);
   });
 
   it("🗄️ cephanelik sorgusu düşerse sayfa düşmez (fail-soft) — yuva eskisi gibi", async () => {

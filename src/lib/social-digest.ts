@@ -44,6 +44,9 @@
 //      (lib/hukuk-keywords); başlığı kimlik taramasına (social-calendar/identity) takılan karar cephanelikten seçilmez.
 //  · 📰 SEKTÖREL İKİNCİ HABER (2026-10-26, 👤 karar): altı yuva korunur; açık yuvaya İLK donör sektöreldir ve ikinci
 //    haber birincinin karşı kökeninden gelir (biri yerli, biri uluslararası). Sektörel tükenince eski donör sırası.
+//  · 📅 ARŞİV HAFTADA 2 + 📊 AKIŞ BAŞI TAVAN (2026-10-26, 👤 karar): arşivden İçtihat Salı/Perşembe, Doktrin Pazartesi/Cuma
+//    (ARCHIVE_WEEKDAYS); diğer günlerde yuva donörden dolar. Kartta hiçbir akış 2'den fazla başlık almaz (MAX_PER_STREAM);
+//    tavan herkeste dolduysa en az başlığı olan donöre gidilir (altı yuva korunur).
 import { BRANCHES } from "./triage";
 import { trimSummary } from "./daily-digest";
 import { decodeFeedText } from "./doctorium";
@@ -135,6 +138,8 @@ const STREAMS: Stream[] = [
 // ── 🗄️ Hukuk cephaneliği ────────────────────────────────────────────────────────────────────────────
 
 const DAY_MS = 86_400_000;
+/** Kartta bir akışın en çok başlık sayısı (birincil + donör + arşiv) — 📊 2026-10-26. */
+export const MAX_PER_STREAM = 2;
 /** Türkiye UTC+3, yaz saati yok — TR gününün sırası (epoch'tan). Aynı TR günü aynı cephanelik seçimi. */
 const trDayIndex = (now: Date) => Math.floor((now.getTime() + 3 * 3_600_000) / DAY_MS);
 
@@ -142,6 +147,18 @@ const trDayIndex = (now: Date) => Math.floor((now.getTime() + 3 * 3_600_000) / D
 export const ARCHIVE_EXCLUDE_RECENT_DAYS = 30;
 /** Cephaneliğin en eski yayın yılı — eski içtihat/doktrin güncel hukuku yansıtmayabilir. */
 export const ARCHIVE_MIN_YEAR: Record<ArchiveKind, number> = { ictihat: 2021, doktrin: 2019 };
+
+/**
+ * 📅 Arşiv günleri (2026-10-26, 👤 "haftada 2'den fazla olmasın", her biri ayrı): TR haftanın günü (0 = Pazar).
+ * İçtihat Salı + Perşembe (Çarşamba İçerik Takvimi'nin Karar masası günü — çakışmasın), Doktrin Pazartesi + Cuma.
+ * Diğer günlerde yuva donörden dolar. Taze içtihat/doktrin bu sınıra SAYILMAZ (her gün girebilir).
+ */
+export const ARCHIVE_WEEKDAYS: Record<ArchiveKind, readonly number[]> = { ictihat: [2, 4], doktrin: [1, 5] };
+
+/** `now` TR gününde bu tür arşivden paylaşılabilir mi? */
+export function isArchiveDay(kind: ArchiveKind, now: Date): boolean {
+  return ARCHIVE_WEEKDAYS[kind].includes(new Date(now.getTime() + 3 * 3_600_000).getUTCDay());
+}
 
 /** Cephanelik adayı — hafif satır (karar metni gibi büyük `summary` havuz sorgusunda taşınmaz). */
 export interface SocialArchiveRow {
@@ -166,11 +183,12 @@ export function archiveCutoff(now: Date): Date {
 }
 
 /**
- * Cephanelikten günün adayı — SAF ve deterministik. Havuz yayın tarihi DESC + id ASC sıralıdır (sorgu); uygun satırlar
+ * Cephanelikten günün adayı — SAF ve deterministik. Arşiv günü değilse (📅 ARCHIVE_WEEKDAYS) null. Havuz yayın tarihi DESC + id ASC sıralıdır (sorgu); uygun satırlar
  * süzülür (tür · yıl · son 30 gün dışı · doktrinde hukuki başlık), indeks = TR gün sırası mod havuz boyu. Başlığı kimlik
  * taramasına takılan aday atlanır (sıradakine geçilir). Durumsuz: havuz büyüdükçe kayma olur, nadir tekrar kabul.
  */
 export function pickArchiveCandidate(pool: SocialArchiveRow[], kind: ArchiveKind, now: Date): string | null {
+  if (!isArchiveDay(kind, now)) return null;
   const cutoff = archiveCutoff(now).getTime();
   const eligible = pool.filter(
     (r) =>
@@ -325,8 +343,12 @@ export function pickSocialDigest(
     return prioritize(ordered, (a) => isNativeTurkishSource(a.source) !== firstNative);
   };
 
-  // Sektörel en çok BİR ek yuva alır (kartta toplam 2 sektörel — "1 yerine 2"); sonraki açık yuvalar eski sırayla dolar.
-  let sektorelDonated = 0;
+  // 📊 AKIŞ BAŞI TAVAN (2026-10-26, 👤 "5 tane akademik olmasın"): kartta hiçbir akış 2'den fazla başlık almaz —
+  // sektörel dahil (birincil + en çok bir ek = "1 yerine 2"). Tavandaki tüm donörler tükenirse yuva boş kalmasın diye
+  // (v6.336 altı yuva) EN AZ başlığı olan donöre gidilir (sektörel en sona, eşitlikte donör sırası) — yığılma yine en aza iner.
+  const perStream = new Map<string, number>();
+  const bump = (key: string) => perStream.set(key, (perStream.get(key) ?? 0) + 1);
+  for (const slot of slots) if (slot.pick) bump(slot.stream.key);
   const items: SocialDigestItem[] = [];
   for (const slot of slots) {
     if (slot.pick) {
@@ -336,19 +358,24 @@ export function pickSocialDigest(
     const fromArchive = slot.stream.archive ? archive[slot.stream.archive] : undefined;
     if (fromArchive && !used.has(fromArchive.id)) {
       used.add(fromArchive.id);
+      bump(slot.stream.key);
       items.push(toItem(fromArchive, slot.stream, rotation, null, false, true));
       continue;
     }
+    const available = donors
+      .map((d) => ({ d, cand: donorOrder(d).find((a) => isFresh(a) && !used.has(a.id)) }))
+      .filter((x): x is { d: Stream; cand: SocialArticle } => x.cand !== undefined);
+    const choice =
+      available.find((x) => (perStream.get(x.d.key) ?? 0) < MAX_PER_STREAM) ??
+      // Tavan aşılacaksa sektörel EN SONA (👤 "gerekirse 2 sektörel" — sektörel 2'yi ancak başka donör kalmazsa aşar).
+      [...available].sort((a, b) =>
+        Number(a.d.key === "sektorel") - Number(b.d.key === "sektorel") ||
+        (perStream.get(a.d.key) ?? 0) - (perStream.get(b.d.key) ?? 0))[0];
     let filled: SocialDigestItem | null = null;
-    for (const d of donors) {
-      if (d.key === "sektorel" && sektorelDonated >= 1) continue;
-      const cand = donorOrder(d)
-        .find((a) => isFresh(a) && !used.has(a.id));
-      if (!cand) continue;
-      used.add(cand.id);
-      if (d.key === "sektorel") sektorelDonated++;
-      filled = toItem(cand, d, rotation, { stream: slot.stream.key, streamLabel: slot.stream.label }, false);
-      break;
+    if (choice) {
+      used.add(choice.cand.id);
+      bump(choice.d.key);
+      filled = toItem(choice.cand, choice.d, rotation, { stream: slot.stream.key, streamLabel: slot.stream.label }, false);
     }
     if (filled) items.push(filled);
     else if (slot.ordered.length > 0 && slot.stream.staleOk !== false) items.push(toItem(slot.ordered[0], slot.stream, rotation, null, true));
