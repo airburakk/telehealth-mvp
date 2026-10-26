@@ -31,12 +31,27 @@
 //    başlığı dünkü pencerede de en tazeydi → dün basıldı; "yeni yok" = "tekrar edecek" demektir.
 //    Gün içi elle koşulan ingest bir sonraki koşuda "yeni" sayılır (24 saat kayan pencere —
 //    takvim günü DEĞİL; daily-digest'in trDayStart dersi).
+//  · 🗄️ HUKUK CEPHANELİĞİ (2026-10-26, 👤 karar): hukuk akışları doğası gereği seyrek (Yargıtay haftalık, TR Dizin
+//    ayda birkaç makale) → 24 saat kuralıyla yuvaları neredeyse her gün donöre gidiyor, kart akademikle doluyordu.
+//    · İçtihat / Doktrin: taze yoksa yuva DB'deki mevcut kararlar/makalelerden (cephanelik) deterministik gün
+//      rotasyonuyla dolar; etiket "Arşivden İçtihat" / "Arşivden Doktrin" (`archive: true`) — okur bunun bugünün
+//      haberi olmadığını görür. Son 30 günde akışa düşen satır cephaneliğe girmez (yakında zaten gösterildi).
+//      Doktrin cephaneliği başlığında hukuk/malpraktis/onam/sorumluluk geçenlerle daraltılır (adli diş vaka
+//      prevalansı gibi zayıf hukuki içerik girmesin).
+//    · Mevzuat: YALNIZ taze Resmî Gazete — yeni yoksa yuva donöre gider; eski başlık `stale` olarak da KALMAZ.
+//    · 🔒 İçtihatta HAM KARAR METNİ KULLANILMAZ (taze ya da arşiv): Yargıtay anonimleştirmesi kusurlu ("davacının
+//      Mina'nın…" sızıntısı — İçerik Takvimi notu) → özet yerine sözlükten türeyen "Konu … Dayanak …" satırı
+//      (lib/hukuk-keywords); başlığı kimlik taramasına (social-calendar/identity) takılan karar cephanelikten seçilmez.
+//  · 📰 SEKTÖREL İKİNCİ HABER (2026-10-26, 👤 karar): altı yuva korunur; açık yuvaya İLK donör sektöreldir ve ikinci
+//    haber birincinin karşı kökeninden gelir (biri yerli, biri uluslararası). Sektörel tükenince eski donör sırası.
 import { BRANCHES } from "./triage";
 import { trimSummary } from "./daily-digest";
 import { decodeFeedText } from "./doctorium";
 import { isNativeTurkishSource } from "./news-language";
 import { buildSummaryLong } from "./social-summary-long";
 import { normalizeTrialPhasePrefix } from "./trial-phase";
+import { extractKeywords, extractLawRefs } from "./hukuk-keywords";
+import { scanIdentity } from "./social-calendar/identity";
 
 type Branch = (typeof BRANCHES)[number];
 
@@ -90,9 +105,21 @@ export interface SocialDigestItem {
   replaces: { stream: string; streamLabel: string } | null;
   /** O gün yeni başlık yok VE donör bulunamadı → eski başlık kaldı (dünkü seçkiyle aynı olabilir). */
   stale: boolean;
+  /** true → başlık hukuk cephaneliğinden (taze değil); streamLabel "Arşivden …" taşır (🗄️ 2026-10-26). */
+  archive: boolean;
 }
 
-type Stream = { key: string; label: string; match: (a: SocialArticle) => boolean };
+type ArchiveKind = "ictihat" | "doktrin";
+
+type Stream = {
+  key: string;
+  label: string;
+  match: (a: SocialArticle) => boolean;
+  /** Tazesi yoksa yuvayı dolduran cephanelik (🗄️). */
+  archive?: ArchiveKind;
+  /** false → tazesi ve donörü yoksa eski başlık `stale` olarak da KALMAZ, yuva düşer (Mevzuat). */
+  staleOk?: false;
+};
 
 /** Altı akışın NewsArticle eşlemesi — daily-digest SECTIONS ile aynı ayrım (tek doğruluk oradaki
  *  yorumda: module=mevzuat üç akışa kind ile ayrılır). */
@@ -100,10 +127,76 @@ const STREAMS: Stream[] = [
   { key: "akademik", label: "Akademik", match: (a) => a.module === "akademik" },
   { key: "ilac", label: "İlaç & Cihaz", match: (a) => a.module === "ilac" },
   { key: "sektorel", label: "Sektörel", match: (a) => a.module === "sektorel" },
-  { key: "mevzuat", label: "Mevzuat", match: (a) => a.module === "mevzuat" && a.kind === "mevzuat" },
-  { key: "ictihat", label: "İçtihat", match: (a) => a.module === "mevzuat" && a.kind === "ictihat" },
-  { key: "doktrin", label: "Doktrin", match: (a) => a.module === "mevzuat" && a.kind === "doktrin" },
+  { key: "mevzuat", label: "Mevzuat", match: (a) => a.module === "mevzuat" && a.kind === "mevzuat", staleOk: false },
+  { key: "ictihat", label: "İçtihat", match: (a) => a.module === "mevzuat" && a.kind === "ictihat", archive: "ictihat" },
+  { key: "doktrin", label: "Doktrin", match: (a) => a.module === "mevzuat" && a.kind === "doktrin", archive: "doktrin" },
 ];
+
+// ── 🗄️ Hukuk cephaneliği ────────────────────────────────────────────────────────────────────────────
+
+const DAY_MS = 86_400_000;
+/** Türkiye UTC+3, yaz saati yok — TR gününün sırası (epoch'tan). Aynı TR günü aynı cephanelik seçimi. */
+const trDayIndex = (now: Date) => Math.floor((now.getTime() + 3 * 3_600_000) / DAY_MS);
+
+/** Son bu kadar günde akışa düşen satır cephaneliğe girmez (yakında zaten gösterildi). */
+export const ARCHIVE_EXCLUDE_RECENT_DAYS = 30;
+/** Cephaneliğin en eski yayın yılı — eski içtihat/doktrin güncel hukuku yansıtmayabilir. */
+export const ARCHIVE_MIN_YEAR: Record<ArchiveKind, number> = { ictihat: 2021, doktrin: 2019 };
+
+/** Cephanelik adayı — hafif satır (karar metni gibi büyük `summary` havuz sorgusunda taşınmaz). */
+export interface SocialArchiveRow {
+  id: string;
+  kind: string;
+  title: string;
+  publishedAt: Date;
+  createdAt: Date;
+}
+
+/** Cephanelikten seçilip TAM satırı okunmuş adaylar (lib/social-digest-public yükler). */
+export type SocialArchive = Partial<Record<ArchiveKind, SocialArticle>>;
+
+/** Doktrin cephaneliğine girecek kadar hukuki mi? (👤 onaylı daraltma: hukuk/malpraktis/onam/sorumluluk) */
+export function isDoctrineArchiveWorthy(title: string): boolean {
+  return /hukuk|malpraktis|malpractice|onam|sorumlu/.test(title.toLocaleLowerCase("tr"));
+}
+
+/** Cephaneliğin `now` TR gününde dışladığı en yeni akışa-düşme anı (gün tabanlı → kart ile /secki aynı sonucu verir). */
+export function archiveCutoff(now: Date): Date {
+  return new Date((trDayIndex(now) - ARCHIVE_EXCLUDE_RECENT_DAYS) * DAY_MS - 3 * 3_600_000);
+}
+
+/**
+ * Cephanelikten günün adayı — SAF ve deterministik. Havuz yayın tarihi DESC + id ASC sıralıdır (sorgu); uygun satırlar
+ * süzülür (tür · yıl · son 30 gün dışı · doktrinde hukuki başlık), indeks = TR gün sırası mod havuz boyu. Başlığı kimlik
+ * taramasına takılan aday atlanır (sıradakine geçilir). Durumsuz: havuz büyüdükçe kayma olur, nadir tekrar kabul.
+ */
+export function pickArchiveCandidate(pool: SocialArchiveRow[], kind: ArchiveKind, now: Date): string | null {
+  const cutoff = archiveCutoff(now).getTime();
+  const eligible = pool.filter(
+    (r) =>
+      r.kind === kind &&
+      r.publishedAt.getUTCFullYear() >= ARCHIVE_MIN_YEAR[kind] &&
+      r.createdAt.getTime() < cutoff &&
+      (kind !== "doktrin" || isDoctrineArchiveWorthy(r.title)),
+  );
+  if (eligible.length === 0) return null;
+  const start = trDayIndex(now) % eligible.length;
+  for (let i = 0; i < eligible.length; i++) {
+    const r = eligible[(start + i) % eligible.length];
+    if (scanIdentity(r.title).length === 0) return r.id;
+  }
+  return null;
+}
+
+/**
+ * İçtihatın kamuya giden özeti — HAM KARAR METNİ YERİNE sözlükten türeyen konu/dayanak satırı (🔒). Sözlük etiketleri ve
+ * kanun maddesi atıfları kimlik taşıyamaz; hiçbiri bulunmazsa boş döner (özet yedeği devreye girer).
+ */
+export function ictihatTopicLine(text: string): string {
+  const konu = extractKeywords(text, 3).map((k) => k.label).join(", ");
+  const dayanak = extractLawRefs(text, 3).join(", ");
+  return [konu && `Konu: ${konu}.`, dayanak && `Dayanak: ${dayanak}.`].filter(Boolean).join(" ");
+}
 
 /**
  * Günün rotasyon branşı — SAF ve deterministik: "YYYY-MM-DD" gün etiketinden yılın günü → mod 35.
@@ -146,15 +239,19 @@ function toItem(
   rotation: Branch,
   replaces: SocialDigestItem["replaces"],
   stale: boolean,
+  archive = false,
 ): SocialDigestItem {
   const branded = stream.key === "akademik" && isBrandedFor(a, rotation);
   // Özet BİR kez çözülür; teaser (160) ve hikâye açıklaması (400) aynı temiz metinden türer.
-  const summary = decodeFeedText(a.summary);
+  // İçtihatta ham karar metni yerine konu/dayanak satırı (🔒 — akış değil SATIR türüne bakılır: donör olsa da geçerli).
+  const decoded = decodeFeedText(a.summary);
+  const summary = a.module === "mevzuat" && a.kind === "ictihat" ? ictihatTopicLine(decoded) : decoded;
   const long = buildSummaryLong({ summary, sourceName: decodeFeedText(a.sourceName), publishedAt: a.publishedAt });
   return {
     id: a.id,
     stream: stream.key,
-    streamLabel: stream.label,
+    // Kart etiketi büyük harfle çizer ("ARŞİVDEN İÇTİHAT"); " · " ayırıcısı KULLANILMAZ — Reel altyazısı etiketleri " · " ile birleştirir.
+    streamLabel: archive ? `Arşivden ${stream.label}` : stream.label,
     // Varlık temizliği BURADA da gerekli: bu uç NewsArticle satırını doğrudan okur, web akışının
     // toFeedItem dönüşümünden geçmez — decode olmadan "&#x2009;" sosyal medya gönderisine ham
     // giderdi. Kırpmadan ÖNCE çözülür: 160 karakterlik bütçe gerçek harfleri saymalı ve kırpma
@@ -171,6 +268,7 @@ function toItem(
     branch: branded ? { key: rotation.key, label: rotation.label } : null,
     replaces,
     stale,
+    archive,
   };
 }
 
@@ -186,8 +284,14 @@ function toItem(
  *     `stale: true` ile kalır; eski başlığı da olmayan (boş) yuva düşer.
  * Birincil geçiş tamamen bitmeden donör geçişi başlamaz → donör hiçbir akışın kendi birincil
  * başlığını ÇALAMAZ (`used` kümesi).
+ * 🗄️ Cephanelikli akış (İçtihat/Doktrin) açık yuvada önce `archive` adayını dener, sonra donörü; Mevzuat `stale` kalmaz.
  */
-export function pickSocialDigest(articles: SocialArticle[], rotation: Branch, now: Date): SocialDigestItem[] {
+export function pickSocialDigest(
+  articles: SocialArticle[],
+  rotation: Branch,
+  now: Date,
+  archive: SocialArchive = {},
+): SocialDigestItem[] {
   const freshSince = now.getTime() - SOCIAL_FRESH_MS;
   const isFresh = (a: SocialArticle) => a.createdAt.getTime() > freshSince;
 
@@ -202,30 +306,52 @@ export function pickSocialDigest(articles: SocialArticle[], rotation: Branch, no
     slots.push({ stream: s, ordered, pick });
   }
 
-  // Donör sırası: o gün en çok taze başlık gelen akış önce; Array.prototype.sort kararlıdır →
-  // eşitlikte STREAMS sırası korunur. Tazesi olmayan akış (= açık yuvanın kendisi) donör olamaz.
+  // Donör sırası: SEKTÖREL İLK (📰 2026-10-26, 👤 karar — sektörel en hareketli akış, ikinci haberi hak ediyor), sonra
+  // o gün en çok taze başlık gelen akış; Array.prototype.sort kararlıdır → eşitlikte STREAMS sırası korunur. Tazesi
+  // olmayan akış (= açık yuvanın kendisi) donör olamaz. Kart altı yuvada kalır: sektörel ikinci haberini ancak açık
+  // yuva varsa (çoğu gün Mevzuat) alır.
   const freshCount = new Map(STREAMS.map((s) => [s.key, articles.filter((a) => s.match(a) && isFresh(a)).length]));
   const donors = STREAMS
     .filter((s) => (freshCount.get(s.key) ?? 0) > 0)
-    .sort((a, b) => (freshCount.get(b.key) ?? 0) - (freshCount.get(a.key) ?? 0));
+    .sort((a, b) =>
+      Number(b.key === "sektorel") - Number(a.key === "sektorel") ||
+      (freshCount.get(b.key) ?? 0) - (freshCount.get(a.key) ?? 0));
+  // Sektörelin ikinci haberi birincinin KARŞI kökeninden: biri yerli, biri uluslararası (yoksa aynı kökenden en taze).
+  const sektorelPick = slots.find((s) => s.stream.key === "sektorel")?.pick ?? null;
+  const donorOrder = (d: Stream) => {
+    const ordered = orderCandidates(d, articles.filter(d.match), rotation);
+    if (d.key !== "sektorel" || !sektorelPick) return ordered;
+    const firstNative = isNativeTurkishSource(sektorelPick.source);
+    return prioritize(ordered, (a) => isNativeTurkishSource(a.source) !== firstNative);
+  };
 
+  // Sektörel en çok BİR ek yuva alır (kartta toplam 2 sektörel — "1 yerine 2"); sonraki açık yuvalar eski sırayla dolar.
+  let sektorelDonated = 0;
   const items: SocialDigestItem[] = [];
   for (const slot of slots) {
     if (slot.pick) {
       items.push(toItem(slot.pick, slot.stream, rotation, null, false));
       continue;
     }
+    const fromArchive = slot.stream.archive ? archive[slot.stream.archive] : undefined;
+    if (fromArchive && !used.has(fromArchive.id)) {
+      used.add(fromArchive.id);
+      items.push(toItem(fromArchive, slot.stream, rotation, null, false, true));
+      continue;
+    }
     let filled: SocialDigestItem | null = null;
     for (const d of donors) {
-      const cand = orderCandidates(d, articles.filter(d.match), rotation)
+      if (d.key === "sektorel" && sektorelDonated >= 1) continue;
+      const cand = donorOrder(d)
         .find((a) => isFresh(a) && !used.has(a.id));
       if (!cand) continue;
       used.add(cand.id);
+      if (d.key === "sektorel") sektorelDonated++;
       filled = toItem(cand, d, rotation, { stream: slot.stream.key, streamLabel: slot.stream.label }, false);
       break;
     }
     if (filled) items.push(filled);
-    else if (slot.ordered.length > 0) items.push(toItem(slot.ordered[0], slot.stream, rotation, null, true));
+    else if (slot.ordered.length > 0 && slot.stream.staleOk !== false) items.push(toItem(slot.ordered[0], slot.stream, rotation, null, true));
     // else: boş akış + donör yok → yuva düşer (gösterilecek gerçek başlık yok)
   }
   return items;
