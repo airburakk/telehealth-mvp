@@ -12,7 +12,16 @@
 // (o sabahın kartı henüz çıkmadı). Anchor saati değişirse (n8n zamanlaması) YALNIZ buradaki sabit güncellenir.
 import { db } from "@/lib/db";
 import { trDayString } from "./daily-digest";
-import { pickSocialDigest, rotationBranchFor, SOCIAL_WINDOW_MS, type SocialDigestItem } from "./social-digest";
+import {
+  ARCHIVE_MIN_YEAR,
+  archiveCutoff,
+  pickArchiveCandidate,
+  pickSocialDigest,
+  rotationBranchFor,
+  SOCIAL_WINDOW_MS,
+  type SocialArchive,
+  type SocialDigestItem,
+} from "./social-digest";
 
 /** 07:45 TR = 04:45 UTC (n8n "Sabah Bülteni" tetiği). */
 export const SOCIAL_ANCHOR_UTC = { hour: 4, minute: 45 } as const;
@@ -42,6 +51,39 @@ export function loadSocialArticles(from: Date, to?: Date) {
   });
 }
 
+/**
+ * 🗄️ Hukuk cephaneliği (2026-10-26): günün İçtihat/Doktrin arşiv adayı. İki adım — havuz HAFİF okunur (karar metni `summary`
+ * yüzlerce satırda MB'larca tutar), seçim saf `pickArchiveCandidate`'te yapılır, yalnız seçilen ≤2 satırın tamamı okunur.
+ * FAIL-SOFT: hata → boş cephanelik (yuva eskisi gibi donörden dolar); sabah kartı cephanelik yüzünden düşmez.
+ */
+export async function loadSocialArchive(now: Date): Promise<SocialArchive> {
+  try {
+    const pool = await db.newsArticle.findMany({
+      where: {
+        module: "mevzuat",
+        createdAt: { lt: archiveCutoff(now) },
+        OR: [
+          { kind: "ictihat", publishedAt: { gte: new Date(Date.UTC(ARCHIVE_MIN_YEAR.ictihat, 0, 1)) } },
+          { kind: "doktrin", publishedAt: { gte: new Date(Date.UTC(ARCHIVE_MIN_YEAR.doktrin, 0, 1)) } },
+        ],
+      },
+      select: { id: true, kind: true, title: true, publishedAt: true, createdAt: true },
+      orderBy: [{ publishedAt: "desc" }, { id: "asc" }],
+      take: 3000,
+    });
+    const ids = (["ictihat", "doktrin"] as const)
+      .map((k) => pickArchiveCandidate(pool, k, now))
+      .filter((id): id is string => id !== null);
+    if (ids.length === 0) return {};
+    const rows = await db.newsArticle.findMany({ where: { id: { in: ids } }, select: SOCIAL_ARTICLE_SELECT });
+    const out: SocialArchive = {};
+    for (const r of rows) if (r.kind === "ictihat" || r.kind === "doktrin") out[r.kind] = r;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
 export interface PublicDigest {
   /** Seçkinin TR gün etiketi ("2026-10-02") — anchor'un günü. */
   day: string;
@@ -65,5 +107,11 @@ export async function loadPublicDigest(now: Date = new Date()): Promise<PublicDi
     await new Promise((r) => setTimeout(r, 400));
     articles = await loadSocialArticles(from, anchor);
   }
-  return { day, rotation: { key: rotation.key, label: rotation.label }, items: pickSocialDigest(articles, rotation, anchor) };
+  // Cephanelik de ANCHOR'a göre seçilir (gün tabanlı) → sayfa sabah kartıyla aynı arşiv başlığını gösterir.
+  const archive = await loadSocialArchive(anchor);
+  return {
+    day,
+    rotation: { key: rotation.key, label: rotation.label },
+    items: pickSocialDigest(articles, rotation, anchor, archive),
+  };
 }

@@ -23,22 +23,37 @@ import { hidesGlobalChrome } from "@/lib/chrome-routes";
 import { loadPublicDigest, socialDigestAnchor, SOCIAL_ANCHOR_UTC } from "@/lib/social-digest-public";
 import type { SocialArticle } from "@/lib/social-digest";
 
-// ── DB taklidi (gerçek DB'ye dokunulmaz): findMany, where.createdAt gte/lte'yi gerçekten uygular ──
-const h = vi.hoisted(() => ({ rows: [] as unknown[], calls: [] as unknown[], failNext: 0 }));
+// ── DB taklidi (gerçek DB'ye dokunulmaz): findMany üç sorgu biçimini gerçekten uygular ──
+//   · seçki penceresi: where.createdAt {gte, lte?} (createdAt DESC)
+//   · 🗄️ cephanelik havuzu: where.createdAt {lt} + module/kind (publishedAt DESC + id ASC)
+//   · cephanelik tam satırı: where.id {in}
+type Where = { createdAt?: { gte?: Date; lte?: Date; lt?: Date }; id?: { in: string[] } };
+const h = vi.hoisted(() => ({ rows: [] as unknown[], calls: [] as unknown[], failNext: 0, failArchive: false }));
 vi.mock("@/lib/db", () => ({
   db: {
     newsArticle: {
-      findMany: async (args: { where: { createdAt: { gte: Date; lte?: Date } } }) => {
+      findMany: async (args: { where: Where }) => {
         h.calls.push(args);
+        const rows = h.rows as SocialArticle[];
+        const w = args.where;
+        if (w.id) return rows.filter((r) => w.id!.in.includes(r.id));
+        if (w.createdAt?.lt) {
+          if (h.failArchive) throw new Error("arsiv down");
+          return rows
+            .filter((r) => r.module === "mevzuat" && (r.kind === "ictihat" || r.kind === "doktrin") && r.createdAt < w.createdAt!.lt!)
+            .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime() || (a.id < b.id ? -1 : 1));
+        }
         if (h.failNext > 0) { h.failNext--; throw new Error("db down"); }
-        const { gte, lte } = args.where.createdAt;
-        return (h.rows as SocialArticle[])
-          .filter((r) => r.createdAt >= gte && (!lte || r.createdAt <= lte))
+        const { gte, lte } = w.createdAt!;
+        return rows
+          .filter((r) => r.createdAt >= gte! && (!lte || r.createdAt <= lte))
           .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime() || (a.id < b.id ? 1 : -1));
       },
     },
   },
 }));
+/** Yalnız seçki penceresi sorguları (cephanelik sorguları hariç). */
+const windowCalls = () => h.calls.filter((c) => (c as { where: Where }).where.createdAt?.gte);
 
 const H = 3_600_000;
 const art = (over: Partial<SocialArticle>): SocialArticle => ({
@@ -68,7 +83,7 @@ describe("socialDigestAnchor: son 07:45 TR (04:45 UTC) ≤ now", () => {
 });
 
 describe("loadPublicDigest: sabah kartıyla AYNI seçki", () => {
-  afterEach(() => { vi.useRealTimers(); h.rows = []; h.calls = []; h.failNext = 0; });
+  afterEach(() => { vi.useRealTimers(); h.rows = []; h.calls = []; h.failNext = 0; h.failArchive = false; });
   const MORNING = new Date("2026-10-02T04:50:00Z"); // 07:50 TR
   const EVENING = new Date("2026-10-02T17:00:00Z"); // 20:00 TR
   const ANCHOR = new Date("2026-10-02T04:45:00Z");
@@ -129,7 +144,7 @@ describe("loadPublicDigest: sabah kartıyla AYNI seçki", () => {
     await vi.advanceTimersByTimeAsync(500);
     const d = await p;
     expect(d.items).toHaveLength(1);
-    expect(h.calls).toHaveLength(2);
+    expect(windowCalls()).toHaveLength(2);
   });
 
   it("ikinci hata çağırana fırlar (sayfa kendi hata durumunu çizer)", async () => {
@@ -138,7 +153,35 @@ describe("loadPublicDigest: sabah kartıyla AYNI seçki", () => {
     const assertion = expect(loadPublicDigest(MORNING)).rejects.toThrow("db down");
     await vi.advanceTimersByTimeAsync(500);
     await assertion;
-    expect(h.calls).toHaveLength(2);
+    expect(windowCalls()).toHaveLength(2);
+  });
+
+  // 🗄️ Hukuk cephaneliği (2026-10-26)
+  const eskiHukuk = [
+    art({ id: "ic1", module: "mevzuat", kind: "ictihat", title: "Yargıtay 3. Hukuk Dairesi · E. 2023/1, K. 2024/2", sourceName: "Yargıtay",
+      summary: "İçtihat Metni MAHKEMESİ … davacının Mina'nın … malpraktis … TBK m.49 …",
+      publishedAt: new Date("2024-05-01T00:00:00Z"), createdAt: new Date("2026-06-01T00:00:00Z"), url: null }),
+    art({ id: "dk1", module: "mevzuat", kind: "doktrin", title: "Tıbbi Malpraktiste Hukuki Sorumluluk", sourceName: "Hukuk Dergisi",
+      publishedAt: new Date("2024-03-01T00:00:00Z"), createdAt: new Date("2026-06-01T00:00:00Z") }),
+  ];
+
+  it("🗄️ hukuk tazesi yoksa İçtihat/Doktrin yuvası arşivden dolar; sabah ve akşam AYNI arşiv başlığı", async () => {
+    h.rows = [art({ id: "ak", title: "Akademik", createdAt: new Date(ANCHOR.getTime() - 2 * H) }), ...eskiHukuk];
+    const sabah = await loadPublicDigest(MORNING);
+    const aksam = await loadPublicDigest(EVENING);
+    expect(aksam.items).toEqual(sabah.items);
+    const arsiv = sabah.items.filter((i) => i.archive);
+    expect(arsiv.map((i) => i.streamLabel)).toEqual(["Arşivden İçtihat", "Arşivden Doktrin"]);
+    // 🔒 ham karar metni (taraf adı) kamuya gitmez
+    expect(JSON.stringify(sabah.items)).not.toContain("Mina");
+  });
+
+  it("🗄️ cephanelik sorgusu düşerse sayfa düşmez (fail-soft) — yuva eskisi gibi", async () => {
+    h.rows = [art({ id: "ak", title: "Akademik", createdAt: new Date(ANCHOR.getTime() - 2 * H) }), ...eskiHukuk];
+    h.failArchive = true;
+    const d = await loadPublicDigest(MORNING);
+    expect(d.items.some((i) => i.archive)).toBe(false);
+    expect(d.items.map((i) => i.title)).toContain("Akademik");
   });
 });
 
@@ -171,9 +214,9 @@ describe("görünüm modeli (saf)", () => {
       rotation: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" },
       items: [
         { id: "1", stream: "akademik", streamLabel: "Akademik", title: "T1", sourceName: "Europe PMC", summary: "Kısa özet.", summaryLong: "Kısa özet. Uzun açıklama.", summaryLongFallback: false, url: "https://doi.org/10.1/x",
-          publishedAt: "2026-10-01T00:00:00.000Z", branch: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" }, replaces: null, stale: false },
+          publishedAt: "2026-10-01T00:00:00.000Z", branch: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" }, replaces: null, stale: false, archive: false },
         { id: "2", stream: "mevzuat", streamLabel: "Mevzuat", title: "T2", sourceName: "T.C. Resmî Gazete", summary: "  ", summaryLong: "T.C. Resmî Gazete kaynağında 2 Ekim 2026 tarihinde yayımlandı; ayrıntı kaynak bağlantısında.", summaryLongFallback: true, url: "javascript:alert(1)",
-          publishedAt: "2026-10-02T00:00:00.000Z", branch: null, replaces: null, stale: false },
+          publishedAt: "2026-10-02T00:00:00.000Z", branch: null, replaces: null, stale: false, archive: false },
       ],
     });
     expect(view.dateLabel).toBe("2 Ekim 2026");
@@ -194,9 +237,9 @@ describe("SeckiPage: sunucu tarafı HTML", () => {
     rotation: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" },
     items: [
       { id: "1", stream: "akademik", streamLabel: "Akademik", title: "Gaz yakma ve kanser", sourceName: "Europe PMC", summary: "Ekolojik çalışma.", summaryLong: "Ekolojik çalışma. Uzun açıklama metni.", summaryLongFallback: false, url: "https://doi.org/10.1/x",
-        publishedAt: "2026-10-01T00:00:00.000Z", branch: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" }, replaces: null, stale: false },
+        publishedAt: "2026-10-01T00:00:00.000Z", branch: { key: "radyasyon-onkolojisi", label: "Radyasyon Onkolojisi" }, replaces: null, stale: false, archive: false },
       { id: "2", stream: "ilac", streamLabel: "İlaç & Cihaz", title: "<script>alert(1)</script> Faz 3", sourceName: "ClinicalTrials.gov", summary: "", summaryLong: "ClinicalTrials.gov kaynağında 1 Ekim 2026 tarihinde yayımlandı; ayrıntı kaynak bağlantısında.", summaryLongFallback: true, url: null,
-        publishedAt: "2026-10-01T00:00:00.000Z", branch: null, replaces: null, stale: false },
+        publishedAt: "2026-10-01T00:00:00.000Z", branch: null, replaces: null, stale: false, archive: false },
     ],
   });
   const html = renderToStaticMarkup(createElement(SeckiPage, { view }));

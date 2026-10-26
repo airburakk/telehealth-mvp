@@ -12,7 +12,10 @@
 //   5) 🧩 Her zaman altı yuva (v6.336, 2026-10-07, 👤 karar): 48 saatte HİÇ içeriği olmayan akışın yuvası
 //      da donörle dolar (5–7 Ekim kartı hukuk akışları boş diye 3 başlığa inmişti); donör tükenince düşer.
 import { describe, it, expect } from "vitest";
-import { rotationBranchFor, pickSocialDigest, SOCIAL_FRESH_MS, type SocialArticle } from "@/lib/social-digest";
+import {
+  rotationBranchFor, pickSocialDigest, SOCIAL_FRESH_MS, type SocialArticle,
+  pickArchiveCandidate, archiveCutoff, isDoctrineArchiveWorthy, ictihatTopicLine, ARCHIVE_EXCLUDE_RECENT_DAYS, type SocialArchiveRow,
+} from "@/lib/social-digest";
 import { BRANCHES } from "@/lib/triage";
 
 /** Koşu anı: 07:45 TR (04:45 UTC) — sabah bülteni saati. */
@@ -264,5 +267,101 @@ describe("pickSocialDigest: tekrar yerine donör (🔁 2026-09-21)", () => {
     expect(taze[0].stale).toBe(false);
     const eskiTek = pickSocialDigest([art({ id: "y", createdAt: new Date(NOW.getTime() - SOCIAL_FRESH_MS - H) })], rot, NOW);
     expect(eskiTek[0].stale).toBe(true);
+  });
+});
+
+// ── 🗄️ Hukuk cephaneliği (2026-10-26, 👤 karar) ─────────────────────────────────────────────────────
+//   · İçtihat/Doktrin: tazesi yoksa yuva cephanelikten ("Arşivden …", archive:true) — donörden ÖNCE.
+//   · Mevzuat: yalnız taze Resmî Gazete; yeni yoksa donör, o da yoksa yuva DÜŞER (stale kalmaz).
+//   · İçtihatta ham karar metni kamuya gitmez: özet = sözlük kökenli "Konu … Dayanak …" satırı.
+//   · Cephanelik seçimi deterministik (TR günü), son 30 gün + eski yıl + zayıf doktrin + kimlik isabeti dışlanır.
+describe("🗄️ hukuk cephaneliği", () => {
+  const rotA = rotationBranchFor("2026-09-21");
+  const ESKI = 26;
+  const KARAR = "İçtihat Metni MAHKEMESİ: Asliye Hukuk. Davacının Mina'nın tedavisinde malpraktis iddiası; manevi tazminat talebi TBK m.49 ve TBK m.56 uyarınca …";
+  const icArsiv = art({ id: "ic-arsiv", module: "mevzuat", kind: "ictihat", title: "Yargıtay 3. Hukuk Dairesi · E. 2023/1, K. 2024/2",
+    sourceName: "Yargıtay", summary: KARAR, url: null, createdAt: new Date("2026-06-01T00:00:00Z") });
+  const dkArsiv = art({ id: "dk-arsiv", module: "mevzuat", kind: "doktrin", title: "Tıbbi Malpraktiste Hukuki Sorumluluk",
+    sourceName: "Hukuk Dergisi", createdAt: new Date("2026-06-01T00:00:00Z") });
+
+  it("tazesi olmayan İçtihat/Doktrin yuvası arşivden dolar — donör çekilmez, etiket 'Arşivden …'", () => {
+    const items = pickSocialDigest([...dolgu("ictihat", "doktrin"), art({ id: "ak-fazla" })], rotA, NOW, { ictihat: icArsiv, doktrin: dkArsiv });
+    expect(items.map((i) => i.id)).toEqual(["dolgu-akademik", "dolgu-ilac", "dolgu-sektorel", "dolgu-mevzuat", "ic-arsiv", "dk-arsiv"]);
+    expect(items.slice(4).map((i) => [i.streamLabel, i.archive, i.replaces, i.stale])).toEqual([
+      ["Arşivden İçtihat", true, null, false],
+      ["Arşivden Doktrin", true, null, false],
+    ]);
+    expect(items.slice(0, 4).every((i) => i.archive === false)).toBe(true);
+  });
+
+  it("taze içtihat varsa arşiv kullanılmaz", () => {
+    const items = pickSocialDigest([...dolgu()], rotA, NOW, { ictihat: icArsiv, doktrin: dkArsiv });
+    expect(items.map((i) => i.id)).toEqual(["dolgu-akademik", "dolgu-ilac", "dolgu-sektorel", "dolgu-mevzuat", "dolgu-ictihat", "dolgu-doktrin"]);
+    expect(items.some((i) => i.archive)).toBe(false);
+  });
+
+  it("cephanelik boşsa (sorgu düştü / havuz yok) eski davranış: donör", () => {
+    const items = pickSocialDigest([...dolgu("ictihat"), art({ id: "ak2" })], rotA, NOW, {});
+    expect(items[4].id).toBe("ak2");
+    expect(items[4].replaces?.stream).toBe("ictihat");
+  });
+
+  it("Mevzuat: yeni Resmî Gazete yoksa eski başlık STALE olarak da kalmaz — donör yoksa yuva düşer", () => {
+    const items = pickSocialDigest([
+      art({ id: "ak1" }),
+      art({ id: "mv-dun", module: "mevzuat", kind: "mevzuat", createdAt: ago(ESKI) }),
+    ], rotA, NOW);
+    expect(items.map((i) => i.id)).toEqual(["ak1"]);
+  });
+
+  it("🔒 içtihatta ham karar metni (taraf adı) kamuya gitmez — özet konu/dayanak satırıdır; taze içtihatta da", () => {
+    const tazeIc = art({ id: "ic-taze", module: "mevzuat", kind: "ictihat", summary: KARAR, sourceName: "Yargıtay" });
+    for (const items of [
+      pickSocialDigest(dolgu("ictihat", "doktrin"), rotA, NOW, { ictihat: icArsiv }),
+      pickSocialDigest([...dolgu("ictihat"), tazeIc], rotA, NOW),
+    ]) {
+      const ic = items.find((i) => i.stream === "ictihat")!;
+      expect(JSON.stringify(ic)).not.toMatch(/Mina|MAHKEMESİ/);
+      expect(ic.summary).toMatch(/^Konu: .*Malpraktis/);
+      expect(ic.summary).toContain("Dayanak: TBK m.49");
+      expect(ic.summaryLong).toBe(ic.summary);
+    }
+  });
+
+  it("ictihatTopicLine: sözlükte karşılığı yoksa boş (yedek cümle devreye girer)", () => {
+    expect(ictihatTopicLine("Usulden ret, dosya iade.")).toBe("");
+  });
+
+  const row = (over: Partial<SocialArchiveRow>): SocialArchiveRow => ({
+    id: "r", kind: "ictihat", title: "Yargıtay 3. Hukuk Dairesi · E. 2023/1, K. 2024/2",
+    publishedAt: new Date("2024-01-01T00:00:00Z"), createdAt: new Date("2026-01-01T00:00:00Z"), ...over,
+  });
+
+  it("pickArchiveCandidate: aynı TR günü aynı seçim; ertesi gün sıradaki; günün içinde saat değişmez", () => {
+    const pool = ["a", "b", "c"].map((id) => row({ id }));
+    const sabah = pickArchiveCandidate(pool, "ictihat", new Date("2026-10-26T04:45:00Z"));
+    expect(pickArchiveCandidate(pool, "ictihat", new Date("2026-10-26T20:00:00Z"))).toBe(sabah); // 23:00 TR
+    expect(pickArchiveCandidate(pool, "ictihat", new Date("2026-10-26T21:30:00Z"))).not.toBe(sabah); // 00:30 TR = ertesi gün
+    const gunler = Array.from({ length: 3 }, (_, k) => pickArchiveCandidate(pool, "ictihat", new Date(Date.UTC(2026, 9, 26 + k, 5))));
+    expect(new Set(gunler).size).toBe(3); // üç günde üç farklı karar
+  });
+
+  it("pickArchiveCandidate: son 30 gün · eski yıl · başka tür · zayıf doktrin · kimlik isabetli başlık dışlanır", () => {
+    const now = new Date("2026-10-26T04:45:00Z");
+    expect(pickArchiveCandidate([row({ createdAt: new Date("2026-10-10T00:00:00Z") })], "ictihat", now)).toBeNull();
+    expect(pickArchiveCandidate([row({ publishedAt: new Date("2020-06-01T00:00:00Z") })], "ictihat", now)).toBeNull();
+    expect(pickArchiveCandidate([row({ kind: "doktrin" })], "ictihat", now)).toBeNull();
+    expect(pickArchiveCandidate([row({ kind: "doktrin", title: "Adli Diş Vakalarının Prevalansı" })], "doktrin", now)).toBeNull();
+    expect(pickArchiveCandidate([row({ kind: "doktrin", title: "AYDINLATILMIŞ ONAM ÜZERİNE" })], "doktrin", now)).toBe("r");
+    expect(pickArchiveCandidate([row({ title: "Davacının Mina'nın davası" })], "ictihat", now)).toBeNull();
+    expect(archiveCutoff(now).toISOString()).toBe("2026-09-25T21:00:00.000Z"); // 26.10 TR gün başı − 30 gün
+    expect(ARCHIVE_EXCLUDE_RECENT_DAYS).toBe(30);
+  });
+
+  it("isDoctrineArchiveWorthy: hukuk/malpraktis/onam/sorumluluk (Türkçe büyük harf dahil)", () => {
+    expect(isDoctrineArchiveWorthy("SAĞLIK HUKUKU KAPSAMINDA YAPAY ZEKA")).toBe(true);
+    expect(isDoctrineArchiveWorthy("Doktorun Cezai Sorumluluğu")).toBe(true);
+    expect(isDoctrineArchiveWorthy("The Effect of Malpractice Education")).toBe(true);
+    expect(isDoctrineArchiveWorthy("Oral İmplantoloji Vakaları")).toBe(false);
   });
 });

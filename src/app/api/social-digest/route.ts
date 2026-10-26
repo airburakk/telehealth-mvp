@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { pickSocialDigest, rotationBranchFor, SOCIAL_WINDOW_MS } from "@/lib/social-digest";
-import { loadSocialArticles } from "@/lib/social-digest-public";
+import { loadSocialArchive, loadSocialArticles } from "@/lib/social-digest-public";
 import { trDayString } from "@/lib/daily-digest";
 
 // GET /api/social-digest — kamuya açık gazete seçkisinin MAKİNE ucu (2026-08-30, belge §2.2).
@@ -36,8 +36,10 @@ export async function GET(req: Request) {
   const rotation = rotationBranchFor(day);
   // Sorgu herkese açık /secki sayfasıyla ORTAK (lib/social-digest-public): kart ile sayfa aynı şekli okur.
   const articles = await loadSocialArticles(new Date(now.getTime() - SOCIAL_WINDOW_MS));
+  // 🗄️ Hukuk cephaneliği (2026-10-26): İçtihat/Doktrin tazesi yoksa yuva arşivden dolar ("Arşivden …" etiketi, `archive`).
+  const archive = await loadSocialArchive(now);
 
-  const items = pickSocialDigest(articles, rotation, now);
+  const items = pickSocialDigest(articles, rotation, now, archive);
   return NextResponse.json(
     {
       day,
@@ -48,6 +50,7 @@ export async function GET(req: Request) {
       fill: {
         replaced: items.filter((i) => i.replaces).length,
         stale: items.filter((i) => i.stale).length,
+        archive: items.filter((i) => i.archive).length,
       },
     },
     { headers: { "Cache-Control": "no-store" } },
