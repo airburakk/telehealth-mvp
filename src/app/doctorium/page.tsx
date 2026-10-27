@@ -3,7 +3,7 @@ import { DoctoriumLandingV3 } from "@/components/aura/doctorium-v3/DoctoriumLand
 import { StructuredData } from "@/components/aura/structured-data";
 import { doctoriumSameAs } from "@/components/aura/doctorium-social-links";
 import { LANDING_META } from "@/lib/doctorium-landing/content";
-import { SITE_URL } from "@/lib/aura-landing/seo";
+import { DOCTORIUM_CANONICAL_URL } from "@/lib/brand";
 
 // /doctorium — Doctorium tanıtım landing'i V3 (2026-08-26, modernizasyon turu: zebra yok,
 // Inter tek aile, film13 hero, Framer Motion). Karşılaştırma yedeği rotaları (v1/v2) V3
@@ -16,15 +16,20 @@ import { SITE_URL } from "@/lib/aura-landing/seo";
 // ulaşılamazsa fixture ile render olur (landing-feed.ts), sayfa asla 500 vermez.
 export const revalidate = 600;
 
+// Canonical DAİMA doctorium.tr KÖKÜ (2026-10-26, Search Console ölçümü): Doctorium deploy'unda "/" bu sayfaya rewrite
+// olur; canonical "/doctorium" deyince Google kökü seçip sayfayı "kopya" saydı. AURA host'unda da servis edilen bu
+// sayfa mutlak adresle doctorium.tr'yi gösterir (/secki ve hukuki sayfalarla aynı desen) — iki alan adı yarışmaz.
+const CANONICAL = `${DOCTORIUM_CANONICAL_URL}/`;
+
 export const metadata: Metadata = {
   // Ayrışma (2026-08-24): segment layout'u "%s · Doctorium" şablonu uygular — landing'in kendisi
   // yalın "Doctorium" kalsın diye absolute ("Doctorium · Doctorium" tekrarı olmasın).
   title: { absolute: "Doctorium" },
   description: LANDING_META.description,
-  alternates: { canonical: "/doctorium" },
+  alternates: { canonical: CANONICAL },
   openGraph: {
     type: "website",
-    url: "/doctorium",
+    url: CANONICAL,
     siteName: "Doctorium",
     title: LANDING_META.ogTitle,
     description: LANDING_META.ogDescription,
@@ -43,7 +48,7 @@ export const metadata: Metadata = {
 // Organization.sameAs (2026-10-09): resmî sosyal hesaplar — footer ikon satırıyla AYNI liste
 // (`doctoriumSameAs()`); arama motoru hesapları markayla eşleştirir. Organization'a yalnız ad +
 // adres + hesaplar girer (kuruluş yılı/çalışan/adres gibi doğrulanmamış alan EKLENMEZ).
-const ORG_ID = `${SITE_URL}/#doctorium`;
+const ORG_ID = `${DOCTORIUM_CANONICAL_URL}/#doctorium`;
 const JSON_LD = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [
@@ -51,13 +56,13 @@ const JSON_LD = JSON.stringify({
       "@type": "Organization",
       "@id": ORG_ID,
       name: "Doctorium",
-      url: SITE_URL,
+      url: CANONICAL,
       sameAs: doctoriumSameAs(),
     },
     {
       "@type": "WebPage",
       name: "Doctorium",
-      url: `${SITE_URL}/doctorium`,
+      url: CANONICAL,
       inLanguage: "tr-TR",
       description: LANDING_META.description,
       publisher: { "@id": ORG_ID },

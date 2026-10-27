@@ -7,6 +7,7 @@ import { DoctoriumSignupShell } from "@/components/aura/doctorium-signup-shell";
 import { TrialSignupForm } from "@/components/TrialSignupForm";
 import { isTrialEnabled } from "@/lib/doctorium-trial-flag";
 import { TRIAL_PROMISE_PARAGRAPHS, TRIAL_STEPS } from "@/lib/doctorium-trial-copy";
+import { DOCTORIUM_CANONICAL_URL } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Kayıt",
   description: "Doctorium doktor üyeliği — branşınıza göre kurulan kişisel profesyonel çalışma alanınızı oluşturun.",
-  alternates: { canonical: "/doctorium/kayit" },
+  // Mutlak doctorium.tr adresi (2026-10-26): AURA host'unda da servis edilir, iki alan adı yarışmasın.
+  alternates: { canonical: `${DOCTORIUM_CANONICAL_URL}/doctorium/kayit` },
 };
 
 // Üç katman (2026-09-05): DOCTORIUM_TRIAL_ENABLED=1 iken parolalı deneme formu (ad soyad · e-posta · parola · branş ·
