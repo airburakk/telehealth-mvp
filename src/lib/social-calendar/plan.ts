@@ -11,6 +11,7 @@
 //  • GET'te YAZMA YOK: yuva satırı yalnız "Yuvayı aç" ile oluşur (openSlot).
 //  • İçerik PHI DEĞİL (kamuya açık karar/etkinlik metadata'sı + editör metni) → şifresiz; audit'e içerik YAZILMAZ, yalnız rubrik·gün·hash öneki.
 import { db } from "../db";
+import type { Prisma } from "@prisma/client";
 import { recordAccess } from "../audit";
 import type { SessionUser } from "../session";
 import { evaluateGates, type GateReport } from "./gates";
@@ -200,13 +201,13 @@ function parseVersion(v: unknown): Date {
 }
 
 /** Seçili kaynakların metinleri: hukuk günü NewsArticle.summary (alıntı doğrulaması) · Etkinlik radarı resmî adlar (kapı istisnası) · diğerlerinde boş. */
-async function loadSourceTexts(series: SeriesDef, ids: string[]): Promise<string[]> {
+export async function loadSourceTexts(series: SeriesDef, ids: string[], client: Pick<Prisma.TransactionClient, "medicalCongress" | "newsArticle"> = db): Promise<string[]> {
   if (ids.length === 0) return [];
   if (series.sourceKind === "etkinlik") {
-    return resmiAdlar(await db.medicalCongress.findMany({ where: { id: { in: ids } }, select: { title: true, organizer: true } }));
+    return resmiAdlar(await client.medicalCongress.findMany({ where: { id: { in: ids } }, select: { title: true, organizer: true } }));
   }
   if (series.sourceKind !== "ictihat") return [];
-  const rows = await db.newsArticle.findMany({ where: { id: { in: ids } }, select: { summary: true } });
+  const rows = await client.newsArticle.findMany({ where: { id: { in: ids } }, select: { summary: true } });
   return rows.map((r) => r.summary);
 }
 
@@ -468,6 +469,7 @@ export async function saveDraft(input: SaveInput & Actor): Promise<PlanItemView>
 /** Onay: kapılar TAZE kaynak metniyle koşar; engelleyen kapı varsa PlanGateError (rapor ekranda). Başarıda içerik mühürlenir. */
 export async function approve(input: { id: string; expectedVersion: string } & Actor): Promise<PlanItemView> {
   const row = await mustGet(input.id);
+  if (row.weeklyPackageId) throw new PlanError("Önce haftalık paketi geri çekin; paket onayı ayrı yönetilir.", 409);
   const series = seriesOf(row);
   if (nextStatus(row.status as PlanStatus, "approve") === null) throw new PlanError("Yalnız taslak durumundaki içerik onaylanabilir.", 409);
   const version = parseVersion(input.expectedVersion);
@@ -552,6 +554,7 @@ export async function dueForDay(gun: string): Promise<DueSnapshot> {
   const items: DueItem[] = [];
   const atlanan: DueSnapshot["atlanan"] = [];
   for (const r of rows) {
+    if (r.weeklyPackageId) continue; // Weekly receipt owns this item; legacy workers must never claim it.
     if (r.status !== "APPROVED") continue;
     const series = seriesByKey(r.seriesKey);
     if (!series) {
@@ -581,7 +584,7 @@ export async function claimForPublish(input: { gun: string; bugun: string } & Ma
   for (const it of snap.items) {
     const pub: Publication = { v: 1, manual: false, channels: [], at: new Date().toISOString() };
     const r = await db.contentPlanItem.updateMany({
-      where: { id: it.id, updatedAt: new Date(it.version), status: "APPROVED" },
+      where: { id: it.id, updatedAt: new Date(it.version), status: "APPROVED", weeklyPackageId: null },
       data: { status: nextStatus("APPROVED", "claim") ?? "PUBLISHING", publishedRefs: JSON.stringify(pub) },
     });
     if (r.count === 0) continue; // başka koşu önce aldı / içerik değişti → bu öğe bizim DEĞİL
@@ -602,6 +605,7 @@ export async function markPublished(
   input: { id: string; expectedVersion: string; channels: unknown; failures?: unknown; manual?: boolean } & MachineActor,
 ): Promise<PlanItemView> {
   const row = await mustGet(input.id);
+  if (row.weeklyPackageId) throw new PlanError("Haftalık paket yayını kanal kayıtlarından yönetilir.", 409);
   if (nextStatus(row.status as PlanStatus, "publish-ok") === null) throw new PlanError("Yalnız onaylı ya da yayınlanmakta olan içerik yayınlandı olarak işaretlenebilir.", 409);
   const manual = input.manual !== false;
   if (!manual && row.status !== "PUBLISHING") throw new PlanError("Otomasyon yalnız ALDIĞI (YAYINLANIYOR) içerik için sonuç bildirebilir.", 409);
@@ -625,6 +629,7 @@ export async function markPublished(
 /** Yayın denemesi başarısız (otomasyon): YAYINLANIYOR → FAILED; onay mührü KORUNUR (yeniden denenebilir), hata notu `publishedRefs`'e yazılır. */
 export async function markPublishFailed(input: { id: string; expectedVersion: string; error: string } & MachineActor): Promise<PlanItemView> {
   const row = await mustGet(input.id);
+  if (row.weeklyPackageId) throw new PlanError("Haftalık paket sonucu kanal kayıtlarından bildirilir.", 409);
   if (nextStatus(row.status as PlanStatus, "publish-fail") === null) throw new PlanError("Yalnız ALINMIŞ (YAYINLANIYOR) içerik için yayın hatası bildirilebilir.", 409);
   const version = parseVersion(input.expectedVersion);
   const pub: Publication = { v: 1, manual: false, channels: [], at: new Date().toISOString(), error: cleanErrorText(input.error) };
@@ -639,6 +644,7 @@ export async function markPublishFailed(input: { id: string; expectedVersion: st
  */
 export async function retryPublish(input: { id: string; expectedVersion: string } & Actor): Promise<PlanItemView> {
   const row = await mustGet(input.id);
+  if (row.weeklyPackageId) throw new PlanError("Haftalık pakette kanal sonucu doğrulanmadan yeniden deneme yapılamaz.", 409);
   if (nextStatus(row.status as PlanStatus, "retry") === null) throw new PlanError("Yeniden denenecek yayın hatası ya da takılı yayın yok.", 409);
   const version = parseVersion(input.expectedVersion);
   if (!sealMatches(row)) throw new PlanError("İçerik onay mührüyle eşleşmiyor — yeniden denenemez; yuvayı atlayıp yeniden hazırlayın.", 409);
