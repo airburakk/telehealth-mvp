@@ -81,6 +81,9 @@ const DOCTORIUM_ROUTES = [
   // cümlesinin tek karşılığı. Kısa adres next.config rewrite'ıyla /doctorium/secki'ye gider (yalnız doctorium.tr). Kırılırsa
   // her sosyal gönderinin CTA'sı boşa düşer. CTA = "Doktor üyeliği" düğmesi; indekslenir (page.tsx canonical doctorium.tr/secki).
   { path: "/secki",           title: "Günlük Seçki",   h1: "Bugünün başlıkları", cta: "/doctorium/kayit",                      noindex: false },
+  // TUS taban puanları (v6.358, 2026-10-29): marka dışı aramanın ilk hedef sayfası (SEO). Kısa adres rewrite'la /doctorium/tus.
+  // CTA = "Öğrenci kaydı" (sayfa sonu + üst bar); indekslenir (canonical doctorium.tr/tus).
+  { path: "/tus",             title: "TUS Taban Puanları", h1: "TUS taban puanları", cta: "/doctorium/ogrenci",                  noindex: false },
 ];
 
 // Marka korkuluğu (next.config.ts AURA_ONLY_PREFIXES + domain-canonicalization): kimlik/hasta

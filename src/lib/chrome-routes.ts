@@ -46,6 +46,9 @@ export const CHROME_FREE_ROUTES = [
   // GÖRÜNEN yol /secki'dir, bu yüzden ikisi de burada ("/" ↔ "/doctorium" çiftiyle aynı gerekçe).
   "/secki",
   "/doctorium/secki",
+  // TUS taban puanları (v6.358, 2026-10-29): TusPublicPage kendi kabuğunu taşır; /secki ile aynı iki-yol gerekçesi.
+  "/tus",
+  "/doctorium/tus",
   // AURA hukuki belgeleri (kod Paket A, v6.268 · 2026-09-13): AuraLegalShell kendi vitrin kabuğunu taşır (V2Nav +
   // AuraClosing — /guven-ve-gizlilik deseni) → global Header/SiteFooter girmez. Liste lib/aura-legal/routes
   // AURA_LEGAL_PATHS ile birim testle bağlıdır (tests/unit/aura-legal.test.ts); oraya belge ekleyen buraya da ekler.
