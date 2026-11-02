@@ -23,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     return [
       entry("/", 1.0, "weekly"), // landing (/doctorium'a rewrite) — canonical kök (2026-10-26: Google kökü seçiyordu)
       entry("/doctorium/kayit", 0.8, "monthly"),
+      entry("/tus", 0.8, "monthly"), // TUS taban puanları (v6.358) — kısa adres rewrite ile /doctorium/tus'a gider, canonical bu URL
       entry("/secki", 0.8, "daily"), // Günlük Seçki (v6.315) — bio linki; kısa adres rewrite ile /doctorium/secki'ye gider, canonical bu URL
       // Hukuki belgeler (v6.210, 2026-09-03) — canonical doctorium.tr; AURA sitemap'ine BİLİNÇLİ girmez
       // (AURA host'unda da servis edilir ama belgenin markası Doctorium'dur, çift indeks olmasın).

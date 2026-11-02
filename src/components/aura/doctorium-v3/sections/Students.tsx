@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AuraMark } from "@/components/AuraLogo";
 import { DoctoriumStudentLockup } from "@/components/aura/doctorium-brand";
 import { EduOpportunityRow, TusKpiStrip } from "@/app/doktor/doctorium/CareerEduSections";
@@ -5,6 +6,7 @@ import { EDU_KINDS, EDU_KIND_SHORT } from "@/lib/edu-opportunities";
 import { section } from "@/lib/doctorium-landing/content";
 import type { LandingProof } from "@/lib/doctorium-landing/landing-feed";
 import { LANDING_ROUTES } from "@/lib/doctorium-landing/routes";
+import { IS_DOCTORIUM_DEPLOY } from "@/lib/brand";
 import { CtaLink } from "../CtaLink";
 import { ProductFrame } from "../ProductFrame";
 import { Rich } from "../rich-text";
@@ -115,6 +117,13 @@ export function StudentsSection({ proof }: { proof: LandingProof["students"] }) 
                     <span>{proof.tusPeriods} dönem</span>
                   </div>
                   <TusKpiStrip last={proof.tusLast} />
+                  {/* v6.358: herkese açık TUS sayfasına iç bağlantı (keşif). Doctorium deploy'unda kısa adres, AURA host'unda iç yol. */}
+                  <Link prefetch={false}
+                    href={IS_DOCTORIUM_DEPLOY ? "/tus" : "/doctorium/tus"}
+                    className="mt-2 inline-flex text-[12.5px] font-semibold text-[var(--c-accent)] underline-offset-4 hover:underline"
+                  >
+                    Tüm branşlar →
+                  </Link>
                 </div>
               )}
               <p className="mt-3 border-t border-[var(--c-hairline)] pt-2.5 text-[11px] leading-relaxed text-[var(--c-ink-3)]">

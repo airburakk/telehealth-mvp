@@ -153,6 +153,8 @@ const nextConfig: NextConfig = {
       beforeFiles: [
         { source: "/", destination: "/doctorium" },
         { source: "/secki", destination: "/doctorium/secki" },
+        // /tus → /doctorium/tus (v6.358, 2026-10-29): herkese açık TUS taban puanları — aynı desen, AURA host'unda /tus 404 kalır.
+        { source: "/tus", destination: "/doctorium/tus" },
       ],
       afterFiles: [],
       fallback: [],
