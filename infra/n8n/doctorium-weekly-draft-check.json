@@ -1,0 +1,15 @@
+{
+  "name": "Doctorium haftalık ikinci katman - salt okunur durum kontrolü",
+  "active": false,
+  "nodes": [
+    { "id": "weekly-manual", "name": "Yalnız elle kontrol", "type": "n8n-nodes-base.manualTrigger", "typeVersion": 1, "position": [0, 0], "parameters": {} },
+    {
+      "id": "weekly-status", "name": "Haftalık durum - günlük akışa dokunmaz", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [260, 0],
+      "parameters": { "method": "GET", "url": "=http://kart:3000/rubrik/haftalik/durum?hafta={{ $now.plus({ weeks: 1 }).startOf('week').toISODate() }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "options": { "timeout": 30000 } },
+      "retryOnFail": false, "onError": "stopWorkflow"
+    }
+  ],
+  "connections": { "Yalnız elle kontrol": { "main": [[{ "node": "Haftalık durum - günlük akışa dokunmaz", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": false },
+  "pinData": {}, "tags": []
+}

@@ -70,6 +70,7 @@ export default async function ContentCalendarPage({ searchParams }: { searchPara
         </nav>
       </div>
 
+      <Link href={`/admin/icerik-takvimi/haftalik?hafta=${monday}`} className="mt-5 inline-block text-sm font-semibold text-[var(--c-accent)]">Haftalık paketi incele</Link>
       <ul className="mt-5 grid gap-3">
         {slots.map(({ series, slotDay, item }) => {
           const past = slotDay < today;
