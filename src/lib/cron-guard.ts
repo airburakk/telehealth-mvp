@@ -56,6 +56,7 @@ export const CRON_SCHEDULES: Record<string, string> = {
   "/api/cron/translate-news": "40 2 * * *",          // 05:40 TR — özet GİRİŞİ çevirisi: TÜM ingest-* bittikten SONRA (en kötü bitiş 02:36), baskıdan önce — v6.206
   "/api/cron/generate-ai-summaries": "56 2 * * *",   // 05:56 TR — AI özetinin PROAKTİF üretimi (2026-09-05: tembel üretim daily-digest'i özetsiz besliyordu; tüm ingest'ler + translate-news bittikten SONRA, Post'tan ÖNCE)
   "/api/cron/registry-sync": "0 3 * * *",            // 06:00 TR — HealthTürkiye dizini (değişmedi)
+  "/api/cron/refresh-family-medicine": "10 3 * * *",      // Curated family-medicine source change monitoring; no clinical approval.
   "/api/cron/purge-deleted": "30 3 * * *",           // 06:30 TR — KVKK imha + zincirler + günlük damga + diploma/pasiflik/ret süpürmeleri (v6.272)
   "/api/cron/daily-digest": "30 3 * * *",            // 06:30 TR — Doctorium Post + etkinlik alarmı
   "/api/cron/rubrik-hatirlatma": "0 6 * * *",        // 09:00 TR — içerik takvimi rubrik hatırlatması: BUGÜN (12:00 yayını) + YARIN yuvası hazır mı (v6.345, 2026-10-10)

@@ -4,6 +4,7 @@
 // Modüller (kullanıcı kararı 2026-08-01): A akış+tercih · B sektörel/mevzuat · C akademik+AI özet ·
 // E kongre takvimi. Modül D (ilaç tanıtımı / e-mümessil) PARK — TİTCK tanıtım yönetmeliği + ruhsat
 // sahibi sıfatı hukuki görüş ister (wiki/todo.md Doctorium bloğu).
+import { parsePracticeSetting, type PracticeSetting } from "./doctorium-practice";
 import { EDU_KINDS, type EduOpportunityKind } from "./edu-opportunities";
 import { TUS_SECTIONS, type TusSectionKey } from "./tus";
 import { createHash } from "crypto";
@@ -1054,6 +1055,8 @@ export interface SectorViewPrefs { source: SourceScope | null; range: string; ca
 export interface PharmaViewPrefs { range: string }
 export interface LegalViewPrefs { range: string; category: string | null }
 export interface DoctoriumViewPrefs {
+  /** Optional self-declared work setting; does not change specialty, verification or feed branches. */
+  practiceSetting: PracticeSetting | null;
   sektorel: SectorViewPrefs;
   ilac: PharmaViewPrefs;
   mevzuat: LegalViewPrefs;
@@ -1067,6 +1070,7 @@ export interface DoctoriumViewPrefs {
   kariyer: { tur: EduOpportunityKind | null; tusBolum: TusSectionKey; tusBrans: string | null };
 }
 const DEFAULT_VIEW_PREFS: DoctoriumViewPrefs = {
+  practiceSetting: null,
   sektorel: { source: null, range: DEFAULT_RANGE, category: null },
   ilac: { range: DEFAULT_RANGE },
   mevzuat: { range: DEFAULT_RANGE, category: null },
@@ -1093,7 +1097,9 @@ export function parseViewPrefs(raw: string | null | undefined): DoctoriumViewPre
     const mv = (v.mevzuat ?? {}) as Record<string, unknown>;
     const tus = (v.tus ?? {}) as Record<string, unknown>;
     const kr = (v.kariyer ?? {}) as Record<string, unknown>;
+    const practice = (v.practice ?? {}) as Record<string, unknown>;
     return {
+      practiceSetting: parsePracticeSetting(practice.setting),
       sektorel: {
         source: parseSourceScope(typeof sek.s === "string" ? sek.s : null),
         range: typeof sek.d === "string" && RANGE_KEY_SET.has(sek.d) ? sek.d : DEFAULT_RANGE,

@@ -69,6 +69,7 @@ export interface BranchPattern {
 }
 
 export const BRANCH_PATTERNS: BranchPattern[] = [
+  { slug: "aile-hekimligi", patterns: ["aile hekim", "aile sağlığı merkezi", "birinci basamak"] },
   { slug: "onkoloji", patterns: ["onkoloji", "onkolog", "kemoterapi"] },
   { slug: "kardiyoloji", patterns: ["kardiyoloji", "kardiyolog", "kalp krizi", "miyokard", "anjiyografi"] },
   { slug: "ortopedi", patterns: ["ortopedi", "ortopedik", "ortopedist", "menisküs", "eklem protezi"] },

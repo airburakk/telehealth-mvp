@@ -12,7 +12,7 @@ import {
   Dna, Venus, Crown, ScanFace, Layers, HandHeart, MessageCircleHeart, Utensils,
   Siren, Radiation, Syringe, Microscope, GitBranch,
   Atom, Filter, Droplets, Droplet, Eye, Ear, Baby, Activity, Stethoscope,
-  Wind, Bug, Ribbon, Zap, type LucideIcon,
+  Wind, Bug, Ribbon, Zap, House, type LucideIcon,
 } from "lucide-react";
 import type { FC } from "react";
 
@@ -53,5 +53,6 @@ export const BRANCH_ICONS: Record<string, BranchIconLike> = {
 
   // Doktor-only branslar (v6.119) — doctorOnly:true, hasta yuzunde gorunmez.
   "acil-tip": Siren, radyoloji: Radiation, anesteziyoloji: Syringe,
+  "aile-hekimligi": House,
   patoloji: Microscope, "tibbi-genetik": GitBranch,
 };

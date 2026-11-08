@@ -61,6 +61,7 @@ export const BRANCHES: BranchDef[] = [
   // ⚠️ Yeni doktor-only branş eklerken şu dört eşleniği de doldur, yoksa modül o branşta
   //    sessizce boş kalır: BRANCH_COLORS · BRANCH_ICONS (branch-icons.tsx) ·
   //    NEWS_QUERIES (medical-news.ts) · BRANCH_JOURNALS (academic-journals.ts).
+  { key: "aile-hekimligi", label: "Aile Hekimliği", keywords: [], doctorOnly: true },
   { key: "acil-tip", label: "Acil Tıp", keywords: [], doctorOnly: true },
   { key: "radyoloji", label: "Radyoloji", keywords: [], doctorOnly: true },
   { key: "anesteziyoloji", label: "Anesteziyoloji ve Reanimasyon", keywords: [], doctorOnly: true },

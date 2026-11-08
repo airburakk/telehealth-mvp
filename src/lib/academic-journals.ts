@@ -67,6 +67,7 @@ export const BRANCH_JOURNALS: Record<string, string[]> = {
   radyoloji: ["Radiology", "Eur Radiol", "AJR Am J Roentgenol", "Radiographics"],
   anesteziyoloji: ["Anesthesiology", "Br J Anaesth", "Anesth Analg", "Intensive Care Med"],
   patoloji: ["Am J Surg Pathol", "Mod Pathol", "Histopathology", "J Pathol"],
+  "aile-hekimligi": ["Ann Fam Med", "Br J Gen Pract", "Fam Pract", "BMC Prim Care"],
   "tibbi-genetik": ["Am J Hum Genet", "Genet Med", "Nat Genet", "Eur J Hum Genet"],
 };
 

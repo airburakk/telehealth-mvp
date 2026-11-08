@@ -1,6 +1,7 @@
 // M5 Kayıt — yeni doktor hesabı oluşturma (e-posta kaydı + Google OAuth callback ortak kullanır).
 // Doctor (verified:false → admin/etik kurul onayına kadar public dizin/eşleştirme KAPALI;
 // onboardedAt/activatedAt null → /doktor/baslangic zorunlu kapısı) + bağlı User (DOCTOR). Atomik.
+import { isPracticeSetting, type PracticeSetting } from "@/lib/doctorium-practice";
 import { db } from "@/lib/db";
 import { encryptField } from "@/lib/crypto";
 import { verifyDoctorAgainstRegistry } from "@/lib/ht-registry";
@@ -42,6 +43,8 @@ export interface DoctorSignupInput {
   // Google/Apple çağrıları GEÇMEZ (onların passwordHash'i rastgele gölge hash'tir, kullanıcı onu
   // bilmez). "Hesabım → Şifre" paneli bu ayrıma bakarak doğru formu çizer (değiştir / belirle).
   passwordSet?: boolean;
+  /** Explicit optional work setting; independent of branch and all subscriptions. */
+  practiceSetting?: PracticeSetting | null;
 }
 
 // Yeni doktor + bağlı kullanıcı oluşturur, oluşturulan User'ı döndürür.
@@ -50,6 +53,7 @@ export interface DoctorSignupInput {
 // v6.95: öğrenci hesabında dizin doğrulaması ATLANIR — öğrenci doktor dizininde olmaz;
 // koşulsaydı her öğrenci hesabı yanlış NOT_FOUND bayrağıyla açılırdı.
 export async function createDoctorAccount(input: DoctorSignupInput) {
+  if (input.practiceSetting != null && !isPracticeSetting(input.practiceSetting)) throw new Error("Invalid practice setting");
   const user = await createAccountTx(input);
   if (user.doctorId && !input.studentTrack) await verifyDoctorAgainstRegistry(user.doctorId, input.name); // hata kayıt akışını bozmaz (içeride yutulur)
   return user;
@@ -64,6 +68,7 @@ function createAccountTx(input: DoctorSignupInput) {
         branch: input.branch,
         city: input.city,
         languages: input.languages,
+        ...(input.practiceSetting == null ? {} : { doctoriumViewPrefs: JSON.stringify({ practice: { setting: input.practiceSetting } }) }),
         phone: input.phone ? encryptField(input.phone) : null, // kişisel veri → at-rest şifreli
         verified: false, // küratörlü güven: self-signup doktor doğrulanmamış başlar
         studentTrack: input.studentTrack ?? false, // v6.95 — öğrenci hunisi işareti (erişim açmaz)

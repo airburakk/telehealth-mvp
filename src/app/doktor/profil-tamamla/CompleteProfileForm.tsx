@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Loader2, Stethoscope, ArrowRight } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
+import { PracticeSettingSelect } from "@/components/PracticeSettingSelect";
+import type { PracticeSetting } from "@/lib/doctorium-practice";
 import { CitySelect } from "@/components/CitySelect";
 
 // OAuth profil-tamamlama formu (v6.87) — DoctorSignupForm'un kimlik alanlarıyla BİREBİR
@@ -16,12 +18,14 @@ const TITLES = ["Dr.", "Prof. Dr.", "Doç. Dr.", "Op. Dr.", "Uzm. Dr."]; // "Dr.
 export function CompleteProfileForm({
   initialName,
   initialTitle,
+  initialPracticeSetting = null,
   branches,
   nextHref,
   compact = false,
 }: {
   initialName: string;
   initialTitle: string;
+  initialPracticeSetting?: PracticeSetting | null;
   branches: string[];
   nextHref: string;
   /** Doctorium deploy'u (üç katman, 2026-09-05): deneme üyesi yalnız BRANŞ + ŞEHİR verir — ünvan
@@ -31,6 +35,8 @@ export function CompleteProfileForm({
   const [name, setName] = useState(initialName);
   const [title, setTitle] = useState(TITLES.includes(initialTitle) ? initialTitle : "Uzm. Dr.");
   const [branch, setBranch] = useState("");
+  const [practiceSetting, setPracticeSetting] = useState<string>(initialPracticeSetting ?? "");
+  const [practiceTouched, setPracticeTouched] = useState(false);
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,7 +50,7 @@ export function CompleteProfileForm({
       const res = await fetch("/api/doctor/complete-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, title, branch, city, phone }),
+        body: JSON.stringify({ name, title, branch, city, phone, ...(practiceTouched ? { practiceSetting: practiceSetting || null } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Kaydedilemedi.");
@@ -92,6 +98,7 @@ export function CompleteProfileForm({
             </Labeled>
           </div>
 
+          <PracticeSettingSelect value={practiceSetting} onChange={value => { setPracticeSetting(value); setPracticeTouched(true); }} className={INPUT} />
           <Labeled label="Şehir">
             <CitySelect value={city} onChange={setCity} className={INPUT} />
           </Labeled>

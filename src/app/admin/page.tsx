@@ -34,6 +34,13 @@ export const metadata = { title: "Yönetim" };
 
 const PANELS = [
   {
+    href: "/admin/aile-hekimligi",
+    label: "Aile Hekimliği İncelemesi",
+    desc: "Kaynak sürümleri, madde eşleştirmeleri ve ayrı hekim/hukuk inceleme kayıtları. Otomatik yayın yapmaz.",
+    icon: ShieldCheck,
+    tone: "#0f766e",
+  },
+  {
     href: "/admin/pano",
     label: "Pano",
     desc: "Tek ekranda özet — toplam üye, son 24 saat / 7 gün / 30 gün yeni üyeler, doğrulama durumu ve beş sosyal medya hesabı.",

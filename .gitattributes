@@ -9,3 +9,8 @@
 # Bu dizin LF'e SABİT; ikili varlıklar (webp) dokunulmaz.
 infra/kart/**            text=auto eol=lf
 infra/kart/assets/*.webp binary
+
+# Canonical bytes for verified migration checksums; do not rewrite other historical SQL.
+prisma/migrations/20261017180000_social_metric_daily/migration.sql text eol=lf
+prisma/migrations/20261107220000_family_medicine_editorial/migration.sql text eol=lf
+prisma/migrations/20261108010000_family_medicine_source_checks/migration.sql text eol=lf

@@ -3,16 +3,16 @@ import { DOCTOR_BRANCH_OPTIONS, isDoctorBranch } from "../../src/lib/doctor-bran
 import { BRANCH_LABELS, branchKeyFromLabel, getBranchProcedures } from "../../src/lib/procedures";
 import { BRANCHES, PATIENT_BRANCHES } from "../../src/lib/triage";
 
-const added=["Acil Tıp","Radyoloji","Anesteziyoloji ve Reanimasyon","Tıbbi Patoloji","Tıbbi Genetik"];
+const added=["Aile Hekimliği","Acil Tıp","Radyoloji","Anesteziyoloji ve Reanimasyon","Tıbbi Patoloji","Tıbbi Genetik"];
 describe("physician and student branch taxonomy",()=>{
   it.each(added)("offers and accepts %s without changing its slug",label=>{
     expect(DOCTOR_BRANCH_OPTIONS).toContain(label);expect(isDoctorBranch(label)).toBe(true);
     expect(BRANCHES.find(b=>b.label===label)?.key).toBeTruthy();
   });
-  it("keeps all previous choices and adds only the five missing branches",()=>{
+  it("keeps all previous choices and includes the doctor-only specialties",()=>{
     const prior=Object.values(BRANCH_LABELS);
     for(const label of prior) expect(DOCTOR_BRANCH_OPTIONS).toContain(label);
-    expect(DOCTOR_BRANCH_OPTIONS.filter(label=>!prior.includes(label)).sort()).toEqual([...added].sort());
+    expect(DOCTOR_BRANCH_OPTIONS.filter(label=>!prior.includes(label)).sort()).toEqual([...added, "Pratisyen Hekim (Uzmanlık Yok)"].sort());
     expect(new Set(DOCTOR_BRANCH_OPTIONS).size).toBe(DOCTOR_BRANCH_OPTIONS.length);
   });
   it("keeps historical labels accepted and mapped to their existing slug",()=>{

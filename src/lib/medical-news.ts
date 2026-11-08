@@ -101,5 +101,6 @@ export const NEWS_QUERIES: Record<string, string> = {
   Radyoloji: "diagnostic imaging[mh] AND (methods[sh] OR diagnosis[sh])",
   "Anesteziyoloji ve Reanimasyon": "anesthesia[mh] OR critical care[mh]",
   "Tıbbi Patoloji": "pathology[mh] AND (methods[sh] OR diagnosis[sh])",
+  "Aile Hekimliği": "family practice[mh] OR primary health care[mh] OR general practice[mh]",
   "Tıbbi Genetik": "genetics, medical[mh] OR genetic testing[mh]",
 };

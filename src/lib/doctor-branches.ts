@@ -5,6 +5,7 @@ import { BRANCH_LABELS } from "./procedures";
 // procedure catalogue. Keep every previously selectable label for compatibility.
 // This does not change PATIENT_BRANCHES or add any procedures or prices.
 export const DOCTOR_BRANCH_OPTIONS: string[] = [...new Set([
+  "Pratisyen Hekim (Uzmanlık Yok)",
   ...Object.values(BRANCH_LABELS),
   ...BRANCHES.map(branch => branch.label),
 ])].sort((a, b) => a.localeCompare(b, "tr"));

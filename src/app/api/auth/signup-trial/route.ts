@@ -6,6 +6,7 @@ import { hashPassword, createSession } from "@/lib/auth";
 import { brandRoleHome } from "@/lib/roles";
 import { gateConsentVersion } from "@/lib/doctorium-consent";
 import { createDoctorAccount } from "@/lib/doctor-signup";
+import { isPracticeSetting, type PracticeSetting } from "@/lib/doctorium-practice";
 import { isDoctorBranch } from "@/lib/doctor-branches";
 import { isAllowedCity } from "@/lib/cities";
 import { rateLimit, clientIp, tooMany } from "@/lib/rate-limit";
@@ -38,7 +39,10 @@ export async function POST(req: Request) {
   const rl = await rateLimit(`signup-trial:${clientIp(req)}`, 5, 15 * 60_000);
   if (!rl.ok) return tooMany(rl.retryAfter);
 
-  const b = await req.json().catch(() => ({}));
+  const b = (await req.json().catch(() => ({}))) ?? {};
+  if (b.practiceSetting != null && !isPracticeSetting(b.practiceSetting)) {
+    return NextResponse.json({ error: "Geçerli bir çalışma alanı seçin." }, { status: 400 });
+  }
   const name = String(b.name ?? "").trim().slice(0, 120);
   const email = String(b.email ?? "").trim().toLowerCase().slice(0, 160);
   const password = String(b.password ?? "");
@@ -63,7 +67,7 @@ export async function POST(req: Request) {
     }
     // DEV kısayolu — e-posta yokken akış canlı provalanabilsin (api/auth/signup dormant dalı emsali).
     if (existing) return NextResponse.json(SENT);
-    const user = await createTrialAccount({ name, email, password, branch, city });
+    const user = await createTrialAccount({ name, email, password, branch, city, practiceSetting: b.practiceSetting });
     if (!user) return NextResponse.json(SENT);
     await db.user.updateMany({ where: { id: user.id, emailVerifiedAt: null }, data: { emailVerifiedAt: new Date() } });
     const cv = await gateConsentVersion(user.id, "DOCTOR");
@@ -79,19 +83,19 @@ export async function POST(req: Request) {
     return NextResponse.json(SENT);
   }
 
-  const user = await createTrialAccount({ name, email, password, branch, city });
+  const user = await createTrialAccount({ name, email, password, branch, city, practiceSetting: b.practiceSetting });
   if (user) await issueVerificationEmail({ id: user.id, email: user.email, name: user.name }, origin, "Doctorium");
   // Aynı e-postayla eşzamanlı ikinci istek (P2002) → "mevcut hesap" yoluyla aynı yanıt (başka oturumun parolasını değiştirmez).
   return NextResponse.json(SENT);
 }
 
-async function createTrialAccount(input: { name: string; email: string; password: string; branch: string; city: string }): Promise<ExistingUser | null> {
+async function createTrialAccount(input: { name: string; email: string; password: string; branch: string; city: string; practiceSetting?: PracticeSetting | null }): Promise<ExistingUser | null> {
   const passwordHash = await hashPassword(input.password);
   try {
     const u = await createDoctorAccount({
       name: input.name, email: input.email, passwordHash,
       title: TRIAL_TITLE, branch: input.branch, city: input.city, languages: "Türkçe",
-      passwordSet: true,
+      passwordSet: true, practiceSetting: input.practiceSetting,
     });
     return { id: u.id, email: u.email, name: u.name, role: u.role, passwordSetAt: u.passwordSetAt, deletedAt: null, loginTokenSentAt: null };
   } catch (e) {

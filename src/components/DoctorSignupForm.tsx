@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Loader2, UserPlus, Stethoscope, MailCheck } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
 import { SocialAuthButtons } from "@/components/social-auth";
+import { PracticeSettingSelect } from "@/components/PracticeSettingSelect";
 import { CitySelect } from "@/components/CitySelect";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
 
@@ -30,6 +31,7 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, brand 
   const [name, setName] = useState("");
   const [title, setTitle] = useState("Uzm. Dr.");
   const [branch, setBranch] = useState("");
+  const [practiceSetting, setPracticeSetting] = useState("");
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState(""); // FAZ 5 — WhatsApp/SMS bildirim kanalı hedefi (opsiyonel)
   const [email, setEmail] = useState("");
@@ -48,7 +50,7 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, brand 
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, title, branch, city, phone, email, password }),
+        body: JSON.stringify({ name, title, branch, city, phone, email, password, practiceSetting: practiceSetting || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Kayıt başarısız.");
@@ -119,6 +121,7 @@ export function DoctorSignupForm({ googleEnabled, appleEnabled, branches, brand 
             </Labeled>
           </div>
 
+          <PracticeSettingSelect value={practiceSetting} onChange={setPracticeSetting} className={INPUT} />
           <Labeled label="Şehir">
             <CitySelect value={city} onChange={setCity} className={INPUT} />
           </Labeled>

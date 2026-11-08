@@ -41,6 +41,7 @@ export const BRANCH_COLORS: Record<string, string> = {
   radyoloji: "#94A3B8",             // slate — görüntüleme grisi
   anesteziyoloji: "#818CF8",        // indigo-400 — sedasyon/uyku
   patoloji: "#BE185D",              // koyu füşya — H&E boyama
+  "aile-hekimligi": "#0F766E",
   "tibbi-genetik": "#15803D",       // orman yeşili — kalıtım
 };
 

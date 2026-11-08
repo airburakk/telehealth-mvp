@@ -1,3 +1,4 @@
+import { slugForLabel } from "@/lib/doctorium";
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
@@ -429,7 +430,13 @@ export default async function DoctoriumPage({
             </ButtonLink>
           )}
         </div>
-        <p className="mt-1.5 text-[13px] text-[var(--c-ink-2)]">{head.desc}</p>
+        <p className="mt-1.5 text-[13px] text-[var(--c-ink-2)]">{head.desc}</p>        {active === "akis" && (
+          <Link href="/doktor/doctorium/aile-hekimligi" className="mt-3 inline-block text-sm font-semibold text-[var(--c-accent)] underline underline-offset-4">
+            {viewPrefs.practiceSetting === "asm" || slugForLabel(doctor?.branch) === "aile-hekimligi"
+              ? "Aile Hekimliği çalışma alanınızı açın →"
+              : "Birinci basamakta çalışıyor musunuz? Aile Hekimliği çalışma alanını açın →"}
+          </Link>
+        )}
       </div>
 
       {/* Sayaç + kulvar — yalnız Akışım'da. İkisi birlikte çalışır: sayaç "ne kadar var"ı,

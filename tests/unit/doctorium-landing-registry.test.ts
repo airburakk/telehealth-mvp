@@ -126,9 +126,9 @@ describe("taksonomi kopyası (istemci-güvenli) ↔ sunucu kaynağı", () => {
     expect(LANDING_MODULES.map((m) => m.key)).toEqual(FEED_MODULE_OPTIONS.map((m) => m.key));
     expect(LANDING_MODULES.map((m) => m.label)).toEqual(FEED_MODULE_OPTIONS.map((m) => m.label));
   });
-  it("branşlar BRANCH_OPTIONS ile BİREBİR (35)", () => {
+  it("branşlar BRANCH_OPTIONS ile BİREBİR (36)", () => {
     expect(LANDING_BRANCHES).toEqual(BRANCH_OPTIONS);
-    expect(LANDING_BRANCHES.length).toBe(35);
+    expect(LANDING_BRANCHES.length).toBe(36);
   });
   it("varsayılan demo seçimi geçerli", () => {
     expect(LANDING_BRANCHES.some((b) => b.slug === DEFAULT_DEMO_BRANCH)).toBe(true);

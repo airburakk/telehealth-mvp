@@ -32,7 +32,7 @@ describe("vercel.json ↔ CRON_SCHEDULES", () => {
   it("yol ve zamanlama birebir aynı (onüç cron; 2026-10-10 rubrik-hatirlatma)", () => {
     const fromVercel = Object.fromEntries(vercel.crons.map((c) => [c.path, c.schedule]));
     expect(fromVercel).toEqual(CRON_SCHEDULES);
-    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(13);
+    expect(Object.keys(CRON_SCHEDULES)).toHaveLength(14);
   });
 
   it("her cron yolunun rota dosyası var, cronGate kullanır, maxDuration bildirir", () => {

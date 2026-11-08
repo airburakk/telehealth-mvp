@@ -206,6 +206,37 @@ describe("runDailyDigests — koşucu davranışı", () => {
     dbMock.newsArticle.findMany.mockResolvedValue([]);
   });
 
+  it("explicit family-medicine preference reaches Post without removing existing branches", async () => {
+    dbMock.doctor.findMany.mockResolvedValue([{ ...doctor, newsBranches: JSON.stringify(["onkoloji", "aile-hekimligi"]), feedModules: JSON.stringify(["akademik"]) }]);
+    await runDailyDigests();
+    const query = JSON.stringify(dbMock.newsArticle.findMany.mock.calls);
+    expect(query).toContain("onkoloji");
+    expect(query).toContain("aile-hekimligi");
+    expect(dbMock.doctor.update).not.toHaveBeenCalled();
+    expect(dbMock.doctor.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { digestChannel: { in: ["app", "email"] } } }));
+  });
+
+  it("ASM work setting alone does not add family medicine or enable digest", async () => {
+    dbMock.doctor.findMany.mockResolvedValue([{ ...doctor, doctoriumViewPrefs: JSON.stringify({ practice: { setting: "asm" } }), feedModules: JSON.stringify(["akademik"]) }]);
+    await runDailyDigests();
+    const query = JSON.stringify(dbMock.newsArticle.findMany.mock.calls);
+    expect(query).toContain("onkoloji");
+    expect(query).not.toContain("aile-hekimligi");
+    expect(dbMock.doctor.update).not.toHaveBeenCalled();
+    expect(sendEmailMock).not.toHaveBeenCalled();
+  });
+
+  it("family specialty fallback works and disabled academic module stays disabled", async () => {
+    dbMock.doctor.findMany.mockResolvedValue([{ ...doctor, branch: "Aile Hekimliği", feedModules: JSON.stringify(["akademik"]) }]);
+    await runDailyDigests();
+    expect(JSON.stringify(dbMock.newsArticle.findMany.mock.calls)).toContain("aile-hekimligi");
+    dbMock.newsArticle.findMany.mockClear();
+    dbMock.doctor.findMany.mockResolvedValue([{ ...doctor, newsBranches: JSON.stringify(["aile-hekimligi"]), feedModules: JSON.stringify(["sektorel"]) }]);
+    await runDailyDigests();
+    expect(JSON.stringify(dbMock.newsArticle.findMany.mock.calls)).not.toContain("akademik");
+    expect(dbMock.doctor.update).not.toHaveBeenCalled();
+  });
+
   it("içerik varsa baskı + bildirim üretir", async () => {
     // personalFeedRaw modül işlerini push sırasıyla çağırır — ilk iş akademiktir.
     dbMock.newsArticle.findMany.mockResolvedValueOnce([row]);

@@ -40,3 +40,37 @@ describe("D18 account preference merge", () => {
     m.role = "COORDINATOR"; expect((await post({ module: "ilac", range: "7" })).status).toBe(401); expect(m.transaction).not.toHaveBeenCalled();
   });
 });
+
+
+describe("optional work setting API", () => {
+  it("stores the setting without altering specialty or other preferences", async () => {
+    expect((await post({ module: "practice", setting: "asm" })).status).toBe(200);
+    expect(JSON.parse(m.stored)).toEqual({ mevzuat: { d: "180" }, practice: { setting: "asm" } });
+    expect(Object.keys(m.update.mock.calls[0][0].data)).toEqual(["doctoriumViewPrefs"]);
+  });
+  it("allows explicitly clearing the setting", async () => {
+    m.stored = '{"practice":{"setting":"asm"},"ilac":{"d":"7"}}';
+    expect((await post({ module: "practice", setting: null })).status).toBe(200);
+    expect(JSON.parse(m.stored)).toEqual({ practice: { setting: null }, ilac: { d: "7" } });
+  });
+  it("rejects missing and invalid settings before writing", async () => {
+    for (const setting of [undefined, "Aile Hekimliği", "unknown", [], {}, true]) {
+      expect((await post({ module: "practice", setting })).status).toBe(400);
+    }
+    expect(m.transaction).not.toHaveBeenCalled();
+  });
+  it("preserves concurrent setting and existing-module writes", async () => {
+    await Promise.all([post({ module: "practice", setting: "egitim-arastirma" }), post({ module: "ilac", range: "365" })]);
+    expect(JSON.parse(m.stored)).toEqual({ mevzuat: { d: "180" }, practice: { setting: "egitim-arastirma" }, ilac: { d: "365" } });
+  });
+  it("requires the existing doctor role", async () => {
+    m.role = "COORDINATOR";
+    expect((await post({ module: "practice", setting: "asm" })).status).toBe(401);
+    expect(m.transaction).not.toHaveBeenCalled();
+  });
+  it("recovers a legacy array without silently discarding the new setting", async () => {
+    m.stored = "[]";
+    expect((await post({ module: "practice", setting: "diger" })).status).toBe(200);
+    expect(JSON.parse(m.stored)).toEqual({ practice: { setting: "diger" } });
+  });
+});

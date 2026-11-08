@@ -1,3 +1,4 @@
+import { parseViewPrefs } from "@/lib/doctorium";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -28,7 +29,7 @@ export default async function CompleteProfilePage({
     ? await db.doctor.findUnique({
         where: { id: me.doctorId },
         select: {
-          name: true, title: true, branch: true, city: true,
+          name: true, title: true, branch: true, city: true, doctoriumViewPrefs: true,
           // Üç katman (2026-09-05): deneme üyesi profilini tamamlayınca DOĞRUDAN portala iner.
           diplomaVerifiedAt: true, studentVerifiedAt: true, doctoriumOptOutAt: true, trialEndsAt: true,
         },
@@ -52,6 +53,7 @@ export default async function CompleteProfilePage({
       <CompleteProfileForm
         initialName={doctor.name}
         initialTitle={doctor.title}
+        initialPracticeSetting={parseViewPrefs(doctor.doctoriumViewPrefs).practiceSetting}
         branches={branches}
         nextHref={nextHref}
         compact={compact}
