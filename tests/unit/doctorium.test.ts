@@ -321,6 +321,7 @@ describe("Doctorium görünüm süzgeci tercihi (v6.142)", () => {
   it("boş/eksik/bozuk veri tam varsayılana düşer", () => {
     for (const raw of [null, undefined, "", "{bozuk json", "[]", "42"]) {
       expect(parseViewPrefs(raw)).toEqual({
+        practiceSetting: null,
         sektorel: { source: null, range: DEFAULT_RANGE, category: null },
         ilac: { range: DEFAULT_RANGE },
         mevzuat: { range: DEFAULT_RANGE, category: null },
@@ -337,6 +338,7 @@ describe("Doctorium görünüm süzgeci tercihi (v6.142)", () => {
       mevzuat: { d: "365", c: "ilac-cihaz" },
     });
     expect(parseViewPrefs(raw)).toEqual({
+        practiceSetting: null,
       sektorel: { source: "uluslararasi", range: "7", category: "sut" },
       ilac: { range: "180" },
       mevzuat: { range: "365", category: "ilac-cihaz" },

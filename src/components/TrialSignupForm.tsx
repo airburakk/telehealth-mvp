@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Loader2, MailCheck, Send, Stethoscope, GraduationCap } from "lucide-react";
 import { AuraMark } from "@/components/AuraLogo";
 import { SocialAuthButtons } from "@/components/social-auth";
+import { PracticeSettingSelect } from "@/components/PracticeSettingSelect";
 import { CitySelect } from "@/components/CitySelect";
 import { oauthBannerMessage } from "@/lib/oauth-banner";
 import { isKnownUniversityEmail } from "@/lib/universities";
@@ -27,6 +28,7 @@ export function TrialSignupForm({ googleEnabled, appleEnabled, branches }: { goo
   const [password, setPassword] = useState("");
   const [passwordAgain, setPasswordAgain] = useState("");
   const [branch, setBranch] = useState("");
+  const [practiceSetting, setPracticeSetting] = useState("");
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -45,7 +47,7 @@ export function TrialSignupForm({ googleEnabled, appleEnabled, branches }: { goo
       const res = await fetch("/api/auth/signup-trial", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, branch, city }),
+        body: JSON.stringify({ name, email, password, branch, city, practiceSetting: practiceSetting || null }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 503 && data.channelDormant) { setDormant(true); return; }
@@ -136,6 +138,7 @@ export function TrialSignupForm({ googleEnabled, appleEnabled, branches }: { goo
               {branches.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
           </Labeled>
+          <PracticeSettingSelect value={practiceSetting} onChange={setPracticeSetting} className={INPUT} />
           <Labeled label="Şehir">
             <CitySelect value={city} onChange={setCity} className={INPUT} />
           </Labeled>

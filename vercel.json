@@ -38,6 +38,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/refresh-family-medicine",
+      "schedule": "10 3 * * *"
+    },
+    {
       "path": "/api/cron/purge-deleted",
       "schedule": "30 3 * * *"
     },

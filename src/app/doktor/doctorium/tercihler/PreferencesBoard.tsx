@@ -4,6 +4,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Loader2, Megaphone, Newspaper } from "lucide-react";
 import { EDU_KINDS, EDU_KIND_SHORT } from "@/lib/edu-opportunities";
 import { TUS_SECTIONS } from "@/lib/tus";
+import Link from "next/link";
+import { familyMedicinePreferenceAddition } from "@/lib/family-medicine-personalization";
+import { PRACTICE_SETTINGS, type PracticeSetting } from "@/lib/doctorium-practice";
 
 /**
  * Akış Tercihleri panosu — T1 KATLANIR LİSTE (v6.132, kullanıcı seçimi 2026-08-20).
@@ -109,6 +112,7 @@ const ALL_FEED_KEYS = GROUPS.flatMap((g) =>
 );
 
 interface Props {
+  practiceInitial: PracticeSetting | null;
   feedInitial: string[];
   branchOptions: { slug: string; label: string }[];
   branchInitial: string[];
@@ -153,6 +157,8 @@ type Status = { state: "idle" | "saving" | "saved" | "error"; msg?: string };
 
 export function PreferencesBoard(p: Props) {
   const [open, setOpen] = useState<string | null>(null);
+  const [practice, setPractice] = useState(p.practiceInitial ?? "");
+  const [practiceSt, setPracticeSt] = useState<Status>({ state: "idle" });
 
   const [feed, setFeed] = useState<Set<string>>(
     new Set(p.feedInitial.length ? p.feedInitial : ALL_FEED_KEYS)
@@ -371,6 +377,7 @@ export function PreferencesBoard(p: Props) {
     };
   }, []);
 
+  const familyAddition = familyMedicinePreferenceAddition([...branches], p.ownBranchSlug, p.branchOptions.map(b => b.slug));
   const ownLabel = p.branchOptions.find((b) => b.slug === p.ownBranchSlug)?.label;
   const branchSorted = [
     ...p.branchOptions.filter((b) => b.slug === p.ownBranchSlug),
@@ -394,6 +401,46 @@ export function PreferencesBoard(p: Props) {
   return (
     <div className="mt-8">
       {navigationError && <p role="alert" className="mb-4 rounded-xl border border-[var(--c-danger)]/30 bg-[var(--c-panel)] p-3 text-sm text-[var(--c-ink)]">{navigationError}</p>}
+      {!p.isStudent && (
+        <section id="calisma-alani" className="mb-9 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5">
+          <h2 className="text-[15px] font-semibold text-[var(--c-ink)]">Çalışma alanınız</h2>
+          <p className="mt-2 text-[13px] leading-relaxed text-[var(--c-ink-2)]">
+            İsteğe bağlıdır. Uzmanlık branşınızı, klinik yetkilerinizi veya seçtiğiniz akış branşlarını değiştirmez.
+          </p>
+          <div className="mt-3">
+            <RadioChips items={[{ key: "", label: "Belirtmek istemiyorum" }, ...PRACTICE_SETTINGS]} value={practice}
+              onChange={(key) => {
+                setPractice(key);
+                void post("/api/doctor/view-filters", { module: "practice", setting: key || null }, setPracticeSt);
+              }} />
+            <StatusLine status={practiceSt} idle="İstediğiniz zaman değiştirebilir veya kaldırabilirsiniz" />
+          </div>
+          {(practice === "asm" || p.ownBranchSlug === "aile-hekimligi") && (
+            <div className="mt-4 border-t border-[var(--c-hairline)] pt-4" data-testid="family-medicine-opt-in">
+              <h3 className="text-sm font-semibold">Aile Hekimliği içerik tercihi</h3>
+              <p className="mt-2 text-xs leading-relaxed text-[var(--c-ink-2)]">Çalışma alanı ve uzmanlık ayrı bilgilerdir. Aşağıdaki seçim, mevcut branş tercihlerinizi koruyarak Aile Hekimliğini ekler. Branş filtresi kullanan yayın ve etkinlik görünümlerine uygulanır; genel içeriklerin tümünü birinci basamağa özel hale getirmez.</p>
+              {branches.size === 0 && !p.ownBranchSlug && <p className="mt-2 text-xs text-[var(--c-ink-2)]">Şu anda branş filtresi yok. Bu seçim, branşa göre süzülen yayınları Aile Hekimliği odağına daraltır.</p>}
+              <p className="mt-2 text-xs text-[var(--c-ink-2)]">{digest ? "Mevcut Doctorium Post aboneliğiniz, seçili modüllerdeki branşa göre süzülen yayınlar için aynı tercihleri kullanır." : "Doctorium Post aboneliğiniz kapalı. Bu işlem aboneliği veya e-posta gönderimini açmaz."}</p>
+              {!feed.has("akademik") && <p className="mt-2 text-xs text-[var(--c-ink-2)]">Akademik bölümünüz kapalı; bu işlem bölümü açmaz. Tercih, bölümü siz açtığınızda uygulanır.</p>}
+              {familyAddition.status === "already-included" ? (
+                <p className="mt-3 text-sm font-semibold text-[var(--c-accent)]">Aile Hekimliği zaten etkin branş tercihlerinizde.</p>
+              ) : (
+                <button type="button" className="mt-3 rounded-lg border border-[var(--c-accent)]/40 px-3 py-2 text-sm font-semibold text-[var(--c-accent)]" onClick={() => {
+                  if (familyAddition.status === "limit") { setBrSt({ state: "error", msg: "En fazla 30 branş seçilebilir. Mevcut tercihleriniz korundu; Akademik ayarlarından bir seçim kaldırıp tekrar deneyin." }); return; }
+                  if (familyAddition.status !== "added") { setBrSt({ state: "error", msg: "Aile Hekimliği şu anda seçilebilir branşlar arasında değil. Mevcut tercihleriniz değiştirilmedi." }); return; }
+                  setBranches(new Set(familyAddition.branches));
+                }}>Aile Hekimliğini akış tercihlerime ekle</button>
+              )}
+              <StatusLine status={brSt} idle="Branş seçimlerinizi aşağıdaki Akademik ayarlarından değiştirebilirsiniz." />
+            </div>
+          )}
+          {practice === "asm" && (
+            <Link href="/doktor/doctorium/aile-hekimligi" className="mt-3 inline-block text-sm font-semibold text-[var(--c-accent)] hover:underline">
+              Aile Hekimliği çalışma alanına git →
+            </Link>
+          )}
+        </section>
+      )}
       {groups.map((g) => {
         const keys = g.sections.flatMap((s) =>
           s.extra === "hukuk" ? HUKUK_SUBS.map((x) => x.key) : s.feedKey ? [s.feedKey] : []);

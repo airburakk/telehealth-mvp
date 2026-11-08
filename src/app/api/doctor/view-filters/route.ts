@@ -1,3 +1,4 @@
+import { isPracticeSetting } from "@/lib/doctorium-practice";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
@@ -10,7 +11,7 @@ import { approvedTusSummaries, tusBranches } from "@/lib/tus-data";
 // (Set<"1"|"7"|"30"|"180"|"365">) — sonra .has(v) çalışma-zamanı string'iyle çağrılınca reddedilir.
 const RANGE_KEYS = new Set<string>(RANGE_OPTIONS.map((r) => r.key));
 const CATEGORY_KEYS = new Set(SECTOR_CATEGORIES.map((c) => c.key));
-const MODULE_KEYS = new Set(["sektorel", "ilac", "mevzuat", "tus", "kariyer"]); // "tus" (Faz B1): raf sekmesi anahtarı {show} · "kariyer" (2026-09-06): öğrenci açılış tercihleri
+const MODULE_KEYS = new Set(["sektorel", "ilac", "mevzuat", "tus", "kariyer", "practice"]); // "tus" (Faz B1): raf sekmesi anahtarı {show} · "kariyer" (2026-09-06): öğrenci açılış tercihleri
 
 function normRange(v: unknown): string {
   return typeof v === "string" && RANGE_KEYS.has(v) ? v : DEFAULT_RANGE;
@@ -41,9 +42,13 @@ export async function POST(req: Request) {
   if (!doctorId) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
 
   const b = await req.json().catch(() => ({}));
-  const moduleKey = typeof b.module === "string" ? b.module : "";
+  const moduleKey = b && typeof b.module === "string" ? b.module : "";
   if (!MODULE_KEYS.has(moduleKey)) {
     return NextResponse.json({ error: "Geçersiz modül." }, { status: 400 });
+  }
+
+  if (moduleKey === "practice" && b.setting !== null && !isPracticeSetting(b.setting)) {
+    return NextResponse.json({ error: "Geçersiz çalışma alanı." }, { status: 400 });
   }
 
   // Serialize the read/merge/write for this account so distinct module updates cannot overwrite each other.
@@ -53,12 +58,14 @@ export async function POST(req: Request) {
     let prefs: Record<string, unknown> = {};
     try {
       const v = current?.doctoriumViewPrefs ? JSON.parse(current.doctoriumViewPrefs) : {};
-      if (v && typeof v === "object") prefs = v;
+      if (v && typeof v === "object" && !Array.isArray(v)) prefs = v;
     } catch {
       /* bozuk kayıt — sıfırdan kurulur, diğer modüller de bu yazımda sıfırlanır (nadir durum) */
     }
   
-    if (moduleKey === "sektorel") {
+    if (moduleKey === "practice") {
+      prefs.practice = { setting: b.setting };
+    } else if (moduleKey === "sektorel") {
       prefs.sektorel = { s: normSource(b.source), d: normRange(b.range), c: normCategory(b.category) };
     } else if (moduleKey === "ilac") {
       prefs.ilac = { d: normRange(b.range) };

@@ -105,6 +105,7 @@ export default async function TercihlerPage() {
         )}
 
         <PreferencesBoard
+          practiceInitial={viewPrefs.practiceSetting}
           feedInitial={parseFeedModules(doctor.feedModules)}
           branchOptions={BRANCH_OPTIONS.map((b) => ({ slug: b.slug, label: b.label }))}
           branchInitial={parseBranchPrefs(doctor.newsBranches)}

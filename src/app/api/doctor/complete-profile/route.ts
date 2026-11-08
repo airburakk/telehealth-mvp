@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { encryptField } from "@/lib/crypto";
 import { DOCTOR_TITLES } from "@/lib/doctor-signup";
+import { isPracticeSetting } from "@/lib/doctorium-practice";
 import { isDoctorBranch } from "@/lib/doctor-branches";
 import { LANGUAGES } from "@/lib/constants";
 import { isAllowedCity } from "@/lib/cities";
@@ -27,7 +28,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Doktor profili bağlı değil." }, { status: 400 });
   }
 
-  const b = await req.json().catch(() => ({}));
+  const b = (await req.json().catch(() => ({}))) ?? {};
+  if (b.practiceSetting != null && !isPracticeSetting(b.practiceSetting)) {
+    return NextResponse.json({ error: "Geçerli bir çalışma alanı seçin." }, { status: 400 });
+  }
   const name = String(b.name ?? "").trim().slice(0, 120);
   const title = String(b.title ?? "").trim();
   const branch = String(b.branch ?? "").trim();
@@ -52,10 +56,23 @@ export async function POST(req: Request) {
   // Ad hem Doctor hem User'da yaşar (oturum/panel User.name okur) — atomik güncelle.
   // Telefon boş bırakıldıysa mevcut değer KORUNUR (silme değil "girmedi" anlamı; OAuth yolunda zaten null).
   await db.$transaction(async (tx) => {
+    let practiceUpdate = {};
+    if (b.practiceSetting !== undefined) {
+      // Share the view-filters row lock so a concurrent preference write is not lost.
+      await tx.$queryRaw`SELECT "id" FROM "Doctor" WHERE "id" = ${me.doctorId} FOR UPDATE`;
+      const current = await tx.doctor.findUnique({ where: { id: me.doctorId! }, select: { doctoriumViewPrefs: true } });
+      let prefs: Record<string, unknown> = {};
+      try {
+        const saved = JSON.parse(current?.doctoriumViewPrefs ?? "{}");
+        if (saved && typeof saved === "object" && !Array.isArray(saved)) prefs = saved;
+      } catch { /* Same recovery contract as view-filters; malformed preferences have no usable object. */ }
+      practiceUpdate = { doctoriumViewPrefs: JSON.stringify({ ...prefs, practice: { setting: b.practiceSetting } }) };
+    }
     await tx.doctor.update({
       where: { id: me.doctorId! },
       data: {
         name, title, branch, city,
+        ...practiceUpdate,
         ...(languages.length > 0 ? { languages: languages.join(",") } : {}),
         ...(phone ? { phone: encryptField(phone) } : {}),
       },

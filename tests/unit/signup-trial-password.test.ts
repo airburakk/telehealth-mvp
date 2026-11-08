@@ -81,3 +81,28 @@ it("VERCEL_ENV üretimse geliştirme bypass'ı açılamaz", async () => {
   vi.stubEnv("NODE_ENV", "development"); vi.stubEnv("VERCEL_ENV", "production"); m.ready.mockReturnValue(false);
   expect((await post()).status).toBe(503); expect(m.create).not.toHaveBeenCalled(); expect(m.session).not.toHaveBeenCalled();
 });
+
+describe("trial signup optional practice setting", () => {
+  it("passes an explicit setting without changing the chosen specialty", async () => {
+    expect((await post({ ...body, practiceSetting: "asm" })).status).toBe(200);
+    expect(m.create).toHaveBeenCalledWith(expect.objectContaining({ practiceSetting: "asm", branch: "Kardiyoloji" }));
+  });
+  it.each([undefined, null])("allows omission without an implicit opt-in (%s)", async practiceSetting => {
+    expect((await post({ ...body, practiceSetting })).status).toBe(200);
+    expect(m.create.mock.calls[0][0].practiceSetting).toBe(practiceSetting);
+  });
+  it.each(["", "invalid", [], {}, true])("rejects invalid work settings before external work (%s)", async practiceSetting => {
+    expect((await post({ ...body, practiceSetting })).status).toBe(400);
+    expect(m.find).not.toHaveBeenCalled(); expect(m.create).not.toHaveBeenCalled(); expect(m.verify).not.toHaveBeenCalled();
+  });
+  it("does not overwrite an existing account setting via repeat signup", async () => {
+    m.find.mockResolvedValue(user);
+    expect((await post({ ...body, practiceSetting: "asm" })).status).toBe(200);
+    expect(m.create).not.toHaveBeenCalled(); expect(m.update).not.toHaveBeenCalled();
+  });
+  it("passes the choice through the development-only path too", async () => {
+    vi.stubEnv("NODE_ENV", "development"); m.ready.mockReturnValue(false);
+    expect((await post({ ...body, practiceSetting: "diger" })).status).toBe(200);
+    expect(m.create).toHaveBeenCalledWith(expect.objectContaining({ practiceSetting: "diger" }));
+  });
+});

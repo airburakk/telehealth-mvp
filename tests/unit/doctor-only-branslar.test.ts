@@ -21,9 +21,9 @@ import { BRANCH_OPTIONS, parseBranchPrefs } from "@/lib/doctorium";
 const DOCTOR_ONLY = BRANCHES.filter((b) => b.doctorOnly);
 
 describe("doctorOnly branşlar — küme bütünlüğü", () => {
-  it("beklenen 5 dal doctorOnly işaretli", () => {
+  it("beklenen 6 dal doctorOnly işaretli", () => {
     expect(DOCTOR_ONLY.map((b) => b.key).sort()).toEqual(
-      ["acil-tip", "anesteziyoloji", "patoloji", "radyoloji", "tibbi-genetik"],
+      ["acil-tip", "aile-hekimligi", "anesteziyoloji", "patoloji", "radyoloji", "tibbi-genetik"],
     );
   });
 
