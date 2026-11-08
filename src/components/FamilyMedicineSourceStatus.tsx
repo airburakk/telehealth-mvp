@@ -21,13 +21,16 @@ export async function FamilyMedicineSourceStatus() {
       <p className="mt-2 text-sm">Kontrol kayıtlarına şu anda erişilemiyor. Kaynakları güncel veya incelenmiş kabul etmeyin; resmî sürümü ayrıca doğrulayın.</p>
     </section>;
   }
+  const reviewNeeded = report.sources.filter(source => source.status === "changed");
+  const accessProblems = report.sources.filter(source => source.status === "unreachable" || source.stale);
   return <section className="mt-8 rounded-2xl border border-[var(--c-hairline)] p-5" aria-labelledby="family-source-watch">
     <h2 id="family-source-watch" className="text-xl font-semibold">Kaynak güncelleme takibi</h2>
-    <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">Bu raftaki bağlantılar ve eşleştirilmiş belgeler her gün 06.10 Türkiye saati için planlanan teknik kontrolde karşılaştırılır. Değişiklik veya erişim sorunu inceleme gerektirir. İçeriğin değişmemesi, yürürlükte veya klinik olarak onaylı olduğunu göstermez. Son başarılı erişim 72 saati geçtiğinde kontrol bayat sayılır.</p>
+    <p className="mt-2 text-sm leading-relaxed text-[var(--c-ink-2)]">Bu raftaki belgeler ile seçili resmî mevzuat, ilaç duyurusu ve dernek sayfaları her gün 06.10 Türkiye saati için planlanan teknik kontrolde karşılaştırılır. Değişiklik veya erişim sorunu inceleme gerektirir. Liste değişikliği, etkinlik tarihinin veya yeni hükmün otomatik onaylandığı anlamına gelmez. İçeriğin değişmemesi, yürürlükte veya klinik olarak onaylı olduğunu göstermez. Son başarılı erişim 72 saati geçtiğinde kontrol bayat sayılır.</p>
     <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
       <div><dt className="font-semibold">Son tamamlanan kontrol koşusu (TR)</dt><dd>{dateLabel(report.lastRunAt)}</dd></div>
       <div><dt className="font-semibold">Son kaynak erişim denemesi (TR)</dt><dd>{dateLabel(report.lastAttemptAt)}</dd></div>
     </dl>
+    <p className="mt-3 text-sm" role="status">İzlenen kaynak: {report.sources.length} · Değişiklik kaydı: {reviewNeeded.length} · Erişim veya tazelik sorunu: {accessProblems.length}</p>
     <ul className="mt-4 space-y-3">
       {report.sources.map(source => <li key={source.sourceKey} className="rounded-xl border border-[var(--c-hairline)] p-3 text-sm">
         <a href={source.url} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-4">{source.title} ↗</a>
@@ -35,6 +38,6 @@ export async function FamilyMedicineSourceStatus() {
         <p className="mt-1 text-xs text-[var(--c-ink-2)]">Son deneme: {dateLabel(source.checkedAt)} · Son başarılı erişim: {dateLabel(source.lastSuccessAt)}{source.changedAt ? ` · Değişiklik: ${dateLabel(source.changedAt)}` : ""}</p>
       </li>)}
     </ul>
-    <p className="mt-4 text-xs leading-relaxed text-[var(--c-ink-2)]">Akademik yayınlar mevcut PubMed, Europe PMC ve DOAJ toplama akışlarını; hukuk ve etkinlikler kendi Doctorium akışlarını kullanır. Bu kontrol yeni mevzuatın tamamını keşfetmez, tüm kongreleri veya ilaç güncellemelerini kapsamaz; eski yayınların ve AI özetlerinin baştan incelendiği anlamına gelmez. Hekim ve hukuk incelemesi teknik kontrolden ayrıdır.</p>
+    <p className="mt-4 text-xs leading-relaxed text-[var(--c-ink-2)]">Akademik yayınlar mevcut PubMed, Europe PMC ve DOAJ toplama akışlarını; hukuk ve etkinlikler kendi Doctorium akışlarını kullanır. TİTCK geri çekme ve blokaj duyuruları resmî RSS üzerinden mevcut günlük haber toplamasına eklenir. TAHUD ve AHEF sayfa değişiklikleri inceleme sinyalidir; etkinlik tarihi otomatik oluşturulmaz. Bu kontrol yeni mevzuatın tamamını keşfetmez, tüm kongreleri veya ilaç güncellemelerini kapsamaz; eski yayınların ve AI özetlerinin baştan incelendiği anlamına gelmez. Hekim ve hukuk incelemesi teknik kontrolden ayrıdır.</p>
   </section>;
 }

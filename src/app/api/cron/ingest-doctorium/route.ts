@@ -26,6 +26,8 @@ export async function GET(req: Request) {
 
   try {
     const r = await ingestDoctorium();
+    const titck = r.sources["titck-recalls"];
+    const titckFailed = r.errors.some(error => error.startsWith("titck-recalls:"));
     // Kalıcı koşu izi: PHI YOK (yalnız adetler) — "cron koştu mu, kaç kayıt geldi" kalıcı kayıttan okunur.
     await recordAccess({
       actor: null,
@@ -33,7 +35,7 @@ export async function GET(req: Request) {
       resourceType: "SYSTEM",
       resourceId: "ingest-doctorium",
       subjectUserId: null,
-      detail: `pubmed=${r.pubmedNew}/${r.pubmedFetched} rg=${r.gazetteNew}/${r.gazetteFetched}${r.errors.length ? ` sorun=${r.errors.length}` : ""}`,
+      detail: `pubmed=${r.pubmedNew}/${r.pubmedFetched} rg=${r.gazetteNew}/${r.gazetteFetched} titck=${titckFailed ? "failed" : titck ? `${titck[1]}/${titck[0]}` : "not-run"}${r.errors.length ? ` sorun=${r.errors.length}` : ""}`,
     });
     return NextResponse.json({ ok: true, ...r });
   } catch (e) {

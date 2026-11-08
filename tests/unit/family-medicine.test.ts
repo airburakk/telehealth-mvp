@@ -28,7 +28,7 @@ describe("family medicine first release", () => {
 
 describe("family medicine source review transparency", () => {
   it("does not turn source titles or HTTPS links into verification claims", () => {
-    for (const source of FAMILY_MEDICINE_RESOURCES.filter(s => !["report-regulation", "report-repeal", "asm-forms"].includes(s.id))) {
+    for (const source of FAMILY_MEDICINE_RESOURCES.filter(s => !["report-regulation", "report-repeal", "asm-forms", "hyp", "hyp-versions"].includes(s.id))) {
       expect(source.review.sourceVersion).toEqual({ label: null, verifiedAt: null });
       expect(source.review.technicalCheck.checkedAt).toBeNull();
       expect(source.review.clinicalReview).toEqual({ status: "pending" });
@@ -36,6 +36,17 @@ describe("family medicine source review transparency", () => {
         version: "Henüz doğrulanmadı", technical: "Henüz yapılmadı", clinical: "Henüz yapılmadı",
       });
     }
+  });
+  it("tracks the officially linked May2026 HYP revision and its version page without granting clinical approval", () => {
+    const source = FAMILY_MEDICINE_RESOURCES.find(s => s.id === "hyp")!;
+    const landing = FAMILY_MEDICINE_RESOURCES.find(s => s.id === "hyp-versions")!;
+    expect(source.url).toContain("/Rehberler/HYP_TARAMA_VE_TAKIP_KILAVUZU_14042026.pdf");
+    expect(source.url).not.toContain("/Yonerge/Ek_Hastalik");
+    expect(source.review.sourceVersion).toMatchObject({ label: expect.stringContaining("1 Mayıs 2026"), verifiedAt: "2026-11-08" });
+    expect(source.review.technicalCheck.checkedAt).toBe("2026-11-08");
+    expect(landing.url).toBe("https://hsgm.saglik.gov.tr/tr/ah-tarama-takip");
+    expect(source.review.clinicalReview).toEqual({ status: "pending" });
+    expect(landing.review.clinicalReview).toEqual({ status: "pending" });
   });
   it("keeps a technical check separate from source and clinical review", () => {
     expect(familyMedicineSourceReviewLabels({

@@ -254,7 +254,7 @@ describe("Sektörel kaynak kapsamı (v6.99.3)", () => {
     // Yeni kaynak eklenip kapsam listesi unutulursa o kaynak "Tümü"nde görünür ama Ulusal/
     // Uluslararası filtrelerinin İKİSİNDE de kaybolur — bu test onu yakalar.
     const covered = new Set([...SECTOR_SOURCE_SCOPES.ulusal, ...SECTOR_SOURCE_SCOPES.uluslararasi]);
-    const sectorSources = ["ttb", "ohsad", "sgk", "istabip", "who", ...RSS_SOURCES.map((s) => s.source)];
+    const sectorSources = ["ttb", "ohsad", "sgk", "titck-recalls", "istabip", "who", ...RSS_SOURCES.map((s) => s.source)];
     for (const s of sectorSources) {
       expect(covered.has(s), `'${s}' kaynağı SECTOR_SOURCE_SCOPES'ta yok — lib/doctorium.ts'e ekle`).toBe(true);
     }

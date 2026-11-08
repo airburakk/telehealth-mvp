@@ -188,6 +188,17 @@ export default async function DoctoriumArticlePage({ params }: { params: Promise
         </section>
       )}
 
+      {reg?.state === "source-only" && (
+        <p className="mt-6 flex items-start gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5 text-xs leading-relaxed text-[var(--c-ink-2)]">
+          <FileText size={15} className="mt-px shrink-0" />
+          <span>
+            Bu kayıt TİTCK geri çekme/blokaj duyurusunun başlık, tarih ve kaynak bağlantısını içerir.
+            Otomatik YZ özeti veya tedavi/uygulama talimatı üretilmez. Ürün, seri/parti ve işlemin
+            kapsamını doğrulamak için aşağıdaki bağlantıdan resmî duyuruyu açın.
+          </span>
+        </p>
+      )}
+
       {reg?.state === "pdf" && (
         // ⚠️ flex-gap tuzağı (2026-09-04 dersi): ikon dışı içerik TEK span'e sarılı olmalı.
         <p className="mt-6 flex items-start gap-2 rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-surface)] px-4 py-3.5 text-xs leading-relaxed text-[var(--c-ink-2)]">

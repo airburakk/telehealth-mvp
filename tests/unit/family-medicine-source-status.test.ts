@@ -19,6 +19,8 @@ describe("family medicine source status", () => {
     const html = renderToStaticMarkup(await FamilyMedicineSourceStatus());
     expect(html).toContain("yeniden inceleme gerekli");
     expect(html).toContain("Teknik kontrol bayat");
+    expect(html).toContain("Değişiklik kaydı: 1");
+    expect(html).toContain("Erişim veya tazelik sorunu: 1");
     expect(html).toContain("Son başarılı erişim");
     expect(html).toContain("klinik olarak onaylı olduğunu göstermez");
   });

@@ -23,6 +23,7 @@ import { SECTOR_CATEGORIES } from "./doctorium-labels";
 import { normalizeTrialPhasePrefix } from "./trial-phase";
 import { academicWhere, ACADEMIC_PAGE_SIZE } from "./academic-search";
 import { ictihatWhere, ICTIHAT_PAGE_SIZE } from "./ictihat-search";
+import { TITCK_RECALL_SOURCE } from "./titck-recalls";
 
 export const DOCTORIUM_NAME = "Doctorium";
 
@@ -211,7 +212,7 @@ export { SECTOR_CATEGORIES, categoryLabel } from "./doctorium-labels";
 // sözleşme testi (doctorium-filtreler) iki listeyi de hizada tutar.
 // 2026-08-24: "sgk" eklendi (GSS GM duyuruları doğrudan kaynaktan — ingestSgkGss).
 export const SECTOR_SOURCE_SCOPES: Record<"ulusal" | "uluslararasi", string[]> = {
-  ulusal: ["ttb", "ohsad", "sgk", "istabip", "klimik", "tjod", "tatd", "tgd-gastro", "tgcd"],
+  ulusal: ["ttb", "ohsad", "sgk", "titck-recalls", "istabip", "klimik", "tjod", "tatd", "tgd-gastro", "tgcd"],
   uluslararasi: ["who", "medscape", "medicalxpress"],
 };
 
@@ -1482,6 +1483,7 @@ export function parseRegulationSummary(raw: string | null): RegulationSummary | 
 
 export type RegulationResult =
   | { state: "ok"; data: RegulationSummary }
+  | { state: "source-only" } // official recall metadata: no derived clinical/action summary
   | { state: "pdf" } // kaynak PDF → metin çıkarılamaz (bilinçli sınır)
   // v6.319: kaynak sayfa OKUNDU ama makale gövdesi yok (yalnız bağlantı/duyuru listesi/menü — KLİMİK "Yeni Sayı İçin Tıklayınız").
   // Özetlenecek metin yok, uydurulmaz; "unavailable"dan ayrı: arayüz "sonra yenileyin" demez, gece sayacı hata saymaz (lib/ai-summary-batch).
@@ -1491,9 +1493,12 @@ export type RegulationResult =
 export async function ensureRegulationSummary(id: string): Promise<RegulationResult> {
   const row = await db.newsArticle.findUnique({
     where: { id },
-    select: { aiSummary: true, summary: true, summaryOriginal: true, title: true, url: true, module: true },
+    select: { aiSummary: true, summary: true, summaryOriginal: true, title: true, url: true, module: true, source: true },
   });
   if (!row) return { state: "unavailable" };
+  // Recall scope, affected batches and actions must be read in the official notice.
+  // Check BEFORE cached AI and never enrich its RSS metadata with scraped page text.
+  if (row.source === TITCK_RECALL_SOURCE) return { state: "source-only" };
 
   const cached = parseRegulationSummary(row.aiSummary);
   if (cached) return { state: "ok", data: cached };
@@ -1551,6 +1556,7 @@ export async function generatePendingAiSummaries(opts: {
   const rows = await db.newsArticle.findMany({
     where: {
       aiSummary: null,
+      source: { not: TITCK_RECALL_SOURCE },
       OR: [
         { module: "akademik" },
         { module: "ilac" },

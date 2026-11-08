@@ -20,7 +20,7 @@ import { tier1Query, tier2Query, isNonHumanAcademic } from "./academic-journals"
 import { BRANCHES } from "./triage";
 import {
   fetchGazetteToday, ingestGazetteItems, ingestOhsad, ingestSgkGss, ingestTtb,
-  ingestFdaRecalls, ingestTrials, ingestWho, describeFetchError,
+  ingestFdaRecalls, ingestTitckRecalls, ingestTrials, ingestWho, describeFetchError,
   ingestIstanbulTabip, ingestRss, RSS_SOURCES, ASSOCIATION_RSS_SOURCES,
 } from "./doctorium-sources";
 import { translateTitlesTr } from "./translate-news";
@@ -294,6 +294,9 @@ export async function ingestDoctorium(): Promise<IngestResult> {
     ["sgk", ingestSgkGss],
     ["ttb", ingestTtb],
     ["fda", () => ingestFdaRecalls(10)],
+    // Official recall/blockage RSS verified 2026-11-08. Bounded 12s/20 metadata
+    // records, no clinical recommendation, no detail scraping or generic news filter.
+    ["titck-recalls", ingestTitckRecalls],
     ["trials", () => ingestTrials(10)],
     ["who", () => ingestWho(8)],
     // v6.99 — "doktorlarla ilgili" haber genişlemesi (kullanıcı seçimi 2026-08-15: mesleki +

@@ -52,6 +52,10 @@ export interface AssociationDef {
 }
 
 export const ASSOCIATIONS: AssociationDef[] = [
+  // Public HTML indexes verified 2026-11-08. No verified RSS: weekly watcher and
+  // congress-refresh-queue only; this directory does not imply automatic event ingestion.
+  { slug: "tahud", abbr: "TAHUD", name: "Türkiye Aile Hekimleri Uzmanlık Derneği", branchSlug: "aile-hekimligi", site: "https://tahud.org.tr", newsPath: "/haberler", note: "Etkinlik listesi /etkinlikler; günlük aile hekimliği kaynak izleminde ayrıca kontrol edilir." },
+  { slug: "ahef", abbr: "AHEF", name: "Aile Hekimleri Dernekleri Federasyonu", branchSlug: "aile-hekimligi", site: "https://www.ahef.org.tr", newsPath: "/Haberler/6/Tum_Haberler.aspx", note: "Kongre listesi /Etkinlikler/46/Kongreler.aspx; duyuru ve etkinlik tarihleri editör incelemesi gerektirir." },
   { slug: "tkd", abbr: "TKD", name: "Türk Kardiyoloji Derneği", branchSlug: "kardiyoloji", site: "https://tkd.org.tr", newsPath: "/duyurular" },
   { slug: "toraks", abbr: "TTD", name: "Türk Toraks Derneği", branchSlug: "gogus-hastaliklari", site: "https://toraks.org.tr", newsPath: "/haberler" },
   { slug: "tusad", abbr: "TÜSAD", name: "Türkiye Solunum Araştırmaları Derneği", branchSlug: "gogus-hastaliklari", site: "https://solunum.org.tr", note: "aynı branşta TTD ile birlikte" },
