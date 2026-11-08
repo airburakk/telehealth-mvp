@@ -2,12 +2,15 @@ import { createHash } from "node:crypto";
 import { FAMILY_MEDICINE_RESOURCES } from "./family-medicine";
 import { FAMILY_MEDICINE_SOURCE_CANDIDATES } from "./family-medicine-source-candidates";
 import { ASM_WORKFLOWS, REPORT_WORKFLOWS } from "./family-medicine-workflows";
+import { FAMILY_MEDICINE_WATCH_SOURCES, prepareFamilyMedicineWatchHtml } from "./family-medicine-watch-sources";
 
 /** Technical change detection only: no medical/legal validation, source text storage, or publication. */
 export const FAMILY_MEDICINE_REFRESH_RESOURCE = "refresh-family-medicine";
 export const FAMILY_MEDICINE_STALE_HOURS = 72;
 export const FAMILY_MEDICINE_FETCH_TIMEOUT_MS = 12_000;
 export const FAMILY_MEDICINE_MAX_SOURCE_BYTES = 8 * 1024 * 1024;
+// Official May 2026 HYP revision is 9,256,227 bytes (220 pages); other sources keep 8 MiB.
+export const FAMILY_MEDICINE_HYP_MAX_SOURCE_BYTES = 12 * 1024 * 1024;
 export const FAMILY_MEDICINE_MAX_SOURCES = 20;
 export const FAMILY_MEDICINE_SOURCE_GAP_MS = 250;
 export type SourceStatus = "baseline" | "current" | "changed" | "unreachable";
@@ -30,11 +33,19 @@ for (const candidate of FAMILY_MEDICINE_SOURCE_CANDIDATES) {
   if (!source.workflowIds.includes(candidate.workflowId)) source.workflowIds.push(candidate.workflowId);
   manifest.set(candidate.url, source);
 }
+for (const source of FAMILY_MEDICINE_WATCH_SOURCES) {
+  manifest.set(source.url, {
+    sourceKey: sha256(source.url), url: source.url, title: source.title,
+    resourceIds: [source.id], workflowIds: [],
+  });
+}
 /** Only code-reviewed public source URLs. Editorial/user-submitted URLs are NEVER fetched. */
 export const FAMILY_MEDICINE_MONITORED_SOURCES: readonly MonitoredFamilyMedicineSource[] = [...manifest.values()];
 const expectedPageTerms: Record<string, readonly string[]> = {
+  ...Object.fromEntries(FAMILY_MEDICINE_WATCH_SOURCES.map(s => [s.id, s.expectedTerms])),
   "report-regulation": ["saglik", "rapor"], "report-repeal": ["rapor", "yonerge"],
   "asm-forms": ["aile", "hekimligi"], "tahud": ["tani", "tedavi"],
+  "hyp-versions": ["hastalik", "yonetim", "kilavuz"],
   "asm": ["asm", "ahb"], "regulation": ["aile", "hekimligi"],
 };
 const plainLatin = (value: string) => value.toLowerCase().replace(/ı/g, "i").normalize("NFKD").replace(/\p{M}/gu, "");
@@ -84,10 +95,32 @@ function decodeSourceText(bytes: Uint8Array, contentType: string): string {
   return new TextDecoder(charset).decode(bytes);
 }
 
+const TAHUD_GUIDE_URL = "https://tahud.org.tr/kitap/tani-ve-tedavi-rehberi-2026";
+const TAHUD_GUIDE_DOWNLOAD_HOST = "fls-a0a0308e-a96c-4ec8-9dd4-74ff94fc9977.367be3a2035528943240074d0096e0cd.r2.cloudflarestorage.com";
+const SIGNED_DOWNLOAD_AUTH_PARAMS = [
+  "X-Amz-Content-Sha256", "X-Amz-Algorithm", "X-Amz-Credential", "X-Amz-Date",
+  "X-Amz-SignedHeaders", "X-Amz-Expires", "X-Amz-Signature",
+] as const;
+/** Only the observed guide attachment rotates its signed URL on each request.
+ * Keep its document path, fragment and every non-auth query parameter. Never fetch it,
+ * expand the fetch allowlist, or store/log signed URL values. Other sources stay unchanged. */
+export function normalizeFamilyMedicineSourceLink(sourceUrl: string | undefined, link: string): string {
+  if (sourceUrl !== TAHUD_GUIDE_URL) return link;
+  try {
+    const url = new URL(link.replace(/&amp;/gi, "&"));
+    if (url.protocol !== "https:" || url.hostname !== TAHUD_GUIDE_DOWNLOAD_HOST || url.username || url.password || url.port ||
+      !/^\/books\/attachments\/[^/]+\.pdf$/i.test(url.pathname) ||
+      url.searchParams.get("X-Amz-Algorithm") !== "AWS4-HMAC-SHA256" ||
+      !/^[a-f0-9]{64}$/i.test(url.searchParams.get("X-Amz-Signature") ?? "")) return link;
+    for (const name of SIGNED_DOWNLOAD_AUTH_PARAMS) url.searchParams.delete(name);
+    return url.href;
+  } catch { return link; }
+}
+
 /** Stable visible HTML reduces script/token/whitespace noise; PDF bytes are hashed in full. */
-export function familyMedicineContentHash(bytes: Uint8Array, contentType: string, expectPdf: boolean): string {
+export function familyMedicineContentHash(bytes: Uint8Array, contentType: string, expectPdf: boolean, maxBytes = FAMILY_MEDICINE_MAX_SOURCE_BYTES, sourceUrl?: string): string {
   if (bytes.length === 0) throw new SourceFetchError("empty-body");
-  if (bytes.length > FAMILY_MEDICINE_MAX_SOURCE_BYTES) throw new SourceFetchError("body-too-large");
+  if (bytes.length > Math.min(maxBytes, FAMILY_MEDICINE_HYP_MAX_SOURCE_BYTES)) throw new SourceFetchError("body-too-large");
   if (expectPdf || contentType.includes("application/pdf")) {
     if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-" || bytes.length < 100) throw new SourceFetchError("invalid-pdf");
     return sha256(bytes);
@@ -101,7 +134,7 @@ export function familyMedicineContentHash(bytes: Uint8Array, contentType: string
     .replace(/<!--[\s\S]*?-->/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   if (normalized.length < 80) throw new SourceFetchError("empty-or-short-page");
   // A replaced attachment URL matters even when the visible link text is unchanged.
-  const links = [...text.matchAll(/<(?:a|iframe)\b[^>]*?\b(?:href|src)=["']([^"']+)["']/gi)].map(m => m[1]).sort();
+  const links = [...text.matchAll(/<(?:a|iframe)\b[^>]*?\b(?:href|src)=["']([^"']+)["']/gi)].map(m => normalizeFamilyMedicineSourceLink(sourceUrl, m[1])).sort();
   return sha256(JSON.stringify({ text: normalized, links }));
 }
 
@@ -113,6 +146,7 @@ export async function observeFamilyMedicineSource(
 ): Promise<SourceObservation> {
   const source = FAMILY_MEDICINE_MONITORED_SOURCES.find(s => s.sourceKey === sourceKey);
   if (!source) throw new Error("Unknown curated family-medicine source");
+  const maxBytes = source.resourceIds.includes("hyp") ? FAMILY_MEDICINE_HYP_MAX_SOURCE_BYTES : FAMILY_MEDICINE_MAX_SOURCE_BYTES;
   let httpStatus: number | null = null;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FAMILY_MEDICINE_FETCH_TIMEOUT_MS);
@@ -135,7 +169,7 @@ export async function observeFamilyMedicineSource(
       }
       if (response.status !== 200) { await response.body?.cancel(); throw new SourceFetchError(`http-${response.status}`); }
       const declaredLength = Number(response.headers.get("content-length") ?? 0);
-      if (declaredLength > FAMILY_MEDICINE_MAX_SOURCE_BYTES) {
+      if (declaredLength > maxBytes) {
         await response.body?.cancel(); throw new SourceFetchError("body-too-large");
       }
       if (!response.body) throw new SourceFetchError("empty-body");
@@ -147,7 +181,7 @@ export async function observeFamilyMedicineSource(
           const { value, done } = await reader.read();
           if (done) break;
           size += value.byteLength;
-          if (size > FAMILY_MEDICINE_MAX_SOURCE_BYTES) { await reader.cancel(); throw new SourceFetchError("body-too-large"); }
+          if (size > maxBytes) { await reader.cancel(); throw new SourceFetchError("body-too-large"); }
           chunks.push(value);
         }
       } finally { reader.releaseLock(); }
@@ -155,10 +189,26 @@ export async function observeFamilyMedicineSource(
       let offset = 0;
       for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
       const expectPdf = /\.pdf$/i.test(new URL(source.url).pathname);
-      const contentHash = familyMedicineContentHash(bytes, response.headers.get("content-type") ?? "", expectPdf);
+      let hashBytes = bytes;
+      let hashContentType = response.headers.get("content-type") ?? "";
+      const watch = FAMILY_MEDICINE_WATCH_SOURCES.find(s => s.url === source.url);
+      if (watch) {
+        // Publisher index adapters receive validated HTML only, never PDF/JSON/login pages.
+        if (!/^(?:text\/html|application\/xhtml\+xml)(?:\s*;|$)/i.test(hashContentType)) throw new SourceFetchError("unsupported-content-type");
+        familyMedicineContentHash(bytes, hashContentType, false, maxBytes);
+        try {
+          hashBytes = new TextEncoder().encode(prepareFamilyMedicineWatchHtml(source.url, decodeSourceText(bytes, hashContentType)));
+        } catch (error) {
+          const tag = error instanceof Error && /^family-medicine-watch-[a-z-]{1,60}$/.test(error.message)
+            ? error.message : "family-medicine-watch-contract-error";
+          throw new SourceFetchError(tag);
+        }
+        hashContentType = "text/html; charset=utf-8";
+      }
+      const contentHash = familyMedicineContentHash(hashBytes, hashContentType, expectPdf, maxBytes, source.url);
       if (!expectPdf) {
         if (new URL(url).pathname === "/" && new URL(source.url).pathname !== "/") throw new SourceFetchError("unexpected-homepage");
-        const page = plainLatin(decodeSourceText(bytes, response.headers.get("content-type") ?? "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " "));
+        const page = plainLatin(decodeSourceText(hashBytes, hashContentType).replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " "));
         const terms = source.resourceIds.flatMap(id => expectedPageTerms[id] ?? []);
         if (!terms.every(term => page.includes(term))) throw new SourceFetchError("unexpected-page-content");
       }

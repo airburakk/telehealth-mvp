@@ -35,6 +35,44 @@ import { joinTrialPhase, trialPhaseLabel } from "./trial-phase";
 import { needsTitleTranslation } from "./news-language";
 import { archivedRssKey, legacyRssKey, normalizeArticleUrl, rssExternalId } from "./rss-twins";
 import { extractDocumentText } from "./document-text";
+import { fetchTitckRecallItems, TITCK_RECALL_SOURCE } from "./titck-recalls";
+
+// 2026-11-08 recheck: TİTCK now provides /recallAnnouncementFeeds (RSS 2.0).
+// The historical no-feed findings above apply to the old endpoints, not this feed.
+// Only recall/blockage metadata is imported; other announcements use the source watcher.
+export async function ingestTitckRecalls(opts?: IngestOpts): Promise<[number, number]> {
+  const items = await fetchTitckRecallItems();
+  let created = 0;
+  for (const item of items) {
+    const existing = await db.newsArticle.findUnique({
+      where: { source_externalId: { source: TITCK_RECALL_SOURCE, externalId: item.id } },
+      select: { id: true, title: true, summary: true, url: true, publishedAt: true },
+    });
+    if (existing) {
+      const changed = existing.title !== item.title || existing.summary !== item.summary || existing.url !== item.url ||
+        existing.publishedAt.getTime() !== item.publishedAt.getTime();
+      // A correction keeps the same article/save identity and first-seen timestamp.
+      // Cached summaries must never describe an older official metadata version.
+      if (changed && !opts?.dryRun) await db.newsArticle.update({
+        where: { id: existing.id }, data: { title: item.title, summary: item.summary, url: item.url,
+          publishedAt: item.publishedAt, aiSummary: null, titleOriginal: null, summaryOriginal: null },
+      });
+      if (changed) opts?.onItem?.(`[TİTCK güncellenen metadata] ${item.title}`);
+      continue;
+    }
+    const isNew = await upsertArticle({
+      source: TITCK_RECALL_SOURCE, externalId: item.id,
+      module: "sektorel", category: "ilac-cihaz", kind: "haber",
+      title: item.title, summary: item.summary, sourceName: "TİTCK",
+      url: item.url, publishedAt: item.publishedAt,
+    }, opts?.dryRun);
+    if (isNew) {
+      created++;
+      opts?.onItem?.(`[TİTCK geri çekme/blokaj] ${item.title}`);
+    }
+  }
+  return [items.length, created];
+}
 
 // v6.57 TEŞHİS (2026-08-03): TR kaynakları (RG/OHSAD/TTB) Vercel fra1'den erişilemiyordu —
 // OHSAD 403 = Cloudflare bot koruması (veri-merkezi IP + "AuraHealth/1.0" ekli bot-ish UA +

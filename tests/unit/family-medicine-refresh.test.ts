@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   FAMILY_MEDICINE_MONITORED_SOURCES, FAMILY_MEDICINE_MAX_SOURCE_BYTES, FAMILY_MEDICINE_MAX_SOURCES,
-  FAMILY_MEDICINE_FETCH_TIMEOUT_MS, familyMedicineContentHash, isAllowedFamilyMedicineRedirect,
-  nextFamilyMedicineSourceState, observeFamilyMedicineSource, sourceCheckIsStale,
+  FAMILY_MEDICINE_HYP_MAX_SOURCE_BYTES, FAMILY_MEDICINE_FETCH_TIMEOUT_MS, familyMedicineContentHash, isAllowedFamilyMedicineRedirect,
+  nextFamilyMedicineSourceState, observeFamilyMedicineSource, sourceCheckIsStale, normalizeFamilyMedicineSourceLink,
   type SourceObservation,
 } from "@/lib/family-medicine-refresh";
+import { FAMILY_MEDICINE_WATCH_SOURCES } from "@/lib/family-medicine-watch-sources";
 import { FAMILY_MEDICINE_RESOURCES } from "@/lib/family-medicine";
 import { FAMILY_MEDICINE_SOURCE_CANDIDATES } from "@/lib/family-medicine-source-candidates";
 import { ASM_WORKFLOWS, REPORT_WORKFLOWS } from "@/lib/family-medicine-workflows";
@@ -21,7 +22,7 @@ afterEach(() => vi.useRealTimers());
 
 describe("family medicine monitoring catalog", () => {
   it("deduplicates every directory and candidate URL and covers every workflow", () => {
-    const expected = new Set([...FAMILY_MEDICINE_RESOURCES, ...FAMILY_MEDICINE_SOURCE_CANDIDATES].map(s => s.url));
+    const expected = new Set([...FAMILY_MEDICINE_RESOURCES, ...FAMILY_MEDICINE_SOURCE_CANDIDATES, ...FAMILY_MEDICINE_WATCH_SOURCES].map(s => s.url));
     expect(FAMILY_MEDICINE_MONITORED_SOURCES.map(s => s.url).sort()).toEqual([...expected].sort());
     expect(FAMILY_MEDICINE_MONITORED_SOURCES.length).toBeLessThanOrEqual(FAMILY_MEDICINE_MAX_SOURCES);
     for (const workflow of [...REPORT_WORKFLOWS, ...ASM_WORKFLOWS]) expect(FAMILY_MEDICINE_MONITORED_SOURCES.some(s => s.workflowIds.includes(workflow.id))).toBe(true);
@@ -90,6 +91,34 @@ describe("bounded source hashing", () => {
     expect(() => familyMedicineContentHash(new Uint8Array(FAMILY_MEDICINE_MAX_SOURCE_BYTES + 1), "text/html", false)).toThrow("body-too-large");
   });
 });
+describe("TAHUD guide signed-link stability", () => {
+  const guide = "https://tahud.org.tr/kitap/tani-ve-tedavi-rehberi-2026";
+  const host = "fls-a0a0308e-a96c-4ec8-9dd4-74ff94fc9977.367be3a2035528943240074d0096e0cd.r2.cloudflarestorage.com";
+  const signed = (signature: string, path = "guide-2026.pdf", extra = "") =>
+    `https://${host}/books/attachments/${path}?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=fixture&amp;X-Amz-Date=${signature === "a" ? "20261108T210000Z" : "20261108T210001Z"}&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Expires=300&amp;X-Amz-Signature=${signature.repeat(64)}${extra}`;
+  const hash = (link: string, source = guide, text = "Guide") => familyMedicineContentHash(bytes(html(`<a href="${link}">${text}</a>`)), "text/html", false, FAMILY_MEDICINE_MAX_SOURCE_BYTES, source);
+  it("ignores only known ephemeral authentication parameters on the exact observed source and host", () => {
+    expect(normalizeFamilyMedicineSourceLink(guide, signed("a"))).toBe(`https://${host}/books/attachments/guide-2026.pdf`);
+    expect(hash(signed("a"))).toBe(hash(signed("b")));
+    expect(isAllowedFamilyMedicineRedirect(`https://${host}/books/attachments/guide-2026.pdf`)).toBe(false);
+  });
+  it("still detects changed document paths, versions, other query values, fragments and visible content", () => {
+    const baseline = hash(signed("a"));
+    expect(hash(signed("a", "guide-2027.pdf"))).not.toBe(baseline);
+    expect(hash(signed("a", undefined, "&amp;versionId=v2"))).not.toBe(hash(signed("b", undefined, "&amp;versionId=v1")));
+    expect(hash(signed("a", undefined, "&amp;revision=2"))).not.toBe(hash(signed("b", undefined, "&amp;revision=1")));
+    expect(hash(signed("a") + "#page=2")).not.toBe(baseline);
+    expect(hash(signed("a"), guide, "Updated guide")).not.toBe(baseline);
+  });
+  it("does not normalize other pages, hosts, paths, credentials or unsigned links", () => {
+    expect(hash(signed("a"), "https://tahud.org.tr/haberler")).not.toBe(hash(signed("b"), "https://tahud.org.tr/haberler"));
+    for (const link of [signed("a").replace(host, "other.r2.cloudflarestorage.com"), signed("a").replace("/books/attachments/", "/private/"),
+      signed("a").replace("https://", "https://user:pass@"), signed("a").replace("AWS4-HMAC-SHA256", "other"), signed("a").replace("X-Amz-Signature", "documentVersion")]) {
+      expect(normalizeFamilyMedicineSourceLink(guide, link)).toBe(link);
+    }
+  });
+});
+
 describe("curated fetch boundary", () => {
   it("does not fetch a caller-supplied URL or unknown source key", async () => {
     const fetcher = vi.fn<typeof fetch>();
@@ -127,6 +156,32 @@ describe("curated fetch boundary", () => {
   it("limits bytes during streaming even without Content-Length", async () => {
     const body = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new Uint8Array(FAMILY_MEDICINE_MAX_SOURCE_BYTES + 1)); } });
     expect(await observeFamilyMedicineSource(source.sourceKey, vi.fn<typeof fetch>().mockResolvedValue(new Response(body, { headers: { "content-type": "text/html" } })), now)).toMatchObject({ errorTag: "body-too-large" });
+  });
+  it("monitors embedded official legislation changes and keeps parser failures distinct from network errors", async () => {
+    const target = FAMILY_MEDICINE_MONITORED_SOURCES.find(s => s.resourceIds.includes("hsgm-family-legislation"))!;
+    const page = (title: string) => html(`<script>const publications = ${JSON.stringify([{ id: 1, title, category: "Yönetmelik", url: "https://hsgm.saglik.gov.tr/depo/kural.pdf", created: "2026-11-08", tags: [] }])};</script>`);
+    const first = await observeFamilyMedicineSource(target.sourceKey, vi.fn<typeof fetch>().mockResolvedValue(response(page("Aile Hekimliği Yönetmeliği"))), now);
+    const changed = await observeFamilyMedicineSource(target.sourceKey, vi.fn<typeof fetch>().mockResolvedValue(response(page("Aile Hekimliği Yeni Yönetmeliği"))), now);
+    expect(first.errorTag).toBeNull();
+    expect(changed.errorTag).toBeNull();
+    expect(first.contentHash).not.toBe(changed.contentHash);
+    expect(await observeFamilyMedicineSource(target.sourceKey, vi.fn<typeof fetch>().mockResolvedValue(response(html())), now)).toMatchObject({ contentHash: null, errorTag: "family-medicine-watch-missing-catalog" });
+    expect(await observeFamilyMedicineSource(target.sourceKey, vi.fn<typeof fetch>().mockResolvedValue(new Response(page("Aile Hekimliği"), { headers: { "content-type": "application/pdf" } })), now)).toMatchObject({ contentHash: null, errorTag: "unsupported-content-type" });
+    expect(await observeFamilyMedicineSource(target.sourceKey, vi.fn<typeof fetch>().mockResolvedValue(response(page("Aile Hekimliği").replace("Public guide", "Access denied"))), now)).toMatchObject({ errorTag: "blocked-or-login-page" });
+  });
+  it("allows the larger official HYP PDF only within its 12 MiB cap", async () => {
+    const body = new Uint8Array(FAMILY_MEDICINE_MAX_SOURCE_BYTES + 1);
+    body.set(bytes("%PDF-1.7"));
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(body, { headers: { "content-type": "application/pdf" } }));
+    const result = await observeFamilyMedicineSource(pdfSource.sourceKey, fetcher, now);
+    expect(pdfSource.resourceIds).toContain("hyp");
+    expect(result.errorTag).toBeNull();
+    expect(result.contentHash).toMatch(/^[a-f0-9]{64}$/);
+    const oversized = new Response("", { headers: { "content-length": String(FAMILY_MEDICINE_HYP_MAX_SOURCE_BYTES + 1) } });
+    expect(await observeFamilyMedicineSource(pdfSource.sourceKey, vi.fn<typeof fetch>().mockResolvedValue(oversized), now)).toMatchObject({ errorTag: "body-too-large" });
+    const otherPdf = FAMILY_MEDICINE_MONITORED_SOURCES.find(s => s.url.endsWith(".pdf") && !s.resourceIds.includes("hyp"))!;
+    const otherResponse = new Response(body, { headers: { "content-type": "application/pdf" } });
+    expect(await observeFamilyMedicineSource(otherPdf.sourceKey, vi.fn<typeof fetch>().mockResolvedValue(otherResponse), now)).toMatchObject({ errorTag: "body-too-large" });
   });
   it("aborts a stalled request within the per-source budget", async () => {
     vi.useFakeTimers();
