@@ -1,3 +1,4 @@
+import { StudentClubEvents } from "./StudentClubEvents";
 import { slugForLabel } from "@/lib/doctorium";
 import type { Metadata } from "next";
 import { Fragment } from "react";
@@ -609,6 +610,7 @@ export default async function DoctoriumPage({
           için ezilebilir — kalıcı tercihi DEĞİŞTİRMEZ (paylaşılan bağlantı beklendiği gibi açılır). */}
 
       {active === "ilac" && <ProspektusSearch />}
+      {active === "etkinlik" && isStudent && <StudentClubEvents />}
 
       {active === "kariyer" ? (
         isStudent ? (
@@ -919,3 +921,4 @@ function CareerList({ rows, savedIds }: { rows: Awaited<ReturnType<typeof career
     </>
   );
 }
+

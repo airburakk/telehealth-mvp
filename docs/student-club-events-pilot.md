@@ -1,28 +1,34 @@
-# Student club event discovery: verified pilot, not a live feed
+# Student club event feed: staged implementation
 
-Run `npx tsx scripts/scan-student-club-events.ts` from this checkout. It only reads public pages and prints a JSON report. It does not read a database, student profile, email, phone number, cookies or authentication tokens. It never posts, sends, approves or publishes anything.
+## Scope
 
-## Implemented
+Official-source pilot for medical student clubs. The first supported source is ESOGÜ SKS: https://sks.ogu.edu.tr/Etkinlik/Index . No student profile, email, phone, cookies, credentials, clinical record, subscription or outbound message is read or written. No social-media publishing is involved.
 
-- Official source: https://sks.ogu.edu.tr/Etkinlik/Index (ESOGU university SKS).
-- Discover same-origin event details, maximum 20 bounded HTTPS reads. Reuses the existing DNS-pinned public-only reader with size/time limits and no redirects.
-- Require medical student club organizer, explicit valid date, event title and venue. No language model infers facts.
-- Reject past dates in Europe/Istanbul, cancellation/postponement in event fields, missing fields, unrelated clubs, malformed and currently unsupported multi-day dates.
-- Canonical URL identity plus within-run event deduplication. Output contains source link, verification time and evidence hash.
-- Failures are stable reason codes; partial scans explicitly report `complete: false`. They must NEVER be treated as a deletion instruction for existing records.
-- Output status is always `candidate`; parsing is not editor approval or proof the organizer has not made a last-minute change.
+## Implementation
 
-## Verified 9 November 2026
+- `student-club-events.ts`: bounded official same-origin discovery, strict name/date/venue/medical-student organizer parser, Turkish entity/date handling, past/cancelled/unsupported-data rejection, stable URL identity and event deduplication. Every returned candidate carries source URL, checked time and evidence hash. No inferred dates or fabricated events.
+- `student-club-store.ts`: atomic source-verified event upserts, advisory-lock serialization, newer-run protection, explicit rejection hiding, no deletion on transport failure. Queries hide expired records and any verification older than 36 hours. Display also deduplicates equivalent events across URLs.
+- New additive `StudentClubEvent` table only. No existing table altered or dropped. All SQL is tagged/parameterized. No database migration has been executed in production or development yet.
+- `/api/cron/ingest-student-clubs`: existing `cronGate` authentication and AURA-only shared-DB behavior, aggregate audit and failure alert, 120-second budget. Partial scans return 503 with counts; valid source-verified records can still be updated. No raw personal content in audit.
+- Daily schedule is **02:37 UTC / 05:37 Turkey**, consistent between vercel.json and CRON_SCHEDULES and before downstream translation/summary timing. Registration is code-only until deployed.
+- Student-only `Kampüsten etkinlikler` section inside the existing Etkinlik shelf, with official source links, organizer, venue, date, last-check time and explicit first-source scope. No registration or free-entry claim. Empty/error states are honest. Existing professional congresses remain untouched.
+- Feature is **OFF by default**, gated with `STUDENT_CLUB_EVENTS_ENABLED=true`; until enabled the cron does not query/write the table and UI adds no section.
 
-10 focused Vitest tests pass and focused ESLint passes. Live read: 16 details checked, 2 future candidates, 13 rejected, 1 detail fetch failed (partial result). Two successfully parsed examples: European Medical Students Club half-year general assembly (12 December 2026), TEDx Osmangazi University (8 May 2027). No records inserted or published. This source's dates do not establish event eligibility, admission price, public attendance or registration status.
+## Verification
 
-## Remaining before activation
+Focused parser/store/cron-contract tests: 24 passed. Focused ESLint passed. TypeScript noEmit passed before final deduplication refactor; final aggregate results should be consulted in the handoff. Prisma schema validation passed with dummy localhost URL, no database connection. Live read checked 16 detail pages and yielded 2 future source-verified candidates, rejected 13, and reported 1 source-read failure as partial. Examples: European Medical Students Club half-year assembly, 12 December 2026; TEDx Osmangazi University, 8 May 2027. No events were inserted or published during research.
 
-1. Add a dedicated StudentClubEvent store with source identity unique key, checkedAt, state (candidate/approved/withdrawn), reviewer and expiration. Do not overload professional MedicalCongress defaults (congress/accreditation) or the existing TÜBİTAK social publishing flow.
-2. Add an editor review surface. Require current source review and preserve approvals only while the content/evidence hash remains unchanged. Changed, cancelled or missing details must hide the affected item until reviewed. An infrastructure failure must not delete events, but stale verification must not stay publicly visible indefinitely.
-3. Add a student-only view with approved-only query, Istanbul end-date filtering at read time, source/check-time disclosure and a report-correction link. No calendar invitations, email subscription or sponsor advertising as a side effect.
-4. Add a guarded cron route using existing cronGate/audit/alerts and a transaction/advisory lock. Update vercel.json and CRON_SCHEDULES together; confirm only AURA's shared-DB ingestion deploy runs it. Use total request budget below route maxDuration.
-5. Test persistence/idempotency, overlapping scans, stale source updates, date expiry, cancellation withdrawal, empty and partial scans, access controls and actual Student UI. Run aggregate checks against the integration branch before deployment.
-6. Broaden sources using source-specific tested adapters, not broad-domain scraping or search-snippet publication. Candidate research sources: https://www.turkmsic.org/ and https://kulup.sbu.edu.tr/Home/KTakvim . No adapters or claims of coverage for these yet.
+## Controlled rollout (not yet performed)
 
-The scanner is deliberately a reviewable pilot. No daily schedule, production deployment or completed student product is claimed.
+1. Review code and final checks. Apply this additive migration to a dedicated development database first. Do not reuse production credentials for tests.
+2. Verify real PostgreSQL idempotent upserts, concurrent runs, source updates, cancellation hiding and expiry, plus authenticated Student page rendering and unrelated doctor-role regression.
+3. Coordinate with family-page and weekly-publication changes. This work does not modify prepare-events.ts, prepare-students.ts or social publishing approval gates.
+4. Apply the additive migration before enabling the feature. Normal deployment build regenerates Prisma. Keep the feature OFF on failures; no destructive rollback is required because only a new table exists.
+5. Enable the flag on the AURA ingestion project and Doctorium display project, deploy the reviewed commit, trigger the guarded cron and inspect aggregate audit. Test Student screen on mobile/desktop, empty/loading/error state and external links. Production rollout requires the parent's deploy coordination.
+6. Check the first scheduled run and freshness. Turn the flag off to hide/pause immediately if there is a source/parser/DB problem. Keep the new table; do not drop data as rollback.
+
+## Explicit limitations
+
+One supported official source, no claim of nationwide coverage. Currently only single-day explicit dates; ambiguous/multi-day formats are rejected. Source availability can produce partial scans, and listing capacity is bounded at 20 detail reads per run, with 10 known future records rechecked first. No editor dashboard is needed for automatically source-verified facts, but broader sources or extraction formats require tested adapters before activation. Human curators should review corrections. Upstream may change without notice; 36-hour freshness is a maximum, not a guarantee against changes between checks.
+
+Candidate research sources for later tested adapters: https://www.turkmsic.org/ and https://kulup.sbu.edu.tr/Home/KTakvim . No current adapter or coverage claim for these.

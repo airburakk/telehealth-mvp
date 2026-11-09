@@ -54,10 +54,13 @@ export function parseStudentClubEvent(html: string, sourceUrl: string, now = new
   return { id: createHash("sha256").update(url).digest("hex"), title: title.trim(), organizer: organizer.trim(), venue: venue.trim(), city: "Eskişehir", startDay, endDay: startDay,
     sourceUrl: url, checkedAt: now.toISOString(), evidenceHash: createHash("sha256").update(block).digest("hex"), status: "candidate" };
 }
-export async function scanStudentClubEvents(now = new Date(), readPage = readPrimaryPage) {
-  const result = { checkedAt: now.toISOString(), candidates: [] as StudentClubEvent[], checked: 0, rejected: 0, errors: [] as string[], complete: true };
+export function studentEventIdentity(event: Pick<StudentClubEvent, "organizer" | "title" | "startDay" | "venue">): string {
+  return `${event.organizer}|${event.title}|${event.startDay}|${event.venue}`.normalize("NFKC").toLocaleLowerCase("tr").replace(/[^\p{L}\p{N}|]/gu, "");
+}
+export async function scanStudentClubEvents(now = new Date(), readPage = readPrimaryPage, previousUrls: string[] = []) {
+  const result = { checkedAt: now.toISOString(), candidates: [] as StudentClubEvent[], checked: 0, rejected: 0, errors: [] as string[], complete: true, rejectedUrls: [] as string[], failedUrls: [] as string[] };
   let urls: string[];
-  try { urls = discoverStudentEventUrls(await readPage(STUDENT_EVENT_INDEX)); }
+  try { urls = [...new Set([...previousUrls.map(studentEventUrl).filter((u): u is string => Boolean(u)), ...discoverStudentEventUrls(await readPage(STUDENT_EVENT_INDEX))])]; }
   catch { return { ...result, complete: false, errors: ["student-index-unavailable"] }; }
   if (!urls.length) return { ...result, complete: false, errors: ["student-index-empty-or-changed"] };
   if (urls.length > 20) { result.complete = false; result.errors.push("student-scan-limit"); }
@@ -66,13 +69,15 @@ export async function scanStudentClubEvents(now = new Date(), readPage = readPri
     result.checked++;
     try {
       const event = parseStudentClubEvent(await readPage(url), url, now);
-      if (!event) { result.rejected++; continue; }
-      const key = `${event.organizer}|${event.title}|${event.startDay}|${event.venue}`.normalize("NFKC").toLocaleLowerCase("tr").replace(/[^\p{L}\p{N}|]/gu, "");
+      if (!event) { result.rejected++; result.rejectedUrls.push(url); continue; }
+      const key = studentEventIdentity(event);
       if (!seen.has(key)) { seen.add(key); result.candidates.push(event); }
-    } catch { result.complete = false; result.errors.push("student-detail-unavailable"); }
+    } catch { result.complete = false; result.errors.push("student-detail-unavailable"); result.failedUrls.push(url); }
   }
   result.candidates.sort((a, b) => a.startDay.localeCompare(b.startDay) || a.id.localeCompare(b.id));
   return result;
 }
+
+
 
 

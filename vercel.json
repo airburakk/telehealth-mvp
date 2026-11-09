@@ -5,6 +5,7 @@
     "fra1"
   ],
   "crons": [
+    { "path": "/api/cron/ingest-student-clubs", "schedule": "37 2 * * *" },
     {
       "path": "/api/cron/ingest-doctorium",
       "schedule": "0 2 * * *"
@@ -63,3 +64,5 @@
     }
   ]
 }
+
+
