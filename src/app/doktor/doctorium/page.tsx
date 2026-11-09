@@ -921,4 +921,3 @@ function CareerList({ rows, savedIds }: { rows: Awaited<ReturnType<typeof career
     </>
   );
 }
-

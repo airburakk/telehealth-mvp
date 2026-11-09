@@ -120,4 +120,3 @@ describe("vercel.json ↔ CRON_SCHEDULES", () => {
     expect(t).toBeLessThanOrEqual(18 * 60);
   });
 });
-

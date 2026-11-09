@@ -11,6 +11,7 @@ describe("student club official discovery", () => {
   it.each(["07 Kasım 2026", "31 Şubat 2027", "06-07 Aralık 2026", "yakında"])("rejects elapsed, invalid or unsupported date %s", date => expect(parseStudentClubEvent(fixture(date), url, now)).toBeNull());
   it("rejects cancellation, unrelated clubs, missing venues, and external URLs", () => {
     expect(parseStudentClubEvent(fixture(undefined, "İptal edilen toplantı"), url, now)).toBeNull();
+    expect(parseStudentClubEvent("<h1>ETKİNLİK İPTAL EDİLMİŞTİR</h1>" + fixture(), url, now)).toBeNull();
     expect(parseStudentClubEvent(fixture().replace(/Tıp/g, "Mühendislik"), url, now)).toBeNull();
     expect(parseStudentClubEvent(fixture().replace("Tıp Fakültesi Amfisi", ""), url, now)).toBeNull();
     expect(parseStudentClubEvent(fixture(), "https://evil.example/Etkinlik/Detay/1/x", now)).toBeNull();
@@ -28,4 +29,3 @@ describe("student club official discovery", () => {
   });
   it("uses Turkey's date boundary", () => expect(parseStudentClubEvent(fixture("09 Kasım 2026"), url, new Date("2026-11-09T21:01:00Z"))).toBeNull());
 });
-

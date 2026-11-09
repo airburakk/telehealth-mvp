@@ -38,6 +38,8 @@ export function discoverStudentEventUrls(html: string): string[] {
 export function parseStudentClubEvent(html: string, sourceUrl: string, now = new Date()): StudentClubEvent | null {
   const url = studentEventUrl(sourceUrl);
   if (!url) return null;
+  const heading = [...html.matchAll(/<(?:title|h1|h2)\b[^>]*>([\s\S]*?)<\/(?:title|h1|h2)>/gi)].map(m => eventText(m[1])).join(" ").toLocaleLowerCase("tr");
+  if (/iptal|ertelen|cancelled|postponed/.test(heading)) return null;
   const text = eventText(html);
   // Restrict extraction to the actual event, excluding menu/footer recommendations.
   const block = text.match(/Etkinliği Düzenleyen\s*:\s*([\s\S]*?)Son Güncelleme Tarihi:/i)?.[1];
@@ -77,7 +79,3 @@ export async function scanStudentClubEvents(now = new Date(), readPage = readPri
   result.candidates.sort((a, b) => a.startDay.localeCompare(b.startDay) || a.id.localeCompare(b.id));
   return result;
 }
-
-
-
-
