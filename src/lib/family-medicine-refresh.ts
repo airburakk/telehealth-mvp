@@ -85,6 +85,26 @@ export function nextFamilyMedicineSourceState(previous: SourceCheckState | null,
   };
 }
 class SourceFetchError extends Error {}
+/** Fixed diagnostic codes only; never persist remote messages, URLs, IPs or credentials. */
+export function familyMedicineNetworkErrorTag(error: unknown): string {
+  const tags: Record<string, string> = {
+    ENOTFOUND: "network-dns", EAI_AGAIN: "network-dns-temporary",
+    ECONNREFUSED: "network-refused", ECONNRESET: "network-reset",
+    ETIMEDOUT: "network-timeout", UND_ERR_CONNECT_TIMEOUT: "network-connect-timeout",
+    UND_ERR_SOCKET: "network-socket", CERT_HAS_EXPIRED: "network-tls-expired",
+    UNABLE_TO_VERIFY_LEAF_SIGNATURE: "network-tls-chain", DEPTH_ZERO_SELF_SIGNED_CERT: "network-tls-chain",
+    SELF_SIGNED_CERT_IN_CHAIN: "network-tls-chain", ERR_TLS_CERT_ALTNAME_INVALID: "network-tls-hostname",
+  };
+  let current: unknown = error;
+  for (let depth = 0; depth < 4; depth++) {
+    if (!current || typeof current !== "object") break;
+    const item = current as { code?: unknown; cause?: unknown };
+    if (typeof item.code === "string" && Object.hasOwn(tags, item.code)) return tags[item.code];
+    current = item.cause;
+  }
+  return "network-error";
+}
+
 
 function decodeSourceText(bytes: Uint8Array, contentType: string): string {
   // Official historical gazette pages still declare Windows-1254 in a meta tag.
@@ -217,6 +237,6 @@ export async function observeFamilyMedicineSource(
     throw new SourceFetchError("too-many-redirects");
   } catch (error) {
     // Fixed codes only: arbitrary remote response/error text never enters audit or the database.
-    return { checkedAt, contentHash: null, httpStatus, errorTag: error instanceof SourceFetchError ? error.message : controller.signal.aborted ? "timeout" : "network-error" };
+    return { checkedAt, contentHash: null, httpStatus, errorTag: error instanceof SourceFetchError ? error.message : controller.signal.aborted ? "timeout" : familyMedicineNetworkErrorTag(error) };
   } finally { clearTimeout(timeout); }
 }
