@@ -3,7 +3,7 @@ import {
   FAMILY_MEDICINE_MONITORED_SOURCES, FAMILY_MEDICINE_MAX_SOURCE_BYTES, FAMILY_MEDICINE_MAX_SOURCES,
   FAMILY_MEDICINE_HYP_MAX_SOURCE_BYTES, FAMILY_MEDICINE_FETCH_TIMEOUT_MS, familyMedicineContentHash, isAllowedFamilyMedicineRedirect,
   nextFamilyMedicineSourceState, observeFamilyMedicineSource, sourceCheckIsStale, normalizeFamilyMedicineSourceLink,
-  type SourceObservation,
+  familyMedicineNetworkErrorTag, type SourceObservation,
 } from "@/lib/family-medicine-refresh";
 import { FAMILY_MEDICINE_WATCH_SOURCES } from "@/lib/family-medicine-watch-sources";
 import { FAMILY_MEDICINE_RESOURCES } from "@/lib/family-medicine";
@@ -189,5 +189,16 @@ describe("curated fetch boundary", () => {
     const result = observeFamilyMedicineSource(source.sourceKey, fetcher, now);
     await vi.advanceTimersByTimeAsync(FAMILY_MEDICINE_FETCH_TIMEOUT_MS);
     expect(await result).toMatchObject({ errorTag: "timeout" });
+  });
+});
+describe("safe network diagnostics", () => {
+  it("classifies known causes without recording remote details", () => {
+    expect(familyMedicineNetworkErrorTag(new Error("secret", { cause: { code: "UND_ERR_CONNECT_TIMEOUT" } }))).toBe("network-connect-timeout");
+    expect(familyMedicineNetworkErrorTag({ code: "ENOTFOUND" })).toBe("network-dns");
+    expect(familyMedicineNetworkErrorTag({ cause: { code: "CERT_HAS_EXPIRED" } })).toBe("network-tls-expired");
+    expect(familyMedicineNetworkErrorTag({ cause: { code: "untrusted-remote-value" } })).toBe("network-error");
+    expect(familyMedicineNetworkErrorTag({ code: "toString" })).toBe("network-error");
+    const cycle: { cause?: unknown } = {}; cycle.cause = cycle;
+    expect(familyMedicineNetworkErrorTag(cycle)).toBe("network-error");
   });
 });
