@@ -367,7 +367,7 @@ export function Header({ user, authPending = false, lang = "Türkçe", theme = "
                     <div className="text-sm font-medium leading-tight text-[var(--c-ink)]">{user.name}</div>
                     {/* Mono rol etiketi — landing'in "mono durak" dili. Öğrencide "Doktor" yazmaz:
                         kimlik beyanı dürüst kalır (v6.95). */}
-                    <div className="aura-mono mt-0.5 text-[10px] uppercase tracking-[0.18em] leading-tight text-[var(--c-ink-3)]">{t(student ? "Tıp Öğrencisi" : ROLE_LABELS[user.role] ?? user.role)}</div>
+                    <div className="aura-mono mt-0.5 text-[10px] uppercase tracking-[0.18em] leading-tight text-[var(--c-ink-3)]">{t((audience === "STUDENT" || (audience !== "VERIFIED" && student)) ? "Tıp Öğrencisi" : ROLE_LABELS[user.role] ?? user.role)}</div>
                   </div>
                   <div className="mt-1">
                     {/* Ayrışma (2026-08-24): Doctorium kromunda zil yalnız Doctorium bildirimlerini

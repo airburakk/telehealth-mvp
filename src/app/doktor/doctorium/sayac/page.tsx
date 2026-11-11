@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import { currentDoctoriumAudience } from "@/lib/doctorium-audience";
 import { db } from "@/lib/db";
 import {
   effectiveBranches, personalFeedPage, moduleFeed, localizeTitles, savedArticleIds,
@@ -43,6 +44,8 @@ export default async function SayacPage({
   const user = await getCurrentUser();
   if (!user || !["DOCTOR", "COORDINATOR", "ADMIN"].includes(user.role)) redirect("/");
 
+  const audience = await currentDoctoriumAudience();
+  const isStudent = audience?.audience === "STUDENT";
   const sp = await searchParams;
   const key = sp.m && FM_TO_MODULES[sp.m] ? sp.m : null;
   if (!key) redirect("/doktor/doctorium");
@@ -77,7 +80,7 @@ export default async function SayacPage({
         createdSince: trDayStart(), limit: 100,
         sources: key === "sektorel" ? sektorelSources : undefined,
       })
-    : (await personalFeedPage(branches, FM_TO_MODULES[key], {}, 40, { sektorelSources })).items;
+    : (await personalFeedPage(branches, FM_TO_MODULES[key], {}, 40, { sektorelSources, excludeDoctorCareer: isStudent })).items;
   if (items.length) items = await localizeTitles(items);
 
   const savedIds = user.role === "DOCTOR" && doctor ? await savedArticleIds(doctor.id) : null;
