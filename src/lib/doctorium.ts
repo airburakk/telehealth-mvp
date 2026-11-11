@@ -652,7 +652,12 @@ interface RawModuleResult {
  *  · createdSince: "yalnız yeni" (?n=1) — bugün AKIŞA DÜŞEN kayıtlar (createdAt; sayaçla aynı
  *    eksen). Etkinlik/Kariyer bu modda SORGULANMAZ: küratörlü veridir, gece akışı yoktur ve
  *    sayaç (todayModuleCounts) onları hiç saymaz — sayının vaadiyle listenin içeriği örtüşmeli. */
-export type PersonalFeedOpts = { sektorelSources?: string[]; createdSince?: Date };
+export type PersonalFeedOpts = {
+  sektorelSources?: string[];
+  createdSince?: Date;
+  /** Student uses EDU opportunities instead of doctor career pathways. */
+  excludeDoctorCareer?: boolean;
+};
 
 /** Sayaç modül odağı (?fm= — v6.161, kullanıcı bildirimi ÜÇÜNCÜ kez: "rakama tıklayınca yalnız
  *  o içerikleri göreyim, sekmeyi değil"): PulseStrip rakamları artık SEKMEYE değil Akışım'ın
@@ -823,7 +828,7 @@ async function personalFeedRaw(
   // Etkinlik/Kariyer "yalnız yeni" modunda sorgulanmaz — gerekçe PersonalFeedOpts yorumunda.
   if (on("etkinlik") && !opts?.createdSince)
     jobs.push(congressFeedItems(branchSlugs, q(FEED_QUOTAS.etkinlik), cur("etkinlik")).then((items) => ({ key: "etkinlik", items, requested: q(FEED_QUOTAS.etkinlik) })));
-  if (on("kariyer") && !opts?.createdSince)
+  if (on("kariyer") && !opts?.createdSince && !opts?.excludeDoctorCareer)
     jobs.push(careerFeedItems(q(FEED_QUOTAS.kariyer), cur("kariyer")).then((items) => ({ key: "kariyer", items, requested: q(FEED_QUOTAS.kariyer) })));
 
   return Promise.all(jobs);
@@ -924,6 +929,8 @@ export async function personalFeedPage(
   // yoksa `done` asla true olmaz ve sonsuz kaydırma boş sayfaları sonsuza dek çekerdi
   // ("üç hâl" dersinin devamı: anahtar yok = "henüz sorgulanmadı" diye okunur).
   if (opts?.createdSince) { nextCursors.etkinlik = null; nextCursors.kariyer = null; }
+  // Excluded before querying, not filtered after pagination: no empty-page loop.
+  if (opts?.excludeDoctorCareer) nextCursors.kariyer = null;
   const allModules: FeedModuleKey[] = modules.length ? modules : FEED_MODULE_OPTIONS.map((o) => o.key);
   const done = allModules.every((k) => nextCursors[k] === null);
   return { items, cursors: nextCursors, done };

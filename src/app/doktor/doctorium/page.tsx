@@ -1,4 +1,5 @@
 import { StudentClubEvents } from "./StudentClubEvents";
+import { StudentHome } from "./StudentHome";
 import { slugForLabel } from "@/lib/doctorium";
 import type { Metadata } from "next";
 import { Fragment } from "react";
@@ -133,6 +134,9 @@ export default async function DoctoriumPage({
   // v6.142 — bkz. lib/doctorium parseViewPrefs (aşağıda range/cat/srcScope'ta kullanılır).
   const viewPrefs = parseViewPrefs(doctor?.doctoriumViewPrefs);
 
+  // Resolve the audience before querying: student feeds never fetch doctor career pathways.
+  const audienceCtx = await currentDoctoriumAudience();
+  const isStudent = audienceCtx?.audience === "STUDENT";
   const sp = await searchParams;
   // ?m= çözümü: geçerli anahtar → kendisi; ESKİ anahtar (kongre) → alias'tan etkinliğe; yoksa akış.
   // Alias v6.120 rename'inin bedeli: eski yer imleri ve bildirim href'leri boş sayfa açmasın.
@@ -222,6 +226,7 @@ export default async function DoctoriumPage({
       const page = await personalFeedPage(branches, fm ? FM_TO_MODULES[fm] : feedMods, (feedCursor ?? {}) as FeedCursors, FEED_PAGE_SIZE, {
         sektorelSources: viewPrefs.sektorel.source ? SECTOR_SOURCE_SCOPES[viewPrefs.sektorel.source] : undefined,
         createdSince: since,
+        excludeDoctorCareer: isStudent,
       });
       items = page.items;
       feedNextCursor = page.done ? null : encodeFeedCursor(page.cursors);
@@ -328,12 +333,12 @@ export default async function DoctoriumPage({
   // kartı, anket — COMMUNITY dahil, kullanıcı kararı 2026-08-14 — ve ödül puanı) YALNIZ doğrulanmış
   // doktora açık; tıp öğrencisi ve deneme üyesi sağlık meslek mensubu sayılamaz. Personel (doktor
   // profili yok) kampanyayı bağlamsal görür — eski davranış. Tek sözcü: currentDoctoriumAudience.
-  const audienceCtx = await currentDoctoriumAudience();
   const flags = audienceCtx?.flags ?? audienceFlags("NONE");
   // Öğrencinin Kariyer sahnesi (B3, kullanıcı kararı 2026-09-05): doktorun kariyer akışı (yol haritası + Yurt Dışı ·
   // Türkiye alt-sekmeleri + "ilan içermez" notu) öğrenciye ÇEKİLMEZ ve ÇİZİLMEZ; yerine Kariyer EDU + TUS hub'ı.
-  const isStudent = audienceCtx?.audience === "STUDENT";
-  const head = active === "kariyer" && isStudent ? STUDENT_CAREER_HEAD : MODULE_HEAD[active];
+  const head = isStudent && active === "akis"
+    ? { eyebrow: "DOCTORIUM STUDENT", title: "Öğrenci gündemin", desc: "TUS, burs ve staj fırsatları, yaklaşan tarihler ve ilgi alanların tek yerde.", color: "var(--c-accent)" }
+    : active === "kariyer" && isStudent ? STUDENT_CAREER_HEAD : MODULE_HEAD[active];
 
   // Kariyer modülü alt-sekmesi (v6.89): ?t=yurtdisi|turkiye — yalnız bu modülde (ve doktor sahnesinde) anlamlı.
   // (?c= sektörel kategoriye, ?h= Hukuk'a, ?s= etkinlik kapsamına ait — param çakışması yok.)
@@ -431,7 +436,8 @@ export default async function DoctoriumPage({
             </ButtonLink>
           )}
         </div>
-        <p className="mt-1.5 text-[13px] text-[var(--c-ink-2)]">{head.desc}</p>        {active === "akis" && (
+        <p className="mt-1.5 text-[13px] text-[var(--c-ink-2)]">{head.desc}</p>
+        {active === "akis" && !isStudent && (
           <Link href="/doktor/doctorium/aile-hekimligi" className="mt-3 inline-block text-sm font-semibold text-[var(--c-accent)] underline underline-offset-4">
             {viewPrefs.practiceSetting === "asm" || slugForLabel(doctor?.branch) === "aile-hekimligi"
               ? "Aile Hekimliği çalışma alanınızı açın →"
@@ -477,6 +483,8 @@ export default async function DoctoriumPage({
         </div>
       )}
 
+      {active === "akis" && isStudent && <StudentHome />}
+      {active === "akis" && isStudent && <StudentClubEvents limit={3} />}
       {active === "akis" && <PulseStrip items={items} todayCounts={counts} />}
 
       {/* Sayaç → akış geçiş ayracı (2026-08-21, kullanıcı bildirimi: "sayaçtan sonra habere
