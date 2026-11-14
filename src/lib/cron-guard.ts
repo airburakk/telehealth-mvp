@@ -48,6 +48,7 @@ export function errText(e: unknown, fallback: string): string {
  * ertesi geceye dek İngilizce kalıp seçkiye/Post'a öyle giriyordu (v6.206 sıra testi yalnız ingest-doctorium'a bakıyordu).
  */
 export const CRON_SCHEDULES: Record<string, string> = {
+  "/api/cron/ingest-student-clubs": "37 2 * * *", // 05:37 TR; isolated student discovery, no social publication
   "/api/cron/ingest-doctorium": "0 2 * * *",         // 05:00 TR — akademik (PubMed) + RG + sabit kaynaklar/RSS (maxDuration 800, 2026-09-05)
   "/api/cron/ingest-europepmc": "15 2 * * *",        // 05:15 TR — Europe PMC (2026-09-05 ayrıldı; 2026-10-02: 44→15 — PubMed'in 800 sn tavanından SONRA [tekilleştirme yönlü], translate-news'ten ÖNCE)
   "/api/cron/ingest-hukuk": "20 2 * * *",            // 05:20 TR — Yargıtay + Doktrin + TTB (Pazartesi)
