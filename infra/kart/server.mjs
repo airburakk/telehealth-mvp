@@ -25,6 +25,8 @@ import { createRubrik } from "./lib/social-rubrik.mjs";
 import * as video from "./lib/social-video.mjs";
 import * as carousel from "./lib/social-carousel.mjs";
 import { createRubrikYayin } from "./lib/rubrik-yayin.mjs";
+import { createWeeklyDraftWorker } from "./lib/weekly-draft-worker.mjs";
+import { createWeeklyMediaHandler } from "./lib/weekly-media.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const TOKEN = process.env.SOCIAL_DIGEST_TOKEN ?? "";
@@ -165,8 +167,28 @@ const rubrikYayin = createRubrikYayin({
   log: (m) => console.log(`[kart] ${m}`),
 });
 
+// Defaults OFF. Existing static archive mapping/account policy must be reviewed;
+// this code does not expose a new public file server or enable an n8n trigger.
+const weeklyDraft = createWeeklyDraftWorker({
+  dir: SOSYAL_DIR, getBrowser, token: TOKEN, planToken: PLAN_TOKEN,
+  spherePath: path.join(HERE, "assets", "doctorium-sphere-disk-1024-v3.webp"),
+  enabled: process.env.WEEKLY_DRAFT_PREPARE_ENABLED === "true",
+  profileFile: process.env.WEEKLY_DRAFT_PROFILE_FILE,
+  archiveRoot: process.env.WEEKLY_DRAFT_ARCHIVE_ROOT,
+  archiveBaseUrl: process.env.WEEKLY_DRAFT_ARCHIVE_BASE_URL,
+  archiveMappingVerified: process.env.WEEKLY_DRAFT_ARCHIVE_VERIFIED === "true",
+  dailyIndexFile: process.env.WEEKLY_DRAFT_DAILY_READ_ONLY_INDEX_FILE,
+  mesgul: () => sosyal.durum().durum === "calisiyor",
+});
+
+const weeklyMedia = createWeeklyMediaHandler({ root: process.env.WEEKLY_DRAFT_ARCHIVE_ROOT,
+  enabled: process.env.WEEKLY_MEDIA_SERVING_ENABLED === "true",
+  draftStagingAllowed: process.env.WEEKLY_MEDIA_DRAFT_STAGING_ALLOWED === "true" });
+
 http.createServer(async (req, res) => {
   if (req.url === "/saglik") { res.writeHead(200); return res.end("ok"); }
+  if (await weeklyMedia(req, res)) return;
+  if (await weeklyDraft.handle(req, res)) return;
   if (await rubrik.handle(req, res)) return;
   if (await rubrikYayin.handle(req, res)) return;
   if (await sosyal.handle(req, res)) return;
