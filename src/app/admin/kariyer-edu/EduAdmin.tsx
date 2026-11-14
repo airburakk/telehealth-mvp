@@ -82,7 +82,7 @@ export function EduAdmin({ rows }: { rows: EduOpportunityView[] }) {
         <label className="block">Doğrulama günü<input className={input} name="verifiedAt" type="date" required defaultValue={editing.verifiedAt} /></label>
         {err && <p role="alert">{err}</p>}
         <button type="submit" disabled={busy !== null} className="rounded-lg border px-3 py-2">Değişiklikleri kaydet</button>
-        <button type="button" onClick={() => setEditing(null)} className="ml-3 rounded-lg border px-3 py-2">Vazgeç</button>
+        <button type="button" disabled={busy !== null} onClick={() => setEditing(null)} className="ml-3 rounded-lg border px-3 py-2">Vazgeç</button>
       </form>}
       <section>
         <h2 className="text-[15px] font-semibold text-[var(--c-ink)]">Kayıtlar <span className="aura-mono text-[11px] text-[var(--c-ink-3)]">{rows.length} · onaylı {rows.filter((r) => r.approvedAt).length}</span></h2>
