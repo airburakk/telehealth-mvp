@@ -9,10 +9,11 @@ const KIND_OPTIONS = [["burs", "Burs / destek"], ["staj", "Staj / gözlemcilik"]
 
 export function EduAdmin({ rows }: { rows: EduOpportunityView[] }) {
   const router = useRouter();
+  const [editing, setEditing] = useState<EduOpportunityView | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function call(method: "POST" | "PATCH" | "DELETE", body: unknown, key: string) {
+  async function call(method: "POST" | "PATCH" | "DELETE" | "PUT", body: unknown, key: string) {
     setBusy(key); setErr(null);
     try {
       const res = await fetch("/api/admin/edu-opportunity", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -65,6 +66,24 @@ export function EduAdmin({ rows }: { rows: EduOpportunityView[] }) {
         </button>
       </form>
 
+      {editing && <form key={editing.id + editing.updatedAt} onSubmit={async (e) => {
+        e.preventDefault(); const f = new FormData(e.currentTarget);
+        const ok = await call("PUT", { id: editing.id, expectedUpdatedAt: editing.updatedAt,
+          deadline: f.get("deadline"), deadlineNote: f.get("deadlineNote"), eligibility: f.get("eligibility"),
+          sourceUrl: f.get("sourceUrl"), verifiedAt: f.get("verifiedAt") }, editing.id);
+        if (ok) setEditing(null);
+      }} className="rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)] p-5 space-y-3">
+        <h2 className="font-semibold">İçeriği düzenle: {editing.title}</h2>
+        <p className="text-sm">Yalnız bu kaydın tarih, özet ve kaynak alanları güncellenir. Yayın onayı ve takipler korunur. Kaynak doğrulamasını tamamlamadan kaydetmeyin.</p>
+        <label className="block">Son başvuru<input className={input} name="deadline" type="date" defaultValue={editing.deadline ?? ""} /></label>
+        <label className="block">Dönemsel not<input className={input} name="deadlineNote" maxLength={200} defaultValue={editing.deadlineNote ?? ""} /></label>
+        <label className="block">Şart özeti<textarea className={input} name="eligibility" required minLength={20} maxLength={420} rows={4} defaultValue={editing.eligibility} /></label>
+        <label className="block">Kaynak<input className={input} name="sourceUrl" type="url" required defaultValue={editing.sourceUrl} /></label>
+        <label className="block">Doğrulama günü<input className={input} name="verifiedAt" type="date" required defaultValue={editing.verifiedAt} /></label>
+        {err && <p role="alert">{err}</p>}
+        <button type="submit" disabled={busy !== null} className="rounded-lg border px-3 py-2">Değişiklikleri kaydet</button>
+        <button type="button" onClick={() => setEditing(null)} className="ml-3 rounded-lg border px-3 py-2">Vazgeç</button>
+      </form>}
       <section>
         <h2 className="text-[15px] font-semibold text-[var(--c-ink)]">Kayıtlar <span className="aura-mono text-[11px] text-[var(--c-ink-3)]">{rows.length} · onaylı {rows.filter((r) => r.approvedAt).length}</span></h2>
         <ul className="mt-3 divide-y divide-[var(--c-hairline)] rounded-2xl border border-[var(--c-hairline)] bg-[var(--c-panel)]">
@@ -78,6 +97,7 @@ export function EduAdmin({ rows }: { rows: EduOpportunityView[] }) {
                 <div className="text-[12px] text-[var(--c-ink-2)]">{r.organizer} · doğrulama {r.verifiedAt} · {r.approvedAt ? `yayında (${r.approvedAt})` : "onay bekliyor (gizli)"}</div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
+                <button type="button" disabled={busy !== null || !r.updatedAt} onClick={() => { setErr(null); setEditing(r); }} className="rounded-lg border px-2.5 py-1 text-[12px]">Düzenle</button>
                 <button type="button" disabled={busy === r.id} onClick={() => call("PATCH", { id: r.id, approved: !r.approvedAt }, r.id)}
                   className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[12px] font-semibold ${r.approvedAt ? "border-[var(--c-hairline)] text-[var(--c-ink-2)]" : "border-[var(--c-accent)]/50 bg-[var(--c-accent)]/12 text-[var(--c-accent)]"}`}>
                   {busy === r.id ? <Loader2 size={13} className="animate-spin" /> : r.approvedAt ? <X size={13} /> : <Check size={13} />} {r.approvedAt ? "Yayından kaldır" : "Onayla"}

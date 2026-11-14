@@ -10,15 +10,17 @@ export interface EduOpportunityView {
   /** ISO gün ya da null. */ deadline: string | null; deadlineNote: string | null; startsAt: string | null;
   eligibility: string; sourceUrl: string; verifiedAt: string; approvedAt: string | null;
   /** Son başvurusu geçti (Türkiye takvim günü) — yüzeyde "başvuru kapandı" yazar, liste sonuna iner, takip düğmesi çıkmaz. */ closed: boolean;
+  updatedAt?: string;
   /** Takip eden öğrenci sayısı (admin listesi için; öğrenci yüzeyinde kullanılmaz). */ followers?: number;
 }
 
 const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
-type Row = { id: string; kind: string; title: string; organizer: string; country: string | null; deadline: Date | null; deadlineNote: string | null; startsAt: string | null; eligibility: string; sourceUrl: string; verifiedAt: Date; approvedAt: Date | null };
+type Row = { id: string; kind: string; title: string; organizer: string; country: string | null; deadline: Date | null; deadlineNote: string | null; startsAt: string | null; eligibility: string; sourceUrl: string; verifiedAt: Date; approvedAt: Date | null; updatedAt: Date };
 const toView = (r: Row, today: string): EduOpportunityView => ({
   id: r.id, kind: r.kind as EduOpportunityKind, title: r.title, organizer: r.organizer, country: r.country, deadline: day(r.deadline),
   deadlineNote: r.deadlineNote, startsAt: r.startsAt, eligibility: r.eligibility, sourceUrl: r.sourceUrl, verifiedAt: day(r.verifiedAt) as string, approvedAt: day(r.approvedAt),
   closed: isEduClosed({ deadline: day(r.deadline) }, today),
+  updatedAt: r.updatedAt.toISOString(),
 });
 /** Tarihli olanlar önce (yakın son başvuru üstte), tarihsizler (dönemsel) sonra; eşitlikte ad. */
 const order = (a: EduOpportunityView, b: EduOpportunityView) => {
