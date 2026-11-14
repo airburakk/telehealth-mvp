@@ -70,3 +70,17 @@ export async function DELETE(req: Request) {
   ]);
   return NextResponse.json({ ok: true });
 }
+
+/** Narrow public-content edit. Preserves identity, approval, followers and every unrelated field. */
+export async function PUT(req: Request) {
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+  const b = await req.json().catch(() => ({}));
+  const { parseEduContentEdit } = await import("@/lib/edu-content-edit");
+  const parsed = parseEduContentEdit(b);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const { id, expectedUpdatedAt, data } = parsed;
+  // Optimistic concurrency: exactly the version displayed in the editor, never a blind overwrite.
+  const result = await db.eduOpportunity.updateMany({ where: { id, updatedAt: expectedUpdatedAt }, data });
+  if (result.count !== 1) return NextResponse.json({ error: "Kayıt değişmiş veya bulunamadı. Sayfayı yenileyip yeniden inceleyin." }, { status: 409 });
+  return NextResponse.json({ ok: true, id });
+}
