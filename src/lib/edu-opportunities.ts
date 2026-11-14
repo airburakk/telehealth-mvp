@@ -80,9 +80,9 @@ export const EDU_OPPORTUNITIES: readonly EduOpportunity[] = [
     eligibility: "T.C. vatandaşı, tam zamanlı lisans öğrencisi; not ortalaması en az 2,50/4 (60/100); maddi ihtiyaç; başka karşılıksız burs almıyor olma. Kapsamdaki 29 üniversitenin listesi kaynakta. Başvuru 21 Eylül – 9 Ekim 2026, VKV Burs Portalı.",
     sourceUrl: "https://www.vkv.org.tr/tr/burslar/universite-burslari-75", verifiedAt: V, approvedAt: A },
   { id: "tubitak-2209a", kind: "burs", title: "TÜBİTAK 2209-A Üniversite Öğrencileri Araştırma Projeleri Desteği", organizer: "TÜBİTAK BİDEB", country: "TR",
-    deadline: null, deadlineNote: "Yılda bir çağrı, genelde Ekim–Kasım (2025 çağrısı 13 Ekim – 19 Kasım); 2026 çağrısı henüz duyurulmadı", startsAt: null,
-    eligibility: "Ön lisans/lisans öğrencisi (tıp fakültesi dâhil; açıköğretim ve hazırlık sınıfı hariç); akademik danışmanla yürütülen araştırma projesi; 12 aya kadar, en fazla 12.000 TL. Başvuru TÜBİTAK TYBS üzerinden.",
-    sourceUrl: "https://tubitak.gov.tr/en/scholarships/degree-associate-degree/destek-programlari/2209-research-project-support-programme-undergraduate-students", verifiedAt: V, approvedAt: A },
+    deadline: "2026-11-18", deadlineNote: null, startsAt: null,
+    eligibility: "Ön lisans/lisans öğrencisi (tıp fakültesi dâhil; açıköğretim ve hazırlık hariç); akademik danışmanla araştırma projesi; 12 aya kadar, en fazla 12.000 TL. TYBS öğrenci başvurusu ve danışman onayı: 18 Kasım 2026 saat 17.30 (Türkiye). Kuruluş yetkilisi e-imzası: 23-30 Kasım 2026.",
+    sourceUrl: "https://tubitak.gov.tr/tr/burslar/lisans-onlisans/destek-programlari/2209-universite-ogrencileri-arastirma-projeleri-destekleme-programi", verifiedAt: "2026-11-14", approvedAt: A },
   { id: "tubitak-2247c-star", kind: "burs", title: "TÜBİTAK 2247-C STAR Lisans — 2026 yılı 2. dönem", organizer: "TÜBİTAK BİDEB", country: "TR",
     // Öğrenci takvimi: yürütücü talep son günü (12 Ekim) öğrenci deadline'ı değildir.
     // startsAt program/staj başlangıcıdır; başvuru açılışı bu alana yazılmaz.
