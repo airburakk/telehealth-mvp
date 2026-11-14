@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   const kind = str(b.kind, 20); const title = str(b.title, 200); const organizer = str(b.organizer, 160);
   const eligibility = str(b.eligibility, 420); const deadlineNote = str(b.deadlineNote, 200) || null; const startsAt = str(b.startsAt, 120) || null;
   const country = str(b.country, 2).toUpperCase() || null;
-  if (!KINDS.has(kind)) return NextResponse.json({ error: "Geçerli bir tür seçin (staj · değişim · burs)." }, { status: 400 });
+  if (!KINDS.has(kind)) return NextResponse.json({ error: "Geçerli bir tür seçin (staj · değişim · burs · kongre)." }, { status: 400 });
   if (title.length < 8) return NextResponse.json({ error: "Başlık en az 8 karakter olmalı." }, { status: 400 });
   if (organizer.length < 2) return NextResponse.json({ error: "Kurum adı gerekli." }, { status: 400 });
   if (eligibility.length < 20) return NextResponse.json({ error: "Şart özeti en az 20 karakter olmalı (kaynak metni kopyalamayın, kısa özet)." }, { status: 400 });

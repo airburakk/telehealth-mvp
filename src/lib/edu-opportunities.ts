@@ -14,16 +14,17 @@
 // Erasmus+ KA131 · TurkMSIC SCOPE · TurkMSIC SCORE · AAMC VSLO · WHO stajı. Değerlendirilip ALINMAYANLAR: TÜBİTAK 2205
 // (olimpiyat madalyası / temel bilimler — tıp kapsamı yok) · Amgen Scholars Europe (Türkiye üniversiteleri için uygunluk
 // kaynakta net değil) · DAAD RISE (tıp programı listede yok) · YTB Türkiye Bursları (yalnız uluslararası öğrenci).
-export type EduOpportunityKind = "staj" | "degisim" | "burs";
+export type EduOpportunityKind = "staj" | "degisim" | "burs" | "kongre";
 
 export const EDU_KIND_LABEL: Record<EduOpportunityKind, string> = {
   staj: "Staj / gözlemcilik",
   degisim: "Değişim programı",
   burs: "Burs / destek",
+  kongre: "Kongre / sempozyum",
 };
 /** Süzgeç çipi sırası (Fırsatlar sekmesi, 2026-09-06): Hepsi · Staj · Değişim · Burs. */
-export const EDU_KINDS = ["staj", "degisim", "burs"] as const satisfies readonly EduOpportunityKind[];
-export const EDU_KIND_SHORT: Record<EduOpportunityKind, string> = { staj: "Staj", degisim: "Değişim Programları", burs: "Burs" }; // 👤 2026-09-06 adlandırma
+export const EDU_KINDS = ["staj", "degisim", "burs", "kongre"] as const satisfies readonly EduOpportunityKind[];
+export const EDU_KIND_SHORT: Record<EduOpportunityKind, string> = { staj: "Staj", degisim: "Değişim Programları", burs: "Burs", kongre: "Kongreler" }; // 👤 2026-09-06 adlandırma
 /** ?tur= paramı → tür; bilinmeyen/eksik değer süzgeçsiz (null = Hepsi). Akış sayfasında yalnız Kariyer (öğrenci) sahnesinde okunur. */
 export function parseEduKind(raw: string | undefined): EduOpportunityKind | null {
   return (EDU_KINDS as readonly string[]).includes(raw ?? "") ? (raw as EduOpportunityKind) : null;

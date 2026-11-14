@@ -5,7 +5,7 @@ import { Check, Loader2, Plus, Trash2, X } from "lucide-react";
 import type { EduOpportunityView } from "@/lib/edu-store";
 
 // lib/edu-opportunities EDU_KIND_LABEL ile aynı sıra/etiket (client bileşen db'li modül import etmesin diye elle).
-const KIND_OPTIONS = [["burs", "Burs / destek"], ["staj", "Staj / gözlemcilik"], ["degisim", "Değişim programı"]] as const;
+const KIND_OPTIONS = [["burs", "Burs / destek"], ["staj", "Staj / gözlemcilik"], ["degisim", "Değişim programı"], ["kongre", "Kongre / sempozyum"]] as const;
 
 export function EduAdmin({ rows }: { rows: EduOpportunityView[] }) {
   const router = useRouter();
