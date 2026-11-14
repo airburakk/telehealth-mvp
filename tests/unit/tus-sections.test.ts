@@ -30,8 +30,8 @@ describe("Kariyer bölümleme", () => {
   });
 
   it("EDU tür süzgeci: üç tür, kısa çip etiketi, bilinmeyen değer süzgeçsiz", () => {
-    expect(EDU_KINDS).toEqual(["staj", "degisim", "burs"]);
-    expect(EDU_KIND_SHORT).toEqual({ staj: "Staj", degisim: "Değişim Programları", burs: "Burs" }); // 👤 2026-09-06: D ve P büyük
+    expect(EDU_KINDS).toEqual(["staj", "degisim", "burs", "kongre"]);
+    expect(EDU_KIND_SHORT).toEqual({ staj: "Staj", degisim: "Değişim Programları", burs: "Burs", kongre: "Kongreler" }); // 👤 2026-09-06: D ve P büyük
     for (const k of EDU_KINDS) expect(EDU_KIND_LABEL[k]).toBeTruthy();
     expect(parseEduKind("burs")).toBe("burs");
     expect(parseEduKind("staj")).toBe("staj");
