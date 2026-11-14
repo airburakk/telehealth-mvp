@@ -1,0 +1,12 @@
+{
+  "name": "TASLAK - Ayrı haftalık medya sunumu - DEPLOY EDİLMEDİ",
+  "active": false,
+  "nodes": [
+    { "id": "weekly-media-hook", "name": "ÖNERİLEN YENİ route - mevcut endpoint değildir", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0], "parameters": { "httpMethod": "GET", "path": "doctorium-weekly-media/:dosya", "responseMode": "responseNode", "options": {} } },
+    { "id": "weekly-blocked", "name": "Servis doğrulanana kadar 503", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.4, "position": [260, 0], "parameters": { "respondWith": "json", "responseBody": "{\"error\":\"WEEKLY_SERVING_DEPLOYMENT_NOT_VERIFIED\"}", "options": { "responseCode": 503, "responseHeaders": { "entries": [{ "name": "Cache-Control", "value": "no-store" }] } } } },
+    { "id": "weekly-candidate-proxy", "name": "BAĞLANMAMIŞ aday - yeni kart route doğrulanmalı", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "disabled": true, "position": [260, 220], "parameters": { "method": "GET", "url": "=http://kart:3000/weekly-media/{{ encodeURIComponent($json.params.dosya) }}", "options": { "timeout": 90000, "response": { "response": { "responseFormat": "file", "outputPropertyName": "data" } } } }, "retryOnFail": false, "onError": "stopWorkflow" }
+  ],
+  "connections": { "ÖNERİLEN YENİ route - mevcut endpoint değildir": { "main": [[{ "node": "Servis doğrulanana kadar 503", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": false },
+  "pinData": {}, "tags": []
+}

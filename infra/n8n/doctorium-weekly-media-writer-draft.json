@@ -1,0 +1,12 @@
+{
+  "name": "TASLAK - Ayrı haftalık değişmez writer - DEPLOY EDİLMEDİ",
+  "active": false,
+  "nodes": [
+    { "id": "weekly-write-manual", "name": "Yalnız elle taslak incelemesi", "type": "n8n-nodes-base.manualTrigger", "typeVersion": 1, "position": [0, 0], "parameters": {} },
+    { "id": "weekly-write-blocked", "name": "Doğrulanmış mount ve atomic writer bekleniyor", "type": "n8n-nodes-base.stopAndError", "typeVersion": 1, "position": [260, 0], "parameters": { "errorMessage": "WEEKLY_WRITER_DEPLOYMENT_NOT_VERIFIED: Günlük ReadWriteFile node üzerine yazabilir. Ayrı weekly mount, wx writer, servis ve mevcut auth binding doğrulanmadan dosya yazılmaz." } },
+    { "id": "weekly-write-candidate", "name": "BAĞLANMAMIŞ aday - yalnız yeni DRAFT worker", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "disabled": true, "position": [260, 220], "parameters": { "method": "POST", "url": "=http://kart:3000/rubrik/haftalik/hazirla?hafta={{ $now.plus({ weeks: 1 }).startOf('week').toISODate() }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "options": { "timeout": 30000 } }, "retryOnFail": false, "onError": "stopWorkflow" }
+  ],
+  "connections": { "Yalnız elle taslak incelemesi": { "main": [[{ "node": "Doğrulanmış mount ve atomic writer bekleniyor", "type": "main", "index": 0 }]] } },
+  "settings": { "executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": false },
+  "pinData": {}, "tags": []
+}
