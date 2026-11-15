@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "day": "2026-11-14",
+  "edition": {
+    "file": "sources/edition-2026-11-14.server.json",
+    "rawBodySha256": "f4df72e19a47882df6b9bc3cb9ea55463365371567f4ab12c52bc08ba4a12316"
+  },
+  "origin": "Metinler kullanıcının onayladığı 14 Kasım kartlarından harfiyen aktarıldı (approved/2026-11-14-orijinal). Asistan yeni metin yazmadı.",
+  "leadImage": {
+    "path": "gorseller/kapak.png",
+    "caption": "Temsili illüstrasyon · Yapay zekâ ile oluşturulmuştur"
+  },
+  "items": [
+    {
+      "sourceUrl": "https://doi.org/10.4103/rps.rps_237_25",
+      "coverCategory": "Akademik",
+      "coverTitle": "Kanser hücrelerinde hidralazin türevleri",
+      "coverDeck": "Hücre kültüründe incelenen yeni bileşikler, ileri araştırmalar için aday. İnsanlarda etkinlik henüz gösterilmedi.",
+      "detailCategory": "Akademik",
+      "detailTitle": "Hidralazin türevleri kanser hücrelerinde incelendi",
+      "detailSummary": "Yeni hidralazin türevleri, hücre kültürü ve bilgisayar modellemeleriyle değerlendirildi. 4f adlı bileşik ileri araştırmalar için aday olarak belirlendi. Bu laboratuvar bulguları, insanlarda tedavi etkinliği göstermez.",
+      "image": "gorseller/haber-1.png",
+      "sourceCheck": "Europe PMC özeti: MTT, docking, MD, ADMET; 'compound 4f as a lead scaffold for further research'. Yalnız in vitro."
+    },
+    {
+      "sourceUrl": "https://clinicaltrials.gov/study/NCT07489495",
+      "coverCategory": "İlaç & Cihaz",
+      "coverTitle": "Böbrek kanserinde Faz 3 çalışma",
+      "coverDeck": "Belzutifan ve zanzalintinib kombinasyonu inceleniyor. Tedavi sonuçları değil, çalışma kaydı.",
+      "detailCategory": "İlaç & Cihaz",
+      "detailTitle": "İleri böbrek kanserinde Faz 3 kombinasyon çalışması",
+      "detailSummary": "LITESPARK-034, ileri renal hücreli karsinomda belzutifan ve zanzalintinib kombinasyonunu belzutifan ve plaseboyla karşılaştırıyor. Amaç, genel ve hastalık ilerlemeden sağkalımı değerlendirmek; bu bir araştırma duyurusudur, tedavi sonucu değildir.",
+      "image": "gorseller/haber-2.png",
+      "sourceCheck": "ClinicalTrials.gov API v2: PHASE3, RECRUITING; kollar Belzutifan+Zanzalintinib / Belzutifan+Placebo; birincil sonlanım PFS + OS."
+    },
+    {
+      "sourceUrl": "https://www.klimik.org.tr/2026/11/13/sbu-izmir-tepecik-egitim-arastirma-hastanesi-infeksiyon-hastaliklari-ve-klinik-mikrobiyoloji-klinigi-akredite-edildi/",
+      "coverCategory": "Sektörel",
+      "coverTitle": "Tepecik’e yeniden akreditasyon",
+      "coverDeck": "Uzmanlık eğitimi için beş yıllık yeniden akreditasyon.",
+      "detailCategory": "Sektörel",
+      "detailTitle": "Tepecik’in infeksiyon kliniğine beş yıllık akreditasyon",
+      "detailSummary": "KLİMİK, Tepecik Eğitim Araştırma Hastanesi’nin İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniğinin uzmanlık eğitimi için beş yıl süreyle yeniden akredite edildiğini duyurdu. Belge 9 Kasım’daki ziyarette sunuldu.",
+      "image": "gorseller/haber-3.png",
+      "sourceCheck": "KLİMİK sayfası: 'beş yıl süreyle yeniden akredite edilmiştir'; belge 9 Kasım 2026 ziyaretinde törenle teslim."
+    },
+    {
+      "sourceUrl": "https://www.resmigazete.gov.tr/eskiler/2026/11/20261114-2.pdf",
+      "coverCategory": "Mevzuat",
+      "coverTitle": "Üniversite hastanelerine komite",
+      "coverDeck": "11971 sayılı karar, 14 Kasım Resmî Gazete’de yayımlandı.",
+      "detailCategory": "Mevzuat",
+      "detailTitle": "Üniversite hastaneleri için koordinasyon komitesi kararı",
+      "detailSummary": "Üniversite hastaneleri için koordinasyon komitesi kurulmasına ilişkin 11971 sayılı Cumhurbaşkanı Kararı, 14 Kasım tarihli ve 33430 sayılı Resmî Gazete’de yayımlandı.",
+      "image": "gorseller/haber-4.png",
+      "sourceCheck": "RG fihristi: '14 Kasım 2026 Tarihli ve 33430 Sayılı', Cumhurbaşkanı Kararları altında Karar Sayısı 11971. PDF taranmış görüntü."
+    },
+    {
+      "sourceUrl": "https://medicalxpress.com/news/2026-11-microbe-molecule-reverse-gut-boosting.html",
+      "coverCategory": "Sektörel",
+      "coverTitle": "Bağırsak onarımında N-MNA",
+      "coverDeck": "N-MNA, fare ve sineklerde incelendi. İnsanlarda yarar henüz gösterilmedi.",
+      "detailCategory": "Sektörel",
+      "detailTitle": "Bağırsak onarımında N-MNA: hayvan çalışmalarından bulgu",
+      "detailSummary": "Rutgers araştırmasında, bakterilerin ürettiği N-MNA molekülü fare ve sineklerde bağırsak onarımını destekledi; hücre deneylerinde NAD üretimine katkısı incelendi. İnsanlarda tedavi yararı henüz gösterilmedi.",
+      "image": "gorseller/haber-5.png",
+      "sourceCheck": "Medical Xpress: Rutgers Health; 'tests in mice, flies and human cells'; insan kolon hücrelerinde NAD'ın ~%22'si; insanda tedavi 'potential'."
+    },
+    {
+      "sourceUrl": "https://doi.org/10.4103/rps.rps_198_25",
+      "coverCategory": "Akademik",
+      "coverTitle": "Melanoma hücrelerinde kurkumin",
+      "coverDeck": "Hücre kültüründe deneysel bulgu; klinik tedavi yararı gösterilmiş değil.",
+      "detailCategory": "Akademik",
+      "detailTitle": "Kurkumin taşıyan miseller melanoma hücrelerinde test edildi",
+      "detailSummary": "Kurkumin yüklü dekstran stearat miselleri, B16F10 melanoma hücrelerinde serbest kurkumine kıyasla daha güçlü hücre öldürücü etki gösterdi. Çalışma hücre kültürü düzeyinde; klinik tedavi yararı gösterilmiş değil.",
+      "image": "gorseller/haber-6.png",
+      "sourceCheck": "Europe PMC özeti: Cur-Dex-SA IC50 19,66 μM vs serbest kurkumin 44,66 μM (B16F10, 48 sa); 'in vitro delivery platform'."
+    }
+  ]
+}
