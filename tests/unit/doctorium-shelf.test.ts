@@ -3,7 +3,7 @@
 // öğrenciye ekstra sekme AÇILMAZ (TUS + Kariyer EDU Kariyer'in içinde), Takvim en sonda.
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { shelfTabsFor, MODULE_TABS, TAKVIM_TAB, SHELF_EMERALD, STUDENT_LANE } from "@/lib/doctorium-shelf";
+import { shelfTabsFor, MODULE_TABS, TAKVIM_TAB, SOCIAL_ARTICLES_TAB, SHELF_EMERALD, STUDENT_LANE } from "@/lib/doctorium-shelf";
 import type { DoctoriumAudience } from "@/lib/doctorium-tiers";
 
 const hrefs = (a: DoctoriumAudience | null) => shelfTabsFor(a).map((t) => t.href);
@@ -15,6 +15,7 @@ const BASE = [
   "/doktor/doctorium?m=etkinlik",
   "/doktor/doctorium?m=kariyer",
   "/doktor/doctorium?m=mevzuat",
+  "/doktor/doctorium/sosyal-yazilar",
   "/doktor/doctorium/takvim",
 ];
 
@@ -46,7 +47,7 @@ describe("shelfTabsFor — TAM liste (B3: raf her kitlede aynı)", () => {
 
 describe("sekme tanımları", () => {
   it("anahtarlar benzersiz; etiketlerde 'hekim' yok; modül sekmeleri DB module anahtarlarını taşır; TUS/Kariyer EDU rafta YOK", () => {
-    const all = [...MODULE_TABS, TAKVIM_TAB];
+    const all = [...MODULE_TABS, SOCIAL_ARTICLES_TAB, TAKVIM_TAB];
     expect(new Set(all.map((t) => t.key)).size).toBe(all.length);
     for (const t of all) expect(t.label.toLocaleLowerCase("tr")).not.toContain("hekim");
     for (const t of MODULE_TABS) expect(t.module).toBe(t.key);
@@ -77,6 +78,6 @@ describe("sekme tanımları", () => {
   it("küme ayracı yerleri: Akışım→Akademik, İlaç→Etkinlik, Hukuk→Takvim (Takvim'den sonra sekme yok)", () => {
     const tabs = shelfTabsFor("STUDENT");
     const seps = tabs.map((t, i) => (i > 0 && t.group !== tabs[i - 1].group ? t.key : null)).filter(Boolean);
-    expect(seps).toEqual(["akademik", "etkinlik", "takvim"]);
+    expect(seps).toEqual(["akademik", "etkinlik", "sosyal-yazilar"]);
   });
 });

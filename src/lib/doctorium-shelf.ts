@@ -52,11 +52,14 @@ export const MODULE_TABS: readonly ShelfTabDef[] = [
 ];
 
 /** Takvim durağı (kullanıcı kararı 2026-08-19): modül DEĞİL ayrı ROTA — raf yine de taşır (08, EN SONDA; kimliği marka zümrüdü). */
+// 2026-11-16: owner-requested social editorial feed; no DB module or pulse count.
+export const SOCIAL_ARTICLES_TAB: ShelfTabDef = { key: "sosyal-yazilar", href: "/doktor/doctorium/sosyal-yazilar", label: "Sosyal yazılar", color: SHELF_EMERALD, group: null, module: null };
+
 export const TAKVIM_TAB: ShelfTabDef = { key: "takvim", href: "/doktor/doctorium/takvim", label: "Takvim", color: SHELF_EMERALD, group: null, module: null };
 
 /** Kitleye göre raf: dizi HERKESTE aynı; öğrencide Kariyer sekmesi öğrenci kulvarı rengini alır. Personel (null) doktor rafı. */
 export function shelfTabsFor(audience: DoctoriumAudience | null): ShelfTabDef[] {
-  const base = [...MODULE_TABS, TAKVIM_TAB];
+  const base = [...MODULE_TABS, SOCIAL_ARTICLES_TAB, TAKVIM_TAB];
   if (audience !== "STUDENT") return base;
   return base.map((t) => (t.key === "kariyer" ? { ...t, color: STUDENT_LANE } : t));
 }

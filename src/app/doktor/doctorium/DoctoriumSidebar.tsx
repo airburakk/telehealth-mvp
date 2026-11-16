@@ -40,7 +40,7 @@ import { shelfTabsFor, type ShelfColor, type ShelfModuleKey, type ShelfTabDef } 
 
 // "tercihler" yok: /doktor/doctorium/tercihler v6.49'dan beri redirect — işlevsiz yüzeyin
 // linki çizilmez (koşullu-href ilkesi); Özelleştir paneli sayfanın içinde yaşıyor.
-export type SidebarActive = ShelfModuleKey | "takvim" | "oduller" | "kaydettiklerim" | null;
+export type SidebarActive = ShelfModuleKey | "sosyal-yazilar" | "takvim" | "oduller" | "kaydettiklerim" | null;
 
 /** Raf nabzı (v6.102): modül → bugün akışa düşen içerik sayısı (lib/doctorium todayModuleCounts).
  *  null = sayaç verisi yok (raf nabızsız çizilir — geriye uyumlu). */

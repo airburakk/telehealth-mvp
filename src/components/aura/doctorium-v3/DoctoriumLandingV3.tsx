@@ -12,6 +12,7 @@ import { AcademicSection } from "./sections/Academic";
 import { CongressSection } from "./sections/Congress";
 import { DifferenceSection } from "./sections/Difference";
 import { FinalCtaSection } from "./sections/FinalCta";
+import { SocialArticlesSection } from "./sections/SocialArticles";
 import { HeroSection } from "./sections/Hero";
 import { IdentitySection } from "./sections/Identity";
 import { LegalSection } from "./sections/Legal";
@@ -50,7 +51,7 @@ export async function DoctoriumLandingV3() {
   ]);
 
   const renderers: Partial<Record<SectionId, () => ReactNode>> = {
-    hero: () => <HeroSection />,
+    hero: () => <><HeroSection /><SocialArticlesSection /></>,
     problem: () => <ProblemSection />,
     manifesto: () => <ManifestoSection />,
     personalize: () => <PersonalizeSection sample={sample} />,
