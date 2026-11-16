@@ -1,0 +1,128 @@
+"""Editoryal üretici + kapılar — ağ ve model YOK (sahte istemci, sahte kaynak okuyucu).
+
+Çalıştır (konteynerde CI): python3 -m unittest discover -s /app/karusel/editoryal -p 'test_*.py' -v
+Yerelde: python -X utf8 -m unittest discover -s infra/kart/karusel/editoryal -p "test_*.py"
+"""
+import hashlib
+import json
+import sys
+import tempfile
+import types
+import unittest
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import kapilar  # noqa: E402
+import kaynak  # noqa: E402
+import uret  # noqa: E402
+
+E = {'coverTitle': 'Yapay zekâ ve sağlık hukuku', 'coverDeck': 'Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.',
+     'detailTitle': 'Yapay zekâ sağlık hukuku kapsamında değerlendirildi',
+     'detailSummary': 'Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. '
+                      'Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor.'}
+
+
+def kapi(e, src, akis='Sektörel'):
+    return {n: ok for n, ok, _ in kapilar.check(e, {'streamLabel': akis, 'url': 'https://x'}, src)}
+
+
+class Kapilar(unittest.TestCase):
+    def test_temkin_sozcuk_siniri(self):   # 16.11: kaynakçadaki "Fırat Üniversitesi" 'rat ' sanılıyordu
+        self.assertTrue(kapi(E, 'Fırat Üniversitesi Doğu Araştırmaları Dergisi (2007).', 'Arşivden Doktrin')['temkin'])
+        for s in ('Bulgu farelerde gözlendi.', 'Treated rat model.', 'Kanser hücrelerinde etki.', 'Study in mice.'):
+            self.assertFalse(kapi(E, s)['temkin'], s)
+
+    def test_bin_kalibi(self):             # 16.11 Ebola: "11,000 cases" ↔ "11 binden fazla"
+        src = 'More than 11,000 cases have been recorded, and nearly half of those infected have died.'
+        ok = lambda ozet: kapi(dict(E, detailSummary=ozet), src)['sayilar']  # noqa: E731
+        self.assertTrue(ok('Kongo’da 11 binden fazla vaka kaydedildi; enfekte olanların yaklaşık yarısı öldü.'))
+        self.assertFalse(ok('Kongo’da 11 vaka kaydedildi ve enfekte olanların yaklaşık yarısı öldü bildirildi.'))
+        self.assertFalse(ok('Kongo’da 12 binden fazla vaka kaydedildi; enfekte olanların yarısı öldü bildirildi.'))
+
+    def test_yasak_sozcuk_ve_kaynak_istisnasi(self):
+        self.assertFalse(kapi(dict(E, coverDeck='Mucize bir yaklaşım sağlık hukukunda ele alınıyor, deniyor.'), 'x')['yasak_sozcuk'])
+        akr = dict(E, coverDeck='Klinik beş yıllık akreditasyon aldı; karar kurum tarafından duyuruldu.')
+        self.assertFalse(kapi(akr, 'Klinik yeni bir dönem başlattı.')['yasak_sozcuk'])
+        self.assertTrue(kapi(akr, 'The clinic was accredited for five years.')['yasak_sozcuk'])
+
+    def test_uzunluk_ve_baglanti(self):
+        self.assertFalse(kapi(dict(E, detailSummary='Kısa.'), 'x')['uzunluk'])
+        self.assertFalse(kapi(dict(E, coverDeck=E['coverDeck'] + ' https://ornek.org'), 'x')['baglanti_yok'])
+
+
+# ---- üretici: sahte istemci ----
+def edisyon(kok: Path) -> Path:
+    items = [{'url': f'https://ornek.org/{i}', 'title': f'Başlık {i}', 'sourceName': 'Örnek', 'streamLabel': 'Sektörel',
+              'summaryLong': 'Kurum yeni bir sağlık hukuku değerlendirmesi yayımladı.'} for i in range(1, 7)]
+    body = json.dumps({'items': items}, ensure_ascii=False)
+    d = kok / 'girdi'
+    d.mkdir()
+    (d / 'edition.json').write_text(json.dumps({'day': '2026-11-16', 'rawBodyUtf8': body,
+                                                'rawBodySha256': hashlib.sha256(body.encode()).hexdigest()}), encoding='utf-8')
+    return d
+
+
+class SahteIstemci:
+    """Taslak isteğine E döner; doğrulamada `kotu_oge` (1 tabanlı) için 'abartili' etiketi verir."""
+    def __init__(self, kotu_oge=None):
+        self.kotu, self.cagri, self.oge = kotu_oge, [], 0
+        self.messages = types.SimpleNamespace(parse=self.parse)
+
+    def parse(self, *, output_format, messages, **_):
+        self.cagri.append(output_format.__name__)
+        if output_format.__name__ == 'Taslak':
+            self.oge = int(messages[0]['content'].split('KAYNAK METNİ:\n')[1].split('Başlık ')[1][0])
+            out = output_format(**E)
+        else:
+            etiket = 'abartili' if self.oge == self.kotu else 'desteklenir'
+            out = output_format(iddialar=[{'alan': 'detailSummary', 'iddia': 'x', 'etiket': etiket, 'gerekce': 'y'}])
+        return types.SimpleNamespace(usage=types.SimpleNamespace(input_tokens=100, output_tokens=50),
+                                     stop_reason='end_turn', parsed_output=out)
+
+
+class Uretici(unittest.TestCase):
+    def setUp(self):
+        self._t = tempfile.TemporaryDirectory()
+        self.kok = Path(self._t.name)
+        self.girdi, self.cikti = edisyon(self.kok), self.kok / 'cikti'
+        self._collect = kaynak.collect
+        kaynak.collect = lambda item, cache: {'edition': f"Başlık {item['title'][-1]}\n{item['summaryLong']}",
+                                              'fetched': '', 'fetchedOk': False, 'error': None}
+
+    def tearDown(self):
+        kaynak.collect = self._collect
+        self._t.cleanup()
+
+    def test_alti_oge_gecer_ve_cizici_semasi_dogru(self):
+        qa = uret.calistir(self.girdi, self.cikti, SahteIstemci(), 'claude-haiku-5-5')
+        self.assertEqual(qa['gun'], 'GECTI')
+        ed = json.loads((self.cikti / 'editorial.json').read_text(encoding='utf-8'))
+        self.assertEqual(ed['leadImage']['path'], 'gorseller/kapak.png')
+        self.assertEqual([i['image'] for i in ed['items']], [f'gorseller/haber-{n}.png' for n in range(1, 7)])
+        for i in ed['items']:   # render.py'nin zorunlu alanları
+            for k in ('coverTitle', 'coverDeck', 'detailTitle', 'detailSummary', 'image', 'coverCategory', 'detailCategory'):
+                self.assertTrue(i[k].strip(), k)
+        self.assertEqual(qa['cagri'], 12)   # 6 taslak + 6 doğrulama
+
+    def test_dogrulamadan_kalan_oge_gunu_dusurur_editoryal_yazilmaz(self):
+        ist = SahteIstemci(kotu_oge=3)
+        qa = uret.calistir(self.girdi, self.cikti, ist, 'claude-haiku-5-5')
+        self.assertEqual(qa['gun'], 'KALDI')
+        self.assertFalse((self.cikti / 'editorial.json').exists())
+        self.assertEqual(len(qa['ogeler'][2]['denemeler']), uret.DENEME_SAYISI)
+        self.assertTrue((self.cikti / 'QA-editoryal.json').exists())
+
+    def test_bozuk_edisyon_model_cagrilmadan_reddedilir(self):
+        p = self.girdi / 'edition.json'
+        d = json.loads(p.read_text(encoding='utf-8'))
+        d['rawBodySha256'] = '0' * 64
+        p.write_text(json.dumps(d), encoding='utf-8')
+        ist = SahteIstemci()
+        with self.assertRaises(uret.Hata):
+            uret.calistir(self.girdi, self.cikti, ist, 'claude-haiku-5-5')
+        self.assertEqual(ist.cagri, [])
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -16,6 +16,8 @@
 // v6.335 (2026-10-07): + İÇERİK TAKVİMİ YAYIN uçları (lib/rubrik-yayin.mjs): POST /rubrik/bugun[?kuru=1] · POST /rubrik/sonuc · GET|HEAD /rubrik/dosya/<gün>/<ad>.png — bugünün ONAYLI rubrik
 // içeriğini Vercel'den alır (CONTENT_PLAN_TOKEN YALNIZ burada; n8n'e girmez), çizer, sunar, sonucu iletir. Jeton yoksa uçlar 503 (DORMANT). Mevcut uçlara dokunulmadı.
 // 2026-11-15: + Instagram karuseli v3 çizici ucu (lib/karusel-v3.mjs + karusel/render.py; Python + Pillow + RAQM). Yayınlamaz; mevcut uçlara dokunulmadı.
+// 2026-11-16: + karusel editoryal ucu POST /karusel/editoryal (lib/karusel-editoryal.mjs + karusel/editoryal/uret.py; Haiku) ve
+// /karusel/uret'e isteğe bağlı kalite kapısı + GET /karusel/kapi/<gün>. ANTHROPIC_API_KEY yoksa editoryal ucu 503 (DORMANT). Yayınlamaz.
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -27,6 +29,7 @@ import * as video from "./lib/social-video.mjs";
 import * as carousel from "./lib/social-carousel.mjs";
 import { createRubrikYayin } from "./lib/rubrik-yayin.mjs";
 import { createKarusel } from "./lib/karusel-v3.mjs";
+import { createKaruselEditoryal } from "./lib/karusel-editoryal.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const TOKEN = process.env.SOCIAL_DIGEST_TOKEN ?? "";
@@ -176,8 +179,19 @@ const karusel = createKarusel({
   log: (m) => console.log(`[kart] ${m}`),
 });
 
+// Karusel editoryal ucu (2026-11-16, plan adım 5): POST /karusel/editoryal — anahtarın DEĞERİ bu dosyada okunmaz, yalnız varlığı;
+// Python alt süreci ortamdan alır. Anahtar yoksa uç 503 (DORMANT) — mevcut uçlar etkilenmez.
+const karuselEditoryal = createKaruselEditoryal({
+  dir: SOSYAL_DIR,
+  token: TOKEN,
+  modelHazir: Boolean((process.env.ANTHROPIC_API_KEY ?? "").trim()),
+  mesgul: () => sosyal.durum().durum === "calisiyor",
+  log: (m) => console.log(`[kart] ${m}`),
+});
+
 http.createServer(async (req, res) => {
   if (req.url === "/saglik") { res.writeHead(200); return res.end("ok"); }
+  if (await karuselEditoryal.handle(req, res)) return;
   if (await karusel.handle(req, res)) return;
   if (await rubrik.handle(req, res)) return;
   if (await rubrikYayin.handle(req, res)) return;
