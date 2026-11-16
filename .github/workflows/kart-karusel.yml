@@ -1,0 +1,85 @@
+# Kart servisi — karusel v3 kabul kapısı (Doctorium Instagram karusel planı, adım 3 · 2026-11-15).
+# NEDEN CI'da: kapanış kartının piksel kilidi Linux + RAQM'de tutar; geliştirici bilgisayarında Docker/WSL yok.
+# Ne yapar (YAYIN YOK, dış ağa istek YOK — yalnız kendi konteynerine):
+#   1) infra/kart imajını kurar (sunucuya giden imajın AYNISI);
+#   2) kabul.py: 14 Kasım girdisiyle 8 kartı çizer → kapanış hash'i birebir + 01–07 onaylı orijinallere yakınlık;
+#   3) uçtan uca: konteyneri CI'ya özgü SAHTE jetonla başlatır → 401/400 kapıları → POST /karusel/uret → GET dosya.
+# Çıktılar (kartlar + fark haritaları + kabul.json) yapıt olarak yüklenir — insan gözüyle bakılabilsin.
+name: Kart karusel v3
+
+on:
+  pull_request:
+    paths: ["infra/kart/**", ".github/workflows/kart-karusel.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kabul:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      FIKSTUR: infra/kart/test/karusel-kabul/2026-11-14
+      CI_JETON: ci-yalniz-sahte-jeton-uretimde-kullanilmaz
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: İmajı kur
+        run: docker build -t kart-ci infra/kart
+
+      - name: Kabul ölçütü (14 Kasım)
+        run: |
+          mkdir -p cikti && chmod 777 cikti
+          docker run --rm \
+            -v "$PWD/infra/kart/test/karusel-kabul:/kabul:ro" -v "$PWD/cikti:/cikti" \
+            kart-ci python3 /kabul/kabul.py /app/karusel/render.py /kabul/2026-11-14 /cikti
+
+      - name: Uçtan uca — POST /karusel/uret
+        run: |
+          docker run -d --name kart -p 3000:3000 -e SOCIAL_DIGEST_TOKEN="$CI_JETON" kart-ci
+          for i in $(seq 1 30); do curl -fsS http://localhost:3000/saglik >/dev/null 2>&1 && break; sleep 1; done
+          python3 - <<'PY'
+          import base64, json, os, pathlib
+          f = pathlib.Path(os.environ["FIKSTUR"]) / "girdi"
+          govde = {"edition": json.loads((f / "edition.json").read_text(encoding="utf-8")),
+                   "editorial": json.loads((f / "editorial.json").read_text(encoding="utf-8")),
+                   "gorseller": {p.name: base64.b64encode(p.read_bytes()).decode() for p in sorted((f / "gorseller").glob("*.png"))}}
+          pathlib.Path("govde.json").write_text(json.dumps(govde), encoding="utf-8")
+          PY
+          kod() { curl -s -o yanit.json -w '%{http_code}' "$@"; }
+          # Kapılar: jetonsuz 401 · bozuk gövde 400 · üretilmemiş gün 404
+          [ "$(kod -X POST --data-binary @govde.json http://localhost:3000/karusel/uret)" = 401 ]
+          [ "$(kod -X POST -H "Authorization: Bearer $CI_JETON" --data-binary '{"x":1}' http://localhost:3000/karusel/uret)" = 400 ]
+          [ "$(kod http://localhost:3000/karusel/dosya/2026-11-14/01.png)" = 404 ]
+          # Asıl iş
+          k=$(kod -X POST -H "Authorization: Bearer $CI_JETON" -H 'Content-Type: application/json' --data-binary @govde.json http://localhost:3000/karusel/uret)
+          echo "uret → $k"; head -c 600 yanit.json; echo
+          [ "$k" = 200 ]
+          mkdir -p cikti/uc
+          for n in 01 02 03 04 05 06 07 08; do
+            curl -fsS -o "cikti/uc/$n.png" "http://localhost:3000/karusel/dosya/2026-11-14/$n.png"
+          done
+          # Sunulan dosyalar yanıttaki hash'lerle ve kabul adımında çizilenlerle bayt bayt aynı olmalı (deterministik çizim)
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          y = json.loads(pathlib.Path("yanit.json").read_text(encoding="utf-8"))
+          for d in y["dosyalar"]:
+              uc = hashlib.sha256(pathlib.Path("cikti/uc", d["ad"]).read_bytes()).hexdigest()
+              kabul = hashlib.sha256(pathlib.Path("cikti/kartlar", d["ad"]).read_bytes()).hexdigest()
+              assert uc == d["sha256"] == kabul, d["ad"]
+          assert y["qa"]["safeToPublish"] is False and y["qa"]["raqm"] is True
+          print("uçtan uca: 8/8 dosya hash'i tutarlı · safeToPublish=false · RAQM açık")
+          PY
+
+      - name: Konteyner günlüğü
+        if: always()
+        run: docker logs kart 2>&1 | tail -50 || true
+
+      - name: Yapıtları yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: karusel-v3-kabul
+          path: cikti/
+          retention-days: 14

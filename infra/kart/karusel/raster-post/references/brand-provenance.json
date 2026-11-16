@@ -1,0 +1,22 @@
+{
+  "reference": "doctorium-article-cover-brand-v2.png",
+  "library_file_id": "libfile_f448bced37288191a1a31245129a345a",
+  "original_draft_checked": "doctorium-article-cover.png",
+  "original_draft_has_globe": false,
+  "brand_revision_has_globe": true,
+  "asset_method": "Exact raster crop from the user-selected existing Article branding; original standalone master not found",
+  "brand_crop": [
+    125,
+    97,
+    374,
+    154
+  ],
+  "globe_crop": [
+    129,
+    98,
+    184,
+    154
+  ],
+  "sampled_background_hex": "#031610",
+  "feather": "3 px outer edge only; logo/wordmark glyph pixels unmodified"
+}

@@ -15,6 +15,7 @@
 // v6.331 (2026-10-06): LinkedIn videosu 16:9 YATAY tam render (lib/social-video.mjs reelHtml(…, "yatay"); ikinci Playwright geçişi) — Instagram Reel'i 9:16 kalır.
 // v6.335 (2026-10-07): + İÇERİK TAKVİMİ YAYIN uçları (lib/rubrik-yayin.mjs): POST /rubrik/bugun[?kuru=1] · POST /rubrik/sonuc · GET|HEAD /rubrik/dosya/<gün>/<ad>.png — bugünün ONAYLI rubrik
 // içeriğini Vercel'den alır (CONTENT_PLAN_TOKEN YALNIZ burada; n8n'e girmez), çizer, sunar, sonucu iletir. Jeton yoksa uçlar 503 (DORMANT). Mevcut uçlara dokunulmadı.
+// 2026-11-15: + Instagram karuseli v3 çizici ucu (lib/karusel-v3.mjs + karusel/render.py; Python + Pillow + RAQM). Yayınlamaz; mevcut uçlara dokunulmadı.
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -25,6 +26,7 @@ import { createRubrik } from "./lib/social-rubrik.mjs";
 import * as video from "./lib/social-video.mjs";
 import * as carousel from "./lib/social-carousel.mjs";
 import { createRubrikYayin } from "./lib/rubrik-yayin.mjs";
+import { createKarusel } from "./lib/karusel-v3.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const TOKEN = process.env.SOCIAL_DIGEST_TOKEN ?? "";
@@ -165,8 +167,18 @@ const rubrikYayin = createRubrikYayin({
   log: (m) => console.log(`[kart] ${m}`),
 });
 
+// Instagram karuseli v3 çizici ucu (2026-11-15): POST /karusel/uret · GET|HEAD /karusel/dosya/<gün>/<01-08>.png — Python + Pillow
+// (karusel/render.py). Dosyalar <SOSYAL_DIR>/karusel/<gün>/ (sosyal ve rubrik klasörlerinden AYRI). Mevcut uçlara dokunulmadı.
+const karusel = createKarusel({
+  dir: SOSYAL_DIR,
+  token: TOKEN,
+  mesgul: () => sosyal.durum().durum === "calisiyor",
+  log: (m) => console.log(`[kart] ${m}`),
+});
+
 http.createServer(async (req, res) => {
   if (req.url === "/saglik") { res.writeHead(200); return res.end("ok"); }
+  if (await karusel.handle(req, res)) return;
   if (await rubrik.handle(req, res)) return;
   if (await rubrikYayin.handle(req, res)) return;
   if (await sosyal.handle(req, res)) return;

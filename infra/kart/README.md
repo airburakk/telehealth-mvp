@@ -75,6 +75,16 @@ Faz 3 otomasyonunun (n8n) içerikle konuşacağı **tek yüz**: kart bugünün O
 - Dağıtım: yeni dosya `lib/rubrik-yayin.mjs` + `server.mjs` (compose değişmez). **Jeton girilmeden dağıtım davranışı DEĞİŞTİRMEZ** (uçlar 503). Aktivasyon (👤 onaylı, ayrı adım): `.env.kart`'a `CONTENT_PLAN_TOKEN` + aynı değer Vercel `doctorium` env'ine + yeniden yayın.
 - Testler: `npx vitest run tests/unit/kart-rubrik-yayin.test.ts` — saf yardımcılar · KURU (`bak` ASLA `al`) · canlı (`al`, Türkiye günü, en fazla bir kez) · render hatası/taşma/bozuk model → YAYIN HATASI · Vercel hata eşlemesi · `sonuc` beyaz liste + aktarım · dosya ucu (yalnız listeli) · saklama + sosyal izolasyonu · jeton sızıntısı.
 
+## Instagram karuseli v3 — `POST /karusel/uret` · `GET|HEAD /karusel/dosya/<gün>/<01-08>.png` (2026-11-15, karusel planı adım 3)
+
+- **YAYINLAMAZ, içerik ÜRETMEZ.** n8n'in hazırladığı edisyon + editoryal katman + 7 görsel (`kapak.png`, `haber-1..6.png`) gelir; onaylı v3 tasarımıyla 8 kart (kapak · 6 haber · yeşil kapanış) 1080×1350 PNG çizilir. Kalite kapısı ve yayın AYRI adımlardır.
+- **Çizici Python + Pillow (RAQM):** `karusel/render.py`; `karusel/raster-post/` + `karusel/post-carousel-integration/` Atölye paketinin **BAYT BAYT kopyasıdır, burada düzenlenmez** (değişiklik Atölye'de yapılıp yeniden kopyalanır). Kapanış kartı ana kopya piksel hash'ini TUTMAK ZORUNDA — tutmazsa çıkış 3 → 500, dosya yayımlanmaz. RAQM'siz ortamda (Windows) bu kilit tutmaz; doğrulama yalnız konteynerde.
+- **Kapı:** Bearer `SOCIAL_DIGEST_TOKEN` (rubrik/render ile aynı; boşsa 503). 07:55 sosyal işi sürerken 503; aynı anda tek karusel işi (429). Gövde ≤ 40 MB, görsel başına ≤ 8 MB, PNG imzası zorunlu. Çizici reddi (sığmadı, URL/edisyon uyuşmadı) 422.
+- **Dosyalar:** `<SOSYAL_DIR>/karusel/<gün>/01..08.png` + `contact.png` + `QA.json` + `bitti.json` (EN SON yazılır; dosya ucu yalnız orada listeli 01–08'i sunar, jetonsuz — Instagram kimliksiz çeker). Son 7 gün tutulur. Sosyal (`<gün>/`) ve rubrik (`rubrik/`) klasörlerinden ayrıdır; onların temizliği bu klasöre dokunmaz.
+- **Kabul (CI):** `.github/workflows/kart-karusel.yml` — imajı kurar, `test/karusel-kabul/kabul.py` ile 14 Kasım girdisini çizip onaylı orijinallerle (`onayli/*.webp`, kayıplı) karşılaştırır, ardından konteyneri SAHTE jetonla başlatıp uçtan uca `POST`/`GET` dener. Fark haritaları yapıt olarak yüklenir.
+- Testler: `npx vitest run tests/unit/kart-karusel-v3.test.ts` (sahte çizici: kapılar · 422/500 eşlemesi · yarım iş görünmezliği · dosya adı beyaz listesi).
+- Dağıtım: imaj büyür (python3-pil · libraqm0 · fonts-urw-base35 · fonts-dejavu-core). Jeton sunucuda zaten tanımlı olduğundan dağıtımla uç **çağrılabilir hale gelir**, ama kimse çağırmadıkça davranış değişmez (n8n akışı ayrı 👤 onayı).
+
 ## Üretim özellikleri
 
 - Hikâye: kart 9 sn + içerik başına 12 sn; hareketsiz kare + kesintisiz müzik dilimi; açıklama = seçkideki `summaryLong` (yedek cümle dâhil). Reel A: yalnız başlık + kaynak, 107 BPM vuruş ızgarası (`assets/beatgrid.json`).

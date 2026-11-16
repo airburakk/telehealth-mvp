@@ -1,0 +1,39 @@
+{
+  "kind": "kullanici-onayli-orijinal-kartlar",
+  "day": "2026-11-14",
+  "origin": "Sohbet eki (2026-11-15), kullanıcı: \"istediğim kalite bu\"",
+  "files": [
+    {
+      "name": "01.webp",
+      "sha256": "3f6e0048d5b42ddf18e60f0241fea2b29aac64423953e511dd39ed49e1a5b009"
+    },
+    {
+      "name": "02.webp",
+      "sha256": "f0694eea728d131ea8b8f54d26096d5fbc9f85e795db52af811c68038b01c753"
+    },
+    {
+      "name": "03.webp",
+      "sha256": "955e8a1019996aba86fb7aaf99b8123796e699edf6e58318f81a576567b97bbe"
+    },
+    {
+      "name": "04.webp",
+      "sha256": "90ca651c82c6ee69406d78ac3cecab54b1f44390c970a8e1abb3145e8d289a16"
+    },
+    {
+      "name": "05.webp",
+      "sha256": "98ed40f64aaf67e3ae0ad981c9ba241ee4094d082fdba8f853552642e567458e"
+    },
+    {
+      "name": "06.webp",
+      "sha256": "838293b1c19af666c0dcc4d276fdf474ec7405e40216769cbc0f930f5997ebae"
+    },
+    {
+      "name": "07.webp",
+      "sha256": "ca8609a335f2d879b664aac6af8d0b816d12ff4ea70b8e879885b1bd1d0aa24f"
+    },
+    {
+      "name": "08.webp",
+      "sha256": "e03938b0b1eca18decbf7351a369b5067101adff089911c4ea59afa4a372798c"
+    }
+  ]
+}
