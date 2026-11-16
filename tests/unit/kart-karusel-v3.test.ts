@@ -31,8 +31,9 @@ let kok: string;
 let sunucu: http.Server;
 let taban: string;
 
-async function kur(o: { token?: string; mesgul?: () => boolean; cizici?: Cizici } = {}) {
-  const k = createKarusel({ dir: kok, token: o.token ?? JETON, mesgul: o.mesgul, cizici: o.cizici ?? basariliCizici });
+type Kapici = (girdi: string, cikti: string, edition: string) => Promise<{ kod: number; stdout: string; stderr: string }>;
+async function kur(o: { token?: string; mesgul?: () => boolean; cizici?: Cizici; kapici?: Kapici } = {}) {
+  const k = createKarusel({ dir: kok, token: o.token ?? JETON, mesgul: o.mesgul, cizici: o.cizici ?? basariliCizici, kapici: o.kapici });
   sunucu = http.createServer(async (req, res) => { if (!(await k.handle(req, res))) { res.writeHead(418); res.end(); } });
   await new Promise<void>((r) => sunucu.listen(0, "127.0.0.1", r));
   taban = `http://127.0.0.1:${(sunucu.address() as AddressInfo).port}`;
@@ -139,5 +140,65 @@ describe("başarılı iş + dosya sunumu", () => {
     await kur();
     expect((await fetch(`${taban}/bulten.png`)).status).toBe(418);
     expect((await fetch(`${taban}/karusel/uret`)).status).toBe(405);
+  });
+});
+
+// Kalite kapısı (karusel planı adım 5, 2026-11-16) — gerçek kalite_kapisi.py'nin Python testleri karusel/editoryal/test_*.py'de;
+// burada uç sözleşmesi: kapı yalnız `kapi` gelince koşar, karar FAIL-CLOSED, eski GEÇTİ kararı yeniden çizimde taşınmaz.
+describe("kalite kapısı (isteğe bağlı)", () => {
+  const KAPI = { qaEditoryal: { gun: "GECTI" }, qaGorsel: { gorseller: [] } };
+  const kapiKarar = (karar: object | null, kod = 0): Kapici => async (girdi) => {
+    expect(JSON.parse(fs.readFileSync(path.join(girdi, "QA-editoryal.json"), "utf8"))).toEqual(KAPI.qaEditoryal);
+    if (karar) fs.writeFileSync(path.join(girdi, "QA.json"), JSON.stringify(karar));
+    return { kod, stdout: "", stderr: "" };
+  };
+  const kapiOku = (jeton: string | null = JETON) =>
+    fetch(`${taban}/karusel/kapi/${GUN}`, { headers: jeton ? { authorization: `Bearer ${jeton}` } : {} });
+
+  it("kapi verilmezse kapı koşmaz, yanıtta kapi:null, okuma 404", async () => {
+    let cagrildi = false;
+    await kur({ kapici: async () => { cagrildi = true; return { kod: 0, stdout: "", stderr: "" }; } });
+    const y = await (await uret(govde())).json();
+    expect(y.kapi).toBeNull();
+    expect(cagrildi).toBe(false);
+    expect((await kapiOku()).status).toBe(404);
+  });
+  it("GEÇTİ: karar + mühür döner, Bearer'lı okunur; jetonsuz 401", async () => {
+    await kur({ kapici: kapiKarar({ karar: "GECTI", muhur: "m".repeat(64), sorunlar: [] }) });
+    const y = await (await uret(govde({ kapi: KAPI }))).json();
+    expect([y.kapi.karar, y.kapi.muhur]).toEqual(["GECTI", "m".repeat(64)]);
+    expect((await kapiOku(null)).status).toBe(401);
+    const k = await kapiOku();
+    expect(k.status).toBe(200);
+    expect((await k.json()).muhur).toBe("m".repeat(64));
+    expect(JSON.parse(fs.readFileSync(path.join(kok, "karusel", GUN, "bitti.json"), "utf8")).kapi).toEqual({ karar: "GECTI", muhur: "m".repeat(64) });
+    expect((await fetch(`${taban}/karusel/dosya/${GUN}/kapi.json`)).status).toBe(404);   // dosya ucundan sızmaz
+  });
+  it("fail-closed: KALDI · çıkış 0 ama karar yok · kapı çöktü → hepsi KALDI, mühür yok", async () => {
+    for (const [kapici, sorun] of [
+      [kapiKarar({ karar: "KALDI", muhur: null, sorunlar: ["öğe 3: ikinci model doğrulaması temiz değil"] }, 1), "öğe 3"],
+      [kapiKarar(null, 0), "kapı çalışmadı"],
+      [kapiKarar({ karar: "GECTI", muhur: "m".repeat(64) }, -1), "GECTI"],   // çıkış ≠ 0 ise dosyadaki GEÇTİ'ye güvenilmez
+    ] as const) {
+      await kur({ kapici });
+      const y = await (await uret(govde({ kapi: KAPI }))).json();
+      expect(y.kapi.karar).toBe("KALDI");
+      expect(y.kapi.muhur).toBeNull();
+      if (sorun !== "GECTI") expect(y.kapi.sorunlar.join(" ")).toContain(sorun);
+      await new Promise<void>((x) => sunucu.close(() => x()));
+    }
+    await kur();
+  });
+  it("kapısız yeniden çizim eski GEÇTİ kararını taşımaz", async () => {
+    await kur({ kapici: kapiKarar({ karar: "GECTI", muhur: "m".repeat(64), sorunlar: [] }) });
+    await uret(govde({ kapi: KAPI }));
+    expect((await kapiOku()).status).toBe(200);
+    await uret(govde());
+    expect((await kapiOku()).status).toBe(404);
+  });
+  it("bozuk kapi gövdesi 400", async () => {
+    await kur();
+    expect((await uret(govde({ kapi: { qaEditoryal: {} } }))).status).toBe(400);
+    expect((await uret(govde({ kapi: [] }))).status).toBe(400);
   });
 });

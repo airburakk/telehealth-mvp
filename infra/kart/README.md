@@ -85,6 +85,18 @@ Faz 3 otomasyonunun (n8n) içerikle konuşacağı **tek yüz**: kart bugünün O
 - Testler: `npx vitest run tests/unit/kart-karusel-v3.test.ts` (sahte çizici: kapılar · 422/500 eşlemesi · yarım iş görünmezliği · dosya adı beyaz listesi).
 - Dağıtım: imaj büyür (python3-pil · libraqm0 · fonts-urw-base35 · fonts-dejavu-core). Jeton sunucuda zaten tanımlı olduğundan dağıtımla uç **çağrılabilir hale gelir**, ama kimse çağırmadıkça davranış değişmez (n8n akışı ayrı 👤 onayı).
 
+## Karusel editoryal + kalite kapısı — `POST /karusel/editoryal` · `/karusel/uret` + `kapi` · `GET /karusel/kapi/<gün>` (2026-11-16, karusel planı adım 5)
+
+İnsan onayı YOK (👤 15.11 "gözle kontrol yok tam otomasyon"); insanın yerini deterministik kapılar + ikinci model doğrulaması + mühür alır. Her parça **fail-closed**: bir şey eksik/uyuşmaz → KALDI → o gün karusel yok, 07:50 tek kart yayınlanır.
+
+- **`POST /karusel/editoryal {edition}`** → `karusel/editoryal/uret.py` (Haiku 5.5, `CAROUSEL_EDITORIAL_MODEL`): öğe başına kaynak metni (Europe PMC · ClinicalTrials.gov · Resmî Gazete fihristi · HTML paragrafları; okunamazsa yalnız edisyon metni) → taslak → `kapilar.py` (uzunluk · sayı · temkin · yasak sözcük · bağlantı · iç ses · kişi adı · mevzuat künyesi) → ikinci model doğrulaması (her iddia `desteklenir` olmalı) → en çok 3 deneme. 6/6 geçmezse `editorial: null`. Yanıt `{gun, karar, editorial, qaEditoryal}`; iz `<SOSYAL_DIR>/karusel-editoryal/<gün>/` (QA + editorial; **kaynak sayfa önbelleği iz'e girmez**). Ölçüm (Atölye, 13–16 Kasım): ≈0,011–0,020 $/gün, 87–126 sn.
+- **`ANTHROPIC_API_KEY` yoksa uç 503 (DORMANT)** — `.env.kart`'a 👤 koyar (asistan anahtar girmez/kopyalamaz). Değer Node'da okunmaz, yalnız varlığı; alt süreç ortamdan alır, günlüğe yazılmaz. Çağrı uygulamanın `trackedCreate` sayacına (AiUsageDaily) **GİRMEZ** — maliyet QA'daki `tahminiUsd` + Console'dan izlenir.
+- **`POST /karusel/uret` gövdesine `kapi: {qaEditoryal, qaGorsel}`** eklenirse çizimden SONRA `karusel/editoryal/kalite_kapisi.py` koşar (model çağırmaz): edisyon ↔ editoryal ↔ görsel QA ↔ çizim QA ↔ PNG'ler hash'lerle bağlanır; 6/6 öğe temiz, 7/7 görsel denetlenmiş (yedek yalnız `onayli`), 8/8 PNG 1080×1350, kapanış kilidi. GEÇTİ = çıkış 0 **ve** karar GECTI **ve** mühür. Mühür = `sha256(editorial.json ‖ 8 PNG hash ‖ edisyon rawBodySha256)`; yayın adımı `muhur_dogrula()` ile dosyaları YENİDEN hash'ler. `kapi` verilmezse davranış eskisiyle aynı (`kapi: null`); kapısız yeniden çizim eski GEÇTİ kararını taşımaz.
+- **`GET /karusel/kapi/<gün>`** (Bearer) — günün kararı; 07:50 akışının "karusel GEÇTİ ise tek kartı atla" okuması (plan adım 8) içindir.
+- Görsel QA (`qaGorsel`) şeması Atölye `gorsel.py` çıktısıdır; görsel ÜRETİMİ burada YOK (Higgsfield API anahtarı bekleniyor).
+- Testler: Python `karusel/editoryal/test_*.py` (sahte istemci; CI'da imajın sanal ortamında) · `npx vitest run tests/unit/kart-karusel-editoryal.test.ts tests/unit/kart-karusel-v3.test.ts` · CI uçtan uca: anahtarsız 503 + gerçek kapı GEÇTİ/tahrifatta KALDI + mührün indirilen dosyalarla yeniden doğrulanması.
+- Kaynak: Atölye `sources/karusel/` (deneme alanı). Bu kopya **üretim kopyasıdır**; kapı kuralı değişikliği burada yapılır ve testlenir.
+
 ## Üretim özellikleri
 
 - Hikâye: kart 9 sn + içerik başına 12 sn; hareketsiz kare + kesintisiz müzik dilimi; açıklama = seçkideki `summaryLong` (yedek cümle dâhil). Reel A: yalnız başlık + kaynak, 107 BPM vuruş ızgarası (`assets/beatgrid.json`).
@@ -107,6 +119,9 @@ Faz 3 otomasyonunun (n8n) içerikle konuşacağı **tek yüz**: kart bugünün O
 | `SOCIAL_DIGEST_URL` | `https://doctorium.tr/api/social-digest` | |
 | `CONTENT_PLAN_TOKEN` | — | (v6.335) `.env.kart`'ta; Vercel `doctorium` env'indeki ile AYNI değer; n8n'e girmez, günlüğe yazılmaz. **Boşsa `/rubrik/bugun` + `/rubrik/sonuc` 503 (DORMANT)** |
 | `CONTENT_PLAN_URL` | `https://doctorium.tr/api/social-calendar/yayin` | (v6.335) yayın planı ucu |
+| `ANTHROPIC_API_KEY` | — | (2026-11-16) `.env.kart`'ta 👤; **boşsa `/karusel/editoryal` 503 (DORMANT)**; günlüğe yazılmaz |
+| `CAROUSEL_EDITORIAL_MODEL` | `claude-haiku-5-5` | editoryal üretici + doğrulayıcı modeli |
+| `KARUSEL_PY` | `/opt/karusel-py/bin/python` | imajda sabit (anthropic + pydantic sanal ortamı); çizici sistem `python3`'ünde kalır |
 | `SOSYAL_DIR` | `/tmp/sosyal` | çıktı kökü (konteyner içi geçici) |
 | `SOSYAL_MUZIK` | `/varlik/muzik.mp3` | **repoda YOK** (boyut/lisans); sunucuda volume |
 | `SOSYAL_ISCI` | `2` | Reel için paralel Chromium sayfası (2 vCPU ölçümü) |

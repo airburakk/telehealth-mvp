@@ -5,11 +5,16 @@
 # Müzik İMAJA GİRMEZ: compose volume'u `./kart-varlik:/varlik:ro` (README) — dağıtımda kaybolmaz, lisans/boyut repo dışında kalır.
 # 2026-11-15: + karusel v3 çizicisi (karusel/render.py): python3-pil + libraqm0 (RAQM olmadan kapanış kartının piksel kilidi
 # tutmaz) + paketin varsayılan yollarındaki yazı tipleri (/usr/share/fonts/opentype/urw-base35 · /usr/share/fonts/truetype/dejavu).
+# 2026-11-16: + karusel editoryal üreticisi (karusel/editoryal/uret.py): anthropic + pydantic AYRI sanal ortamda (/opt/karusel-py,
+# --system-site-packages) — çizicinin sistem python3'ü DEĞİŞMEZ. Sürümler sabit (Atölye 13–16 Kasım ölçümü bu sürümlerle).
 FROM mcr.microsoft.com/playwright:v1.55.0-noble
 WORKDIR /app
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ffmpeg python3 python3-pil libraqm0 fonts-urw-base35 fonts-dejavu-core \
+ && apt-get install -y --no-install-recommends ffmpeg python3 python3-pil python3-venv libraqm0 fonts-urw-base35 fonts-dejavu-core \
  && rm -rf /var/lib/apt/lists/*
+RUN python3 -m venv --system-site-packages /opt/karusel-py \
+ && /opt/karusel-py/bin/pip install --no-cache-dir anthropic==0.116.0 pydantic==2.13.4
+ENV KARUSEL_PY=/opt/karusel-py/bin/python
 RUN npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1.55.0 >/dev/null
 COPY server.mjs .
 COPY lib ./lib

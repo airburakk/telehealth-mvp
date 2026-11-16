@@ -4,6 +4,9 @@
 #   1) infra/kart imajını kurar (sunucuya giden imajın AYNISI);
 #   2) kabul.py: 14 Kasım girdisiyle 8 kartı çizer → kapanış hash'i birebir + 01–07 onaylı orijinallere yakınlık;
 #   3) uçtan uca: konteyneri CI'ya özgü SAHTE jetonla başlatır → 401/400 kapıları → POST /karusel/uret → GET dosya.
+#   4) (adım 5, 2026-11-16) editoryal + kalite kapısı: Python testleri İMAJIN İÇİNDE (sanal ortam + SDK) · /karusel/editoryal
+#      anahtarsız 503 (model ÇAĞRILMAZ — CI'da ANTHROPIC_API_KEY YOK) · /karusel/uret + kapi → gerçek kalite_kapisi.py GEÇTİ,
+#      tahrifatta KALDI · mühür indirilen dosyalarla yeniden doğrulanır.
 # Çıktılar (kartlar + fark haritaları + kabul.json) yapıt olarak yüklenir — insan gözüyle bakılabilsin.
 name: Kart karusel v3
 
@@ -34,6 +37,10 @@ jobs:
           docker run --rm \
             -v "$PWD/infra/kart/test/karusel-kabul:/kabul:ro" -v "$PWD/cikti:/cikti" \
             kart-ci python3 /kabul/kabul.py /app/karusel/render.py /kabul/2026-11-14 /cikti
+
+      - name: Editoryal + kalite kapısı — Python testleri (konteynerde)
+        run: |
+          docker run --rm kart-ci sh -c '"$KARUSEL_PY" -c "import anthropic, pydantic; print(\"anthropic\", anthropic.__version__, \"pydantic\", pydantic.__version__)"             && "$KARUSEL_PY" -m unittest discover -s /app/karusel/editoryal -p "test_*.py" -v'
 
       - name: Uçtan uca — POST /karusel/uret
         run: |
@@ -70,6 +77,54 @@ jobs:
               assert uc == d["sha256"] == kabul, d["ad"]
           assert y["qa"]["safeToPublish"] is False and y["qa"]["raqm"] is True
           print("uçtan uca: 8/8 dosya hash'i tutarlı · safeToPublish=false · RAQM açık")
+          PY
+          # --- adım 5: editoryal ucu anahtarsız KAPALI (model çağrılmaz) ---
+          [ "$(kod -X POST -H "Authorization: Bearer $CI_JETON" --data-binary '{}' http://localhost:3000/karusel/editoryal)" = 503 ]
+          grep -q ANTHROPIC_API_KEY yanit.json
+          # --- adım 5: gerçek kalite kapısı — fikstürden TUTARLI QA kayıtları kurulur (sentetik; insan onaylı metin) ---
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          g = json.loads(pathlib.Path("govde.json").read_text(encoding="utf-8"))
+          alan = ("coverTitle", "coverDeck", "detailTitle", "detailSummary")
+          taslak = [{a: i[a] for a in alan} for i in g["editorial"]["items"]]
+          den = lambda t: {"sonuc": "GECTI", "taslak": t, "kapilar": [{"ad": "ci", "gecti": True}], "dogrulama": [{"etiket": "desteklenir"}]}
+          qa_a = {"day": g["edition"]["day"], "gun": "GECTI", "editionRawSha256": g["edition"]["rawBodySha256"],
+                  "ogeler": [{"sonuc": "GECTI", "taslak": t, "denemeler": [den(t)]} for t in taslak]}
+          import base64
+          qa_b = {"gorseller": [{"gorsel": ad[:-4], "sonuc": "GECTI", "yedekGerekli": False,
+                                  "denemeler": [{"gecti": True, "sha256": hashlib.sha256(base64.b64decode(v)).hexdigest()}]}
+                                 for ad, v in g["gorseller"].items()]}
+          g["editorial"]["edition"]["rawBodySha256"] = g["edition"]["rawBodySha256"]
+          pathlib.Path("govde-kapi.json").write_text(json.dumps({**g, "kapi": {"qaEditoryal": qa_a, "qaGorsel": qa_b}}), encoding="utf-8")
+          qa_a["ogeler"][2]["denemeler"][-1]["dogrulama"] = [{"etiket": "abartili"}]
+          pathlib.Path("govde-kapi-bozuk.json").write_text(json.dumps({**g, "kapi": {"qaEditoryal": qa_a, "qaGorsel": qa_b}}), encoding="utf-8")
+          PY
+          [ "$(kod -X POST -H "Authorization: Bearer $CI_JETON" --data-binary @govde-kapi-bozuk.json http://localhost:3000/karusel/uret)" = 200 ]
+          python3 -c "import json; k=json.load(open('yanit.json'))['kapi']; print('tahrifat →', k['karar'], k['sorunlar']); assert k['karar']=='KALDI' and k['muhur'] is None"
+          [ "$(kod -X POST -H "Authorization: Bearer $CI_JETON" --data-binary @govde-kapi.json http://localhost:3000/karusel/uret)" = 200 ]
+          python3 -c "import json; k=json.load(open('yanit.json'))['kapi']; print('kapı →', k['karar'], k['sorunlar']); assert k['karar']=='GECTI' and len(k['muhur'])==64"
+          # /karusel/uret yanıtı saklanır — aşağıdaki kod() çağrıları yanit.json'ın üzerine yazar
+          cp yanit.json uret-kapi.json
+          [ "$(kod http://localhost:3000/karusel/kapi/2026-11-14)" = 401 ]
+          [ "$(kod -H "Authorization: Bearer $CI_JETON" http://localhost:3000/karusel/kapi/2026-11-14)" = 200 ]
+          # GET /karusel/kapi aynı kararı (aynı mühür) vermeli
+          python3 -c "import json; a=json.load(open('uret-kapi.json'))['kapi']; b=json.load(open('yanit.json')); b=b.get('kapi', b); assert b['karar']=='GECTI' and b['muhur']==a['muhur'], b; print('GET /karusel/kapi → aynı mühür')"
+          mkdir -p cikti/kapi
+          for n in 01 02 03 04 05 06 07 08; do curl -fsS -o "cikti/kapi/$n.png" "http://localhost:3000/karusel/dosya/2026-11-14/$n.png"; done
+          cp uret-kapi.json cikti/kapi/kapi-karari.json
+          # Yayın adımının yapacağı denetim: mühür, İNDİRİLEN dosyalarla ve gönderilen editorial ile yeniden hesaplanır
+          docker cp kart:/app/karusel/editoryal/kalite_kapisi.py kalite_kapisi.py
+          python3 - <<'PY'
+          import json, pathlib, kalite_kapisi as kk
+          k = json.loads(pathlib.Path("uret-kapi.json").read_text(encoding="utf-8"))
+          kartlar = [pathlib.Path(f"cikti/kapi/{n:02d}.png").read_bytes() for n in range(1, 9)]
+          # Sunucu editorial.json'u Node JSON.stringify ile yazar (boşluksuz, ASCII kaçışsız) → aynı biçim; hash bağı da denetlenir
+          ed = json.dumps(json.loads(pathlib.Path("govde-kapi.json").read_text(encoding="utf-8"))["editorial"],
+                          ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+          assert kk.sha(ed) == k["kapi"]["baglar"]["editorialSha256"], "editorial bayt biçimi sunucununkiyle aynı değil"
+          assert kk.muhur_dogrula(k["kapi"], ed, kartlar), "mühür indirilen dosyalarla tutmadı"
+          assert not kk.muhur_dogrula(k["kapi"], ed, kartlar[:7] + [kartlar[7] + b"x"])
+          print("kapı: GEÇTİ · mühür indirilen 8 dosya + editorial ile yeniden doğrulandı · tek bayt değişikliği reddedildi")
           PY
 
       - name: Konteyner günlüğü
