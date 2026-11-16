@@ -103,16 +103,20 @@ jobs:
           python3 -c "import json; k=json.load(open('yanit.json'))['kapi']; print('tahrifat →', k['karar'], k['sorunlar']); assert k['karar']=='KALDI' and k['muhur'] is None"
           [ "$(kod -X POST -H "Authorization: Bearer $CI_JETON" --data-binary @govde-kapi.json http://localhost:3000/karusel/uret)" = 200 ]
           python3 -c "import json; k=json.load(open('yanit.json'))['kapi']; print('kapı →', k['karar'], k['sorunlar']); assert k['karar']=='GECTI' and len(k['muhur'])==64"
+          # /karusel/uret yanıtı saklanır — aşağıdaki kod() çağrıları yanit.json'ın üzerine yazar
+          cp yanit.json uret-kapi.json
           [ "$(kod http://localhost:3000/karusel/kapi/2026-11-14)" = 401 ]
           [ "$(kod -H "Authorization: Bearer $CI_JETON" http://localhost:3000/karusel/kapi/2026-11-14)" = 200 ]
+          # GET /karusel/kapi aynı kararı (aynı mühür) vermeli
+          python3 -c "import json; a=json.load(open('uret-kapi.json'))['kapi']; b=json.load(open('yanit.json')); b=b.get('kapi', b); assert b['karar']=='GECTI' and b['muhur']==a['muhur'], b; print('GET /karusel/kapi → aynı mühür')"
           mkdir -p cikti/kapi
           for n in 01 02 03 04 05 06 07 08; do curl -fsS -o "cikti/kapi/$n.png" "http://localhost:3000/karusel/dosya/2026-11-14/$n.png"; done
-          cp yanit.json cikti/kapi/kapi-karari.json
+          cp uret-kapi.json cikti/kapi/kapi-karari.json
           # Yayın adımının yapacağı denetim: mühür, İNDİRİLEN dosyalarla ve gönderilen editorial ile yeniden hesaplanır
           docker cp kart:/app/karusel/editoryal/kalite_kapisi.py kalite_kapisi.py
           python3 - <<'PY'
           import json, pathlib, kalite_kapisi as kk
-          k = json.loads(pathlib.Path("yanit.json").read_text(encoding="utf-8"))
+          k = json.loads(pathlib.Path("uret-kapi.json").read_text(encoding="utf-8"))
           kartlar = [pathlib.Path(f"cikti/kapi/{n:02d}.png").read_bytes() for n in range(1, 9)]
           # Sunucu editorial.json'u Node JSON.stringify ile yazar (boşluksuz, ASCII kaçışsız) → aynı biçim; hash bağı da denetlenir
           ed = json.dumps(json.loads(pathlib.Path("govde-kapi.json").read_text(encoding="utf-8"))["editorial"],
