@@ -1,0 +1,43 @@
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { SOCIAL_ARTICLES, socialArticleDate, SOCIAL_ARTICLES_PATH } from '@/lib/doctorium-social-articles';
+import { shelfTabsFor } from '@/lib/doctorium-shelf';
+
+describe('published social editorial catalogue', () => {
+  it('has unique, ordered publications and only the canonical Doctorium X source', () => {
+    expect(new Set(SOCIAL_ARTICLES.map(a => a.id)).size).toBe(SOCIAL_ARTICLES.length);
+    expect(SOCIAL_ARTICLES).toHaveLength(2);
+    for (const a of SOCIAL_ARTICLES) {
+      expect(a.sourceUrl).toBe('https://x.com/Doctoriumtr/status/' + a.id);
+      expect(a.title.length).toBeGreaterThan(10);
+      expect(a.sourceUrl).not.toContain('2121295035027132778');
+      expect(Date.parse(a.publishedAt)).not.toBeNaN();
+    }
+    expect(SOCIAL_ARTICLES.map(a => a.publishedAt)).toEqual(SOCIAL_ARTICLES.map(a => a.publishedAt).sort().reverse());
+  });
+  it('uses Turkey publication dates, including the after-midnight Article', () => {
+    expect(socialArticleDate(SOCIAL_ARTICLES[0].publishedAt)).toBe('14 Kasım 2026');
+    expect(socialArticleDate(SOCIAL_ARTICLES[1].publishedAt)).toBe('6 Kasım 2026');
+  });
+  it('adds the same source feed to all supported audience shelves without altering DB modules', () => {
+    for (const a of ['VERIFIED', 'TRIAL', 'STUDENT', null] as const) {
+      const tabs = shelfTabsFor(a);
+      expect(tabs.find(t => t.key === 'sosyal-yazilar')).toMatchObject({ href: SOCIAL_ARTICLES_PATH, module: null });
+      expect(tabs.at(-1)?.key).toBe('takvim');
+    }
+  });
+  it('reuses one list in hero-page promotion and protected portal, never embeds X scripts', () => {
+    const landing = readFileSync('src/components/aura/doctorium-v3/sections/SocialArticles.tsx', 'utf8');
+    const portal = readFileSync('src/app/doktor/doctorium/sosyal-yazilar/page.tsx', 'utf8');
+    const cards = readFileSync('src/components/aura/doctorium-social-articles.tsx', 'utf8');
+    expect(landing).toContain('x-article-');
+    expect(landing).toContain('SOCIAL_ARTICLES');
+    expect(landing).toContain('styles.back');
+    expect(landing).toContain('styles.front');
+    expect(portal).toContain('<SocialArticleList />');
+    expect(portal).toContain('getCurrentUser()');
+    expect(portal).toContain("active='sosyal-yazilar'");
+    expect(cards).toContain("rel='noopener noreferrer'");
+    expect(cards).not.toMatch(/<script|<iframe/);
+  });
+});
