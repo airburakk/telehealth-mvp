@@ -29,6 +29,7 @@ export type AiFeature =
   | "regulation-summary"     // ai-clinical.summarizeRegulationForClinician — mevzuat + ilaç + SEKTÖREL (ensureRegulationSummary; cron + tembel yol)
   | "news-title-translate"   // lib/translate-news (ingest)
   | "news-summary-translate" // lib/translate-news (cron translate-news)
+  | "karusel-editoryal"      // lib/karusel-editoryal (Instagram karuseli metni + ikinci model doğrulaması; n8n → /api/karusel/editoryal)
   | "live-token";            // api/realtime/token — Gemini Live oturumu (token adedi; dakika ücreti Google'da)
 
 export const AI_FEATURE_LABEL: Record<AiFeature, string> = {
@@ -51,6 +52,7 @@ export const AI_FEATURE_LABEL: Record<AiFeature, string> = {
   "regulation-summary": "Doctorium mevzuat · ilaç · sektörel özeti",
   "news-title-translate": "Haber başlığı çevirisi (gece)",
   "news-summary-translate": "Haber özet girişi çevirisi (gece)",
+  "karusel-editoryal": "Instagram karuseli metni (sabah)",
   "live-token": "Canlı tercüman oturumu (Gemini)",
 };
 
