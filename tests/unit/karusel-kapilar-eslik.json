@@ -1,0 +1,1860 @@
+{
+ "kaynak": "infra/kart/karusel/editoryal/kapilar.py + uret.py (eslik_uret.py ile üretildi)",
+ "istemler": {
+  "uret": "Doctorium Post, doktorlara yönelik günlük bir sağlık haberleri seçkisidir. Görevin: verilen TEK haber için Instagram karuselinde kullanılacak kısa Türkçe metinleri yazmak.\n\nKurallar (hepsi zorunlu):\n- Yalnız \"KAYNAK METNİ\"ndeki bilgiyi kullan. Kaynakta olmayan hiçbir sayı, tarih, kurum, sonuç veya yorum ekleme.\n- Sayıları kaynaktaki gibi yaz (ondalıkta Türkçe virgül kullanabilirsin: 19,66).\n- Laboratuvar, hücre kültürü, bilgisayar modeli veya hayvan çalışmasıysa özetin son cümlesi bunun insanlarda tedavi etkinliği göstermediğini açıkça söyler. Klinik araştırma kaydıysa (sonuç yoksa) \"bu bir araştırma duyurusudur, tedavi sonucu değildir\" anlamını taşıyan bir cümle bulunur.\n- Laboratuvar/hayvan çalışmasında BAŞLIKLAR da bulgunun nerede gözlendiğini söyler (\"farede\", \"hücre kültüründe\", \"hayvan çalışmasında\") ya da yalnız konuyu adlandırır (\"… incelendi\"); başlık bulguyu genel bir etki gibi sunmaz.\n- Mevzuat haberinde yalnız künye bilgisi: ne yayımlandı, sayısı, tarihi, hangi Resmî Gazete. Değerlendirme yok.\n- Kişi adı yazma (kurum adı yazılabilir). Kaynak hakkında açıklama cümlesi yazma (\"kaynakta … yok\" gibi); bilmediğin şeyi hiç anma.\n- Abartı yok: \"çığır açan, devrim, umut verici, mucize, kanıtlandı, kesin tedavi\" gibi sözcükler YASAK. \"hekim\" yerine daima \"doktor\" yaz.\n- Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.\n- Uzunluk: coverTitle ≤ 40 karakter; coverDeck ≤ 115 karakter; detailTitle ≤ 65 karakter; detailSummary 150-250 karakter.\n- Sade, tarafsız haber dili. Özgün başlığı çevirme; konuyu bir doktorun anlayacağı kısa bir başlıkla anlat.\n\nBiçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):\n{ornekler}",
+  "dogrula": "Bir sağlık haberi için yazılmış kısa metinleri KAYNAK METNİ'ne göre denetliyorsun. Görevin metni düzeltmek DEĞİL, her iddiayı etiketlemek.\n\nDört alanın (coverTitle, coverDeck, detailTitle, detailSummary) içindeki her olgusal iddiayı ayrı ayrı çıkar ve etiketle:\n- \"desteklenir\": iddia kaynak metinde açıkça yer alıyor ya da doğrudan çıkıyor.\n- \"desteklenmez\": kaynakta yok, kaynakla çelişiyor ya da kaynaktan daha fazlasını söylüyor (yeni sayı, kurum, sonuç).\n- \"abartili\": kaynakta var ama metin bulguyu olduğundan güçlü, kesin veya klinik olarak yararlı gösteriyor.\n\"Henüz insanlarda gösterilmedi\" gibi temkin cümleleri, kaynak klinik sonuç sunmuyorsa \"desteklenir\" sayılır.\nGerekçeyi bir kısa cümleyle yaz. Şüphedeysen \"desteklenmez\" seç.",
+  "orneklerHaric": "https://doi.org/10.4103/rps.rps_237_25",
+  "ornekler": "{\"coverTitle\": \"Böbrek kanserinde Faz 3 çalışma\", \"coverDeck\": \"Belzutifan ve zanzalintinib kombinasyonu inceleniyor. Tedavi sonuçları değil, çalışma kaydı.\", \"detailTitle\": \"İleri böbrek kanserinde Faz 3 kombinasyon çalışması\", \"detailSummary\": \"LITESPARK-034, ileri renal hücreli karsinomda belzutifan ve zanzalintinib kombinasyonunu belzutifan ve plaseboyla karşılaştırıyor. Amaç, genel ve hastalık ilerlemeden sağkalımı değerlendirmek; bu bir araştırma duyurusudur, tedavi sonucu değildir.\"}\n{\"coverTitle\": \"Tepecik’e yeniden akreditasyon\", \"coverDeck\": \"Uzmanlık eğitimi için beş yıllık yeniden akreditasyon.\", \"detailTitle\": \"Tepecik’in infeksiyon kliniğine beş yıllık akreditasyon\", \"detailSummary\": \"KLİMİK, Tepecik Eğitim Araştırma Hastanesi’nin İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniğinin uzmanlık eğitimi için beş yıl süreyle yeniden akredite edildiğini duyurdu. Belge 9 Kasım’daki ziyarette sunuldu.\"}\n{\"coverTitle\": \"Üniversite hastanelerine komite\", \"coverDeck\": \"11971 sayılı karar, 14 Kasım Resmî Gazete’de yayımlandı.\", \"detailTitle\": \"Üniversite hastaneleri için koordinasyon komitesi kararı\", \"detailSummary\": \"Üniversite hastaneleri için koordinasyon komitesi kurulmasına ilişkin 11971 sayılı Cumhurbaşkanı Kararı, 14 Kasım tarihli ve 33430 sayılı Resmî Gazete’de yayımlandı.\"}",
+  "orneklerHepsi": "{\"coverTitle\": \"Kanser hücrelerinde hidralazin türevleri\", \"coverDeck\": \"Hücre kültüründe incelenen yeni bileşikler, ileri araştırmalar için aday. İnsanlarda etkinlik henüz gösterilmedi.\", \"detailTitle\": \"Hidralazin türevleri kanser hücrelerinde incelendi\", \"detailSummary\": \"Yeni hidralazin türevleri, hücre kültürü ve bilgisayar modellemeleriyle değerlendirildi. 4f adlı bileşik ileri araştırmalar için aday olarak belirlendi. Bu laboratuvar bulguları, insanlarda tedavi etkinliği göstermez.\"}\n{\"coverTitle\": \"Böbrek kanserinde Faz 3 çalışma\", \"coverDeck\": \"Belzutifan ve zanzalintinib kombinasyonu inceleniyor. Tedavi sonuçları değil, çalışma kaydı.\", \"detailTitle\": \"İleri böbrek kanserinde Faz 3 kombinasyon çalışması\", \"detailSummary\": \"LITESPARK-034, ileri renal hücreli karsinomda belzutifan ve zanzalintinib kombinasyonunu belzutifan ve plaseboyla karşılaştırıyor. Amaç, genel ve hastalık ilerlemeden sağkalımı değerlendirmek; bu bir araştırma duyurusudur, tedavi sonucu değildir.\"}\n{\"coverTitle\": \"Tepecik’e yeniden akreditasyon\", \"coverDeck\": \"Uzmanlık eğitimi için beş yıllık yeniden akreditasyon.\", \"detailTitle\": \"Tepecik’in infeksiyon kliniğine beş yıllık akreditasyon\", \"detailSummary\": \"KLİMİK, Tepecik Eğitim Araştırma Hastanesi’nin İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniğinin uzmanlık eğitimi için beş yıl süreyle yeniden akredite edildiğini duyurdu. Belge 9 Kasım’daki ziyarette sunuldu.\"}",
+  "leadCaption": "Temsili illüstrasyon · Yapay zekâ ile oluşturulmuştur",
+  "denemeSayisi": 3
+ },
+ "vakalar": [
+  {
+   "ad": "temkin-firat",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Arşivden Doktrin",
+    "url": "https://x"
+   },
+   "src": "Fırat Üniversitesi Doğu Araştırmaları Dergisi (2007).",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "temkin-klinik-oncesi-0",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "Bulgu farelerde gözlendi.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     false,
+     "klinik öncesi bulgu; temkin cümlesi yok"
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "temkin-klinik-oncesi-1",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "Treated rat model.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     false,
+     "klinik öncesi bulgu; temkin cümlesi yok"
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "temkin-klinik-oncesi-2",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "Kanser hücrelerinde etki.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     false,
+     "klinik öncesi bulgu; temkin cümlesi yok"
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "temkin-klinik-oncesi-3",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "Study in mice.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     false,
+     "klinik öncesi bulgu; temkin cümlesi yok"
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "bin-0",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Kongo’da 11 binden fazla vaka kaydedildi; enfekte olanların yaklaşık yarısı öldü."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "More than 11,000 cases have been recorded, and nearly half of those infected have died.",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "detailSummary=81"
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "bin-1",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Kongo’da 11 vaka kaydedildi ve enfekte olanların yaklaşık yarısı öldü bildirildi."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "More than 11,000 cases have been recorded, and nearly half of those infected have died.",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "detailSummary=81"
+    ],
+    [
+     "sayilar",
+     false,
+     "kaynakta yok: 11"
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "bin-2",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Kongo’da 12 binden fazla vaka kaydedildi; enfekte olanların yarısı öldü bildirildi."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "More than 11,000 cases have been recorded, and nearly half of those infected have died.",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "detailSummary=83"
+    ],
+    [
+     "sayilar",
+     false,
+     "kaynakta yok: 12.000"
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "bin-3",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Kongo’da 11 binlerce vaka; 11 bine yakın kişi etkilendi, yaklaşık yarısı öldü bildirildi."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "More than 11,000 cases have been recorded, and nearly half of those infected have died.",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "detailSummary=89"
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "yasak-mucize",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Mucize bir yaklaşım sağlık hukukunda ele alınıyor, deniyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     false,
+     "mucize"
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "akredit-kaynaksiz",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Klinik beş yıllık akreditasyon aldı; karar kurum tarafından duyuruldu.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "Klinik yeni bir dönem başlattı.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     false,
+     "akredit"
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "akredit-kaynakli",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Klinik beş yıllık akreditasyon aldı; karar kurum tarafından duyuruldu.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "The clinic was accredited for five years.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "uzunluk-kisa",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Kısa."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "detailSummary=5"
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "baglanti",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor. https://ornek.org",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     false,
+     "metinde bağlantı var"
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "hekim-buyuk",
+   "taslak": {
+    "coverTitle": "HEKİMLER için yeni rehber",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     false,
+     "hekim"
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "insanlarda-buyuk",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor. İNSANLARDA etkinlik gösterilmedi."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "Bulgu farelerde gözlendi.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "sayi-ondalik",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Oran yüzde 19,66 ve 44.66 olarak ölçüldü; çalışma 2026 yılında yayımlandı ve tartışıldı."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "Rates were 19.66 and 44,66 in 2026.",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "detailSummary=88"
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "sayi-eksik",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Oran yüzde 19,67 ölçüldü; LITESPARK-034 çalışması 2026 yılında tartışıldı ve yayımlandı."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "Rates were 19.66 in 2026, LITESPARK-034.",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "detailSummary=88"
+    ],
+    [
+     "sayilar",
+     false,
+     "kaynakta yok: 19,67"
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "kisi-adi",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Prof. Dr. Ayşe Yılmaz ve Doç. Şükrü ile Dr.Ömer değerlendirmeyi yaptı; çalışma sorumluluğu ele alıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     false,
+     "Prof. Dr. Ayşe, Doç. Şükrü, Dr.Ömer"
+    ]
+   ]
+  },
+  {
+   "ad": "ic-ses",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor. Kaynakta tarih belirtilmemiş."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     false,
+     "kaynakta, belirtilmemiş"
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "mevzuat-yorum",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Önemli bir yönetmelik yayımlandı; yeni dönem başlıyor ve kurumlar olumlu karşıladı, değerlendirme sürüyor."
+   },
+   "item": {
+    "streamLabel": "Mevzuat",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ],
+    [
+     "mevzuat_kunye",
+     false,
+     "önemli, yeni dönem, olumlu"
+    ]
+   ]
+  },
+  {
+   "ad": "mevzuat-temiz",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Mevzuat",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ],
+    [
+     "mevzuat_kunye",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "ilac-temkinsiz",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "İlaç & Cihaz",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     false,
+     "klinik araştırma kaydı bulgu; temkin cümlesi yok"
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "ilac-temkinli",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor. Bu bir araştırma duyurusudur."
+   },
+   "item": {
+    "streamLabel": "İlaç & Cihaz",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "rat-sozcuk-sonu",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "Ratios and pirate data; rats.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "rat-tam",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "In the rat, dosing differed.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     false,
+     "klinik öncesi bulgu; temkin cümlesi yok"
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "in-vitro",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "An IN VITRO assay with cell lines.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     false,
+     "klinik öncesi bulgu; temkin cümlesi yok"
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "kesin-tedavi",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Kesin tedavi iddiası olmadan yeni yaklaşım hukuk açısından ele alınıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "A cure was not claimed.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "garanti",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Garanti verilmeden yeni yaklaşım sağlık hukuku açısından ele alınıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     false,
+     "garanti"
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "emoji-uzunluk",
+   "taslak": {
+    "coverTitle": "Yapay zekâ 🤖 ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "ornek-0",
+   "taslak": {
+    "coverTitle": "Kanser hücrelerinde hidralazin türevleri",
+    "coverDeck": "Hücre kültüründe incelenen yeni bileşikler, ileri araştırmalar için aday. İnsanlarda etkinlik henüz gösterilmedi.",
+    "detailTitle": "Hidralazin türevleri kanser hücrelerinde incelendi",
+    "detailSummary": "Yeni hidralazin türevleri, hücre kültürü ve bilgisayar modellemeleriyle değerlendirildi. 4f adlı bileşik ileri araştırmalar için aday olarak belirlendi. Bu laboratuvar bulguları, insanlarda tedavi etkinliği göstermez."
+   },
+   "item": {
+    "streamLabel": "Akademik",
+    "url": "https://x"
+   },
+   "src": "Kanser hücrelerinde hidralazin türevleri Hücre kültüründe incelenen yeni bileşikler, ileri araştırmalar için aday. İnsanlarda etkinlik henüz gösterilmedi. Hidralazin türevleri kanser hücrelerinde incelendi Yeni hidralazin türevleri, hücre kültürü ve bilgisayar modellemeleriyle değerlendirildi. 4f adlı bileşik ileri araştırmalar için aday olarak belirlendi. Bu laboratuvar bulguları, insanlarda tedavi etkinliği göstermez.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "ornek-1",
+   "taslak": {
+    "coverTitle": "Böbrek kanserinde Faz 3 çalışma",
+    "coverDeck": "Belzutifan ve zanzalintinib kombinasyonu inceleniyor. Tedavi sonuçları değil, çalışma kaydı.",
+    "detailTitle": "İleri böbrek kanserinde Faz 3 kombinasyon çalışması",
+    "detailSummary": "LITESPARK-034, ileri renal hücreli karsinomda belzutifan ve zanzalintinib kombinasyonunu belzutifan ve plaseboyla karşılaştırıyor. Amaç, genel ve hastalık ilerlemeden sağkalımı değerlendirmek; bu bir araştırma duyurusudur, tedavi sonucu değildir."
+   },
+   "item": {
+    "streamLabel": "Akademik",
+    "url": "https://x"
+   },
+   "src": "Böbrek kanserinde Faz 3 çalışma Belzutifan ve zanzalintinib kombinasyonu inceleniyor. Tedavi sonuçları değil, çalışma kaydı. İleri böbrek kanserinde Faz 3 kombinasyon çalışması LITESPARK-034, ileri renal hücreli karsinomda belzutifan ve zanzalintinib kombinasyonunu belzutifan ve plaseboyla karşılaştırıyor. Amaç, genel ve hastalık ilerlemeden sağkalımı değerlendirmek; bu bir araştırma duyurusudur, tedavi sonucu değildir.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "ornek-2",
+   "taslak": {
+    "coverTitle": "Tepecik’e yeniden akreditasyon",
+    "coverDeck": "Uzmanlık eğitimi için beş yıllık yeniden akreditasyon.",
+    "detailTitle": "Tepecik’in infeksiyon kliniğine beş yıllık akreditasyon",
+    "detailSummary": "KLİMİK, Tepecik Eğitim Araştırma Hastanesi’nin İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniğinin uzmanlık eğitimi için beş yıl süreyle yeniden akredite edildiğini duyurdu. Belge 9 Kasım’daki ziyarette sunuldu."
+   },
+   "item": {
+    "streamLabel": "Akademik",
+    "url": "https://x"
+   },
+   "src": "Tepecik’e yeniden akreditasyon Uzmanlık eğitimi için beş yıllık yeniden akreditasyon. Tepecik’in infeksiyon kliniğine beş yıllık akreditasyon KLİMİK, Tepecik Eğitim Araştırma Hastanesi’nin İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniğinin uzmanlık eğitimi için beş yıl süreyle yeniden akredite edildiğini duyurdu. Belge 9 Kasım’daki ziyarette sunuldu.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "ornek-3",
+   "taslak": {
+    "coverTitle": "Üniversite hastanelerine komite",
+    "coverDeck": "11971 sayılı karar, 14 Kasım Resmî Gazete’de yayımlandı.",
+    "detailTitle": "Üniversite hastaneleri için koordinasyon komitesi kararı",
+    "detailSummary": "Üniversite hastaneleri için koordinasyon komitesi kurulmasına ilişkin 11971 sayılı Cumhurbaşkanı Kararı, 14 Kasım tarihli ve 33430 sayılı Resmî Gazete’de yayımlandı."
+   },
+   "item": {
+    "streamLabel": "Akademik",
+    "url": "https://x"
+   },
+   "src": "Üniversite hastanelerine komite 11971 sayılı karar, 14 Kasım Resmî Gazete’de yayımlandı. Üniversite hastaneleri için koordinasyon komitesi kararı Üniversite hastaneleri için koordinasyon komitesi kurulmasına ilişkin 11971 sayılı Cumhurbaşkanı Kararı, 14 Kasım tarihli ve 33430 sayılı Resmî Gazete’de yayımlandı.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "ornek-4",
+   "taslak": {
+    "coverTitle": "Bağırsak onarımında N-MNA",
+    "coverDeck": "N-MNA, fare ve sineklerde incelendi. İnsanlarda yarar henüz gösterilmedi.",
+    "detailTitle": "Bağırsak onarımında N-MNA: hayvan çalışmalarından bulgu",
+    "detailSummary": "Rutgers araştırmasında, bakterilerin ürettiği N-MNA molekülü fare ve sineklerde bağırsak onarımını destekledi; hücre deneylerinde NAD üretimine katkısı incelendi. İnsanlarda tedavi yararı henüz gösterilmedi."
+   },
+   "item": {
+    "streamLabel": "Akademik",
+    "url": "https://x"
+   },
+   "src": "Bağırsak onarımında N-MNA N-MNA, fare ve sineklerde incelendi. İnsanlarda yarar henüz gösterilmedi. Bağırsak onarımında N-MNA: hayvan çalışmalarından bulgu Rutgers araştırmasında, bakterilerin ürettiği N-MNA molekülü fare ve sineklerde bağırsak onarımını destekledi; hücre deneylerinde NAD üretimine katkısı incelendi. İnsanlarda tedavi yararı henüz gösterilmedi.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "ornek-5",
+   "taslak": {
+    "coverTitle": "Melanoma hücrelerinde kurkumin",
+    "coverDeck": "Hücre kültüründe deneysel bulgu; klinik tedavi yararı gösterilmiş değil.",
+    "detailTitle": "Kurkumin taşıyan miseller melanoma hücrelerinde test edildi",
+    "detailSummary": "Kurkumin yüklü dekstran stearat miselleri, B16F10 melanoma hücrelerinde serbest kurkumine kıyasla daha güçlü hücre öldürücü etki gösterdi. Çalışma hücre kültürü düzeyinde; klinik tedavi yararı gösterilmiş değil."
+   },
+   "item": {
+    "streamLabel": "Akademik",
+    "url": "https://x"
+   },
+   "src": "Melanoma hücrelerinde kurkumin Hücre kültüründe deneysel bulgu; klinik tedavi yararı gösterilmiş değil. Kurkumin taşıyan miseller melanoma hücrelerinde test edildi Kurkumin yüklü dekstran stearat miselleri, B16F10 melanoma hücrelerinde serbest kurkumine kıyasla daha güçlü hücre öldürücü etki gösterdi. Çalışma hücre kültürü düzeyinde; klinik tedavi yararı gösterilmiş değil.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  }
+ ]
+}

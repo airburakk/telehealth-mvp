@@ -1,0 +1,48 @@
+{
+  "kind": "karusel-editoryal-bicem-ornekleri",
+  "kaynak": "14 Kasım 2026 kullanıcı onaylı karusel metni (👤 15.11 \"istediğim kalite bu\")",
+  "items": [
+    {
+      "sourceUrl": "https://doi.org/10.4103/rps.rps_237_25",
+      "coverTitle": "Kanser hücrelerinde hidralazin türevleri",
+      "coverDeck": "Hücre kültüründe incelenen yeni bileşikler, ileri araştırmalar için aday. İnsanlarda etkinlik henüz gösterilmedi.",
+      "detailTitle": "Hidralazin türevleri kanser hücrelerinde incelendi",
+      "detailSummary": "Yeni hidralazin türevleri, hücre kültürü ve bilgisayar modellemeleriyle değerlendirildi. 4f adlı bileşik ileri araştırmalar için aday olarak belirlendi. Bu laboratuvar bulguları, insanlarda tedavi etkinliği göstermez."
+    },
+    {
+      "sourceUrl": "https://clinicaltrials.gov/study/NCT07489495",
+      "coverTitle": "Böbrek kanserinde Faz 3 çalışma",
+      "coverDeck": "Belzutifan ve zanzalintinib kombinasyonu inceleniyor. Tedavi sonuçları değil, çalışma kaydı.",
+      "detailTitle": "İleri böbrek kanserinde Faz 3 kombinasyon çalışması",
+      "detailSummary": "LITESPARK-034, ileri renal hücreli karsinomda belzutifan ve zanzalintinib kombinasyonunu belzutifan ve plaseboyla karşılaştırıyor. Amaç, genel ve hastalık ilerlemeden sağkalımı değerlendirmek; bu bir araştırma duyurusudur, tedavi sonucu değildir."
+    },
+    {
+      "sourceUrl": "https://www.klimik.org.tr/2026/11/13/sbu-izmir-tepecik-egitim-arastirma-hastanesi-infeksiyon-hastaliklari-ve-klinik-mikrobiyoloji-klinigi-akredite-edildi/",
+      "coverTitle": "Tepecik’e yeniden akreditasyon",
+      "coverDeck": "Uzmanlık eğitimi için beş yıllık yeniden akreditasyon.",
+      "detailTitle": "Tepecik’in infeksiyon kliniğine beş yıllık akreditasyon",
+      "detailSummary": "KLİMİK, Tepecik Eğitim Araştırma Hastanesi’nin İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniğinin uzmanlık eğitimi için beş yıl süreyle yeniden akredite edildiğini duyurdu. Belge 9 Kasım’daki ziyarette sunuldu."
+    },
+    {
+      "sourceUrl": "https://www.resmigazete.gov.tr/eskiler/2026/11/20261114-2.pdf",
+      "coverTitle": "Üniversite hastanelerine komite",
+      "coverDeck": "11971 sayılı karar, 14 Kasım Resmî Gazete’de yayımlandı.",
+      "detailTitle": "Üniversite hastaneleri için koordinasyon komitesi kararı",
+      "detailSummary": "Üniversite hastaneleri için koordinasyon komitesi kurulmasına ilişkin 11971 sayılı Cumhurbaşkanı Kararı, 14 Kasım tarihli ve 33430 sayılı Resmî Gazete’de yayımlandı."
+    },
+    {
+      "sourceUrl": "https://medicalxpress.com/news/2026-11-microbe-molecule-reverse-gut-boosting.html",
+      "coverTitle": "Bağırsak onarımında N-MNA",
+      "coverDeck": "N-MNA, fare ve sineklerde incelendi. İnsanlarda yarar henüz gösterilmedi.",
+      "detailTitle": "Bağırsak onarımında N-MNA: hayvan çalışmalarından bulgu",
+      "detailSummary": "Rutgers araştırmasında, bakterilerin ürettiği N-MNA molekülü fare ve sineklerde bağırsak onarımını destekledi; hücre deneylerinde NAD üretimine katkısı incelendi. İnsanlarda tedavi yararı henüz gösterilmedi."
+    },
+    {
+      "sourceUrl": "https://doi.org/10.4103/rps.rps_198_25",
+      "coverTitle": "Melanoma hücrelerinde kurkumin",
+      "coverDeck": "Hücre kültüründe deneysel bulgu; klinik tedavi yararı gösterilmiş değil.",
+      "detailTitle": "Kurkumin taşıyan miseller melanoma hücrelerinde test edildi",
+      "detailSummary": "Kurkumin yüklü dekstran stearat miselleri, B16F10 melanoma hücrelerinde serbest kurkumine kıyasla daha güçlü hücre öldürücü etki gösterdi. Çalışma hücre kültürü düzeyinde; klinik tedavi yararı gösterilmiş değil."
+    }
+  ]
+}
