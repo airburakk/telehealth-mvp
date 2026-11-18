@@ -90,7 +90,14 @@ def main():
         out.append({**c, 'beklenen': [[a, ok, d] for a, ok, d in r], 'geriBildirim': uret.kapi_sorunlari(r, c['taslak'])})
     url = json.loads((HERE / 'ornekler.json').read_text(encoding='utf-8'))['items'][0]['sourceUrl']
     istemler = {'uret': uret.SYSTEM_URET, 'dogrula': uret.SYSTEM_DOGRULA, 'orneklerHaric': url, 'ornekler': uret.ornekler(url),
-                'orneklerHepsi': uret.ornekler('https://yok'), 'leadCaption': uret.LEAD_CAPTION, 'denemeSayisi': uret.DENEME_SAYISI}
+                'orneklerHepsi': uret.ornekler('https://yok'), 'leadCaption': uret.LEAD_CAPTION, 'denemeSayisi': uret.DENEME_SAYISI,
+                # Deneme mesajı (2026-11-18): yeniden denemede önceki taslak alan alan karakter sayısıyla (emoji = 1 karakter).
+                'denemeMesaji': {
+                    'ilk': uret.deneme_mesaji('Akademik', 'KAYNAK X'),
+                    'tekrar': uret.deneme_mesaji('Akademik', 'KAYNAK X', '- uzunluk: coverDeck 141 karakter',
+                                                 dict(E, coverTitle='Yapay zekâ 🤖 ve sağlık hukuku')),
+                    'hataSonrasi': uret.deneme_mesaji('Sektörel', 'KAYNAK Y', 'Yanıt alınamadı; kurallara uyarak yeniden yaz.'),
+                }}
     HEDEF.write_text(json.dumps({'kaynak': 'infra/kart/karusel/editoryal/kapilar.py + uret.py (eslik_uret.py ile üretildi)',
                                  'istemler': istemler, 'vakalar': out},
                                 ensure_ascii=False, indent=1) + '\n', encoding='utf-8')

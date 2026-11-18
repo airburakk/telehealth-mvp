@@ -78,6 +78,15 @@ class GeriBildirim(unittest.TestCase):
         self.assertEqual(self.sorun(dict(E, detailSummary='Kısa.')),
                          ['- uzunluk: detailSummary 5 karakter; en az 90 olmalı → en az 85 karakter uzat (yalnız kaynaktaki bilgiyle).'])
 
+    def test_yeniden_denemede_onceki_taslak_karakter_sayisiyla_gosterilir(self):
+        m = uret.deneme_mesaji('Sektörel', 'SRC', '- uzunluk: coverDeck 141 karakter', dict(E, coverDeck='ö' * 141))
+        self.assertIn('ÖNCEKİ TASLAK:\n- coverTitle (27 karakter): Yapay zekâ ve sağlık hukuku\n- coverDeck (141 karakter): ', m)
+        self.assertLess(m.index('ÖNCEKİ TASLAK:'), m.index('ÖNCEKİ TASLAK REDDEDİLDİ'))
+        self.assertTrue(m.endswith('önceki metni düzelterek yazabilirsin.'))
+
+    def test_ilk_denemede_onceki_taslak_yok(self):
+        self.assertEqual(uret.deneme_mesaji('Sektörel', 'SRC'), 'AKIŞ: Sektörel\n\nKAYNAK METNİ:\nSRC')
+
     def test_uzunluk_disi_kapi_ayni_bicimde_kalir(self):
         s = self.sorun(dict(E, coverDeck='Mucize bir yaklaşım sağlık hukukunda ele alınıyor, deniyor.'))
         self.assertEqual(s, ['- yasak_sozcuk: mucize'])

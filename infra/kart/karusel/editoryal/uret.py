@@ -100,6 +100,20 @@ def kapi_sorunlari(gates, e: dict) -> list[str]:
     return out
 
 
+def deneme_mesaji(akis: str, src: str, geri: str = '', onceki: dict | None = None) -> str:
+    """Bir üretim denemesinin kullanıcı mesajı. Yeniden denemede reddedilen taslak alan alan karakter sayısıyla gösterilir
+    (18.11 ikinci koşu: taslağı görmeyen model "23 karakter kısalt" denince sıfırdan yazıp yalnız 1–3 karakter kısalttı)."""
+    user = f"AKIŞ: {akis}\n\nKAYNAK METNİ:\n{src}"
+    if onceki:
+        satirlar = '\n'.join(f'- {k} ({len(onceki[k])} karakter): {onceki[k]}' for k in kapilar.LIMITS)
+        user += f"\n\nÖNCEKİ TASLAK:\n{satirlar}"
+    if geri:
+        user += f"\n\nÖNCEKİ TASLAK REDDEDİLDİ. Nedenleri:\n{geri}\nBu sorunları gidererek yeniden yaz."
+        if onceki:
+            user += ' Sorunsuz alanları koruyabilir, sorunlu alanı önceki metni düzelterek yazabilirsin.'
+    return user
+
+
 class Hata(Exception):
     pass
 
@@ -181,11 +195,9 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
     for n, item in enumerate(items, 1):
         pkt = kaynak.collect(item, cikti / 'onbellek')
         src = kaynak.source_text(pkt)
-        log, geri, kabul = [], '', None
+        log, geri, kabul, onceki = [], '', None, None
         for deneme in range(1, DENEME_SAYISI + 1):
-            user = f"AKIŞ: {item['streamLabel']}\n\nKAYNAK METNİ:\n{src}"
-            if geri:
-                user += f"\n\nÖNCEKİ TASLAK REDDEDİLDİ. Nedenleri:\n{geri}\nBu sorunları gidererek yeniden yaz."
+            user = deneme_mesaji(item['streamLabel'], src, geri, onceki)
             try:
                 e = parse(SYSTEM_URET.format(ornekler=ornekler(item['url'])), user, Taslak).model_dump()
             except Exception as exc:  # noqa: BLE001 — bir deneme düşer, gün devam eder
@@ -210,7 +222,7 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
             if not sorun:
                 kabul = e
                 break
-            geri = '\n'.join(sorun)
+            geri, onceki = '\n'.join(sorun), e
         rows.append({'n': n, 'sourceUrl': item['url'], 'streamLabel': item['streamLabel'], 'kaynakOkundu': pkt['fetchedOk'],
                      'kaynakHatasi': pkt['error'], 'sonuc': 'GECTI' if kabul else 'KALDI', 'denemeler': log, 'taslak': kabul})
 

@@ -21,7 +21,7 @@
 //   · Sızıntı yok: jeton buraya GİRMEZ (`getDigest` dışarıdan verilir); günlükte içerik/başlık yok, yalnız gün + sayı + süre.
 import fs from "node:fs";
 import path from "node:path";
-import { pipeline } from "node:stream/promises";
+import { dosyaAkit } from "./dosya-akisi.mjs";
 
 const GUN_RE = /^\d{4}-\d{2}-\d{2}$/;
 const AD_RE = /^[a-z0-9][a-z0-9-]*\.mp4$/;
@@ -305,7 +305,7 @@ export function createSosyal(o) {
     try { st = fs.statSync(yol); } catch { return json(res, 404, { hata: "yok" }); }
     res.writeHead(200, { "Content-Type": png ? "image/png" : "video/mp4", "Content-Length": st.size, "Cache-Control": "no-store", "Content-Disposition": `attachment; filename="${ad}"` });
     if (req.method === "HEAD") return res.end();
-    await pipeline(fs.createReadStream(yol), res);
+    await dosyaAkit(yol, res, log);
   }
 
   const yontem = (res, izinli) => { res.setHeader("Allow", izinli); json(res, 405, { hata: "yöntem desteklenmiyor" }); };

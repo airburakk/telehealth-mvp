@@ -29,7 +29,7 @@
 // 🪤 Kaynakta \uXXXX YAZMA (araçlar kaçışı gerçek karaktere çevirebilir). 🪤 Emoji YOK.
 import fs from "node:fs";
 import path from "node:path";
-import { pipeline } from "node:stream/promises";
+import { dosyaAkit } from "./dosya-akisi.mjs";
 import { renderRubrik, rubrikGovdeDogrula } from "./social-rubrik.mjs";
 import { renderRubrikShort, xGruplari } from "./rubrik-video.mjs";
 import { renderRubrikBelge } from "./rubrik-belge.mjs";
@@ -433,7 +433,7 @@ export function createRubrikYayin({ dir, getBrowser, spherePath, planUrl = VARSA
     try { st = fs.statSync(yol); } catch { return json(res, 404, { hata: "yok" }); }
     res.writeHead(200, { "Content-Type": ad.endsWith(".mp4") ? "video/mp4" : ad.endsWith(".pdf") ? "application/pdf" : "image/png", "Content-Length": st.size, "Cache-Control": "no-store", "Content-Disposition": `attachment; filename="${ad}"` });
     if (req.method === "HEAD") return res.end();
-    await pipeline(fs.createReadStream(yol), res);
+    await dosyaAkit(yol, res, log);
   }
 
   const yontem = (req, res, izinli) => { req.resume(); res.setHeader("Allow", izinli); json(res, 405, { hata: "yöntem desteklenmiyor" }); };
