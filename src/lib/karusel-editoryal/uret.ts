@@ -42,9 +42,11 @@ export const SYSTEM_URET =
   '- Abartı yok: "çığır açan, devrim, umut verici, mucize, kanıtlandı, kesin tedavi" gibi sözcükler YASAK. "hekim" yerine ' +
   'daima "doktor" yaz.\n' +
   "- Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.\n" +
-  "- Uzunluk: coverTitle ≤ 40 karakter; coverDeck ≤ 115 karakter; detailTitle ≤ 65 karakter; detailSummary 150-250 karakter.\n" +
+  "- Uzunluk: coverTitle ≤ 36 karakter; coverDeck ≤ 90 karakter, tercihen tek cümle; detailTitle ≤ 60 karakter; detailSummary 150-220 karakter.\n" +
   "- Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 " +
   "gibi değerler) girme. Tek ana fikir yeterli.\n" +
+  "- Kapak (coverTitle, coverDeck) teknik terim taşımaz: hedef molekül, mekanizma, hücre hattı veya yöntem adı yazma; konuyu " +
+  've bulgunun aşamasını sade Türkçeyle söyle (ör. "Hücre kültüründe deneysel bulgu").\n' +
   "- Sade, tarafsız haber dili. Özgün başlığı çevirme; konuyu bir doktorun anlayacağı kısa bir başlıkla anlat.\n\n" +
   "Biçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):\n" +
   "{ornekler}";
@@ -109,7 +111,7 @@ const DOGRULAMA_TOOL: Anthropic.Tool = {
 
 // İstemdeki hedef uzunluklar (kapı sınırlarının biraz altında) — uret.py HEDEF ile aynı. Ret geri bildirimi modele bu hedefe
 // göre kaç karakter kısaltacağını söyler (17.11 gerçek koşusu: yalnız "coverDeck=141" denince model 141 → 136 → 137 gezindi).
-export const HEDEF: Record<(typeof ALANLAR)[number], number> = { coverTitle: 40, coverDeck: 115, detailTitle: 65, detailSummary: 250 };
+export const HEDEF: Record<(typeof ALANLAR)[number], number> = { coverTitle: 36, coverDeck: 90, detailTitle: 60, detailSummary: 220 };
 export const KISALTMA_YOLU =
   "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını " +
   "(hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme.";
@@ -183,10 +185,13 @@ export function edisyonOku(ed: unknown): { ed: Edisyon; items: EdisyonOgesi[] } 
 /** Python `json.dumps(d, ensure_ascii=False)` biçimi (", " ve ": " ayırıcılı) — istem metni Python'la aynı kalsın. */
 const pyDumps = (d: Record<string, string>) => "{" + Object.entries(d).map(([k, v]) => `${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(", ") + "}";
 
+// 18.11 üslup turu: 3 → 5 örnek (mevzuat + hayvan çalışması da görünsün); ≈ +250 giriş token'ı/çağrı (uret.py ile aynı).
+export const ORNEK_SAYISI = 5;
+
 export function ornekler(excludeUrl: string): string {
   return ornekVerisi.items
     .filter((i) => i.sourceUrl !== excludeUrl)   // aynı haber örnek olarak verilmez
-    .slice(0, 3)
+    .slice(0, ORNEK_SAYISI)
     .map((i) => pyDumps({ coverTitle: i.coverTitle, coverDeck: i.coverDeck, detailTitle: i.detailTitle, detailSummary: i.detailSummary }))
     .join("\n");
 }
