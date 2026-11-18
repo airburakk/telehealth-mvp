@@ -63,6 +63,26 @@ def edisyon(kok: Path) -> Path:
     return d
 
 
+class GeriBildirim(unittest.TestCase):
+    """Ret satırları: uzunlukta alan başına sayı + sınır + hedefe göre kısaltma miktarı (17.11 gerçek koşusu dersi)."""
+
+    def sorun(self, e):
+        return uret.kapi_sorunlari(kapilar.check(e, {'streamLabel': 'Sektörel', 'url': 'https://x'}, 'x'), e)
+
+    def test_uzun_alan_kac_karakter_kisaltilacagini_soyler(self):
+        s = self.sorun(dict(E, coverDeck='ö' * 141))
+        self.assertIn('- uzunluk: coverDeck 141 karakter; sınır 125. Hedef en çok 115 → en az 26 karakter kısalt.', s)
+        self.assertEqual(s[-1], uret.KISALTMA_YOLU)
+
+    def test_kisa_alan_uzatma_ister_kisaltma_yolu_eklenmez(self):
+        self.assertEqual(self.sorun(dict(E, detailSummary='Kısa.')),
+                         ['- uzunluk: detailSummary 5 karakter; en az 90 olmalı → en az 85 karakter uzat (yalnız kaynaktaki bilgiyle).'])
+
+    def test_uzunluk_disi_kapi_ayni_bicimde_kalir(self):
+        s = self.sorun(dict(E, coverDeck='Mucize bir yaklaşım sağlık hukukunda ele alınıyor, deniyor.'))
+        self.assertEqual(s, ['- yasak_sozcuk: mucize'])
+
+
 class SahteIstemci:
     """Taslak isteğine E döner; doğrulamada `kotu_oge` (1 tabanlı) için 'abartili' etiketi verir."""
     def __init__(self, kotu_oge=None):

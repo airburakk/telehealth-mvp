@@ -52,6 +52,8 @@ bilmediğin şeyi hiç anma.
 daima "doktor" yaz.
 - Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.
 - Uzunluk: coverTitle ≤ 40 karakter; coverDeck ≤ 115 karakter; detailTitle ≤ 65 karakter; detailSummary 150-250 karakter.
+- Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 \
+gibi değerler) girme. Tek ana fikir yeterli.
 - Sade, tarafsız haber dili. Özgün başlığı çevirme; konuyu bir doktorun anlayacağı kısa bir başlıkla anlat.
 
 Biçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):
@@ -66,6 +68,36 @@ Dört alanın (coverTitle, coverDeck, detailTitle, detailSummary) içindeki her 
 - "abartili": kaynakta var ama metin bulguyu olduğundan güçlü, kesin veya klinik olarak yararlı gösteriyor.
 "Henüz insanlarda gösterilmedi" gibi temkin cümleleri, kaynak klinik sonuç sunmuyorsa "desteklenir" sayılır.
 Gerekçeyi bir kısa cümleyle yaz. Şüphedeysen "desteklenmez" seç."""
+
+
+# İstemdeki hedef uzunluklar (kapı sınırlarının biraz altında). Ret geri bildirimi modele bu hedefe göre kaç karakter
+# kısaltacağını söyler — 17.11 gerçek koşusu: yalnız "coverDeck=141" denince model 141 → 136 → 137 gezindi.
+HEDEF = {'coverTitle': 40, 'coverDeck': 115, 'detailTitle': 65, 'detailSummary': 250}
+KISALTMA_YOLU = ('- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını '
+                 '(hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme.')
+
+
+def kapi_sorunlari(gates, e: dict) -> list[str]:
+    """Başarısız deterministik kapılar → modele gidecek ret satırları. Uzunlukta alan başına sayı + hedef + fark verilir."""
+    out, uzun = [], False
+    for a, ok, d in gates:
+        if ok:
+            continue
+        if a != 'uzunluk':
+            out.append(f'- {a}: {d}')
+            continue
+        for k in kapilar.LIMITS:
+            n = len(e[k])
+            if n > kapilar.LIMITS[k]:
+                out.append(f'- uzunluk: {k} {n} karakter; sınır {kapilar.LIMITS[k]}. Hedef en çok {HEDEF[k]} → '
+                           f'en az {n - HEDEF[k]} karakter kısalt.')
+                uzun = True
+            elif n < kapilar.MIN_LEN[k]:
+                out.append(f'- uzunluk: {k} {n} karakter; en az {kapilar.MIN_LEN[k]} olmalı → '
+                           f'en az {kapilar.MIN_LEN[k] - n} karakter uzat (yalnız kaynaktaki bilgiyle).')
+    if uzun:
+        out.append(KISALTMA_YOLU)
+    return out
 
 
 class Hata(Exception):
@@ -162,7 +194,7 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
                 continue
             gates = kapilar.check(e, item, src)
             rec = {'deneme': deneme, 'taslak': e, 'kapilar': [{'ad': a, 'gecti': ok, 'ayrinti': d} for a, ok, d in gates]}
-            sorun = [f'- {a}: {d}' for a, ok, d in gates if not ok]
+            sorun = kapi_sorunlari(gates, e)
             if not sorun:   # deterministik kapılar geçtiyse ikinci model doğrulaması
                 try:
                     v = parse(SYSTEM_DOGRULA, f"KAYNAK METNİ:\n{src}\n\nDENETLENECEK METİN:\n{json.dumps(e, ensure_ascii=False, indent=1)}",

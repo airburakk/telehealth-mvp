@@ -66,6 +66,11 @@ def vakalar():
     ekle('kesin-tedavi', dict(E, coverDeck='Kesin tedavi iddiası olmadan yeni yaklaşım hukuk açısından ele alınıyor.'), 'A cure was not claimed.')
     ekle('garanti', dict(E, coverDeck='Garanti verilmeden yeni yaklaşım sağlık hukuku açısından ele alınıyor.'), 'x')
     ekle('emoji-uzunluk', dict(E, coverTitle='Yapay zekâ 🤖 ve sağlık hukuku'), 'x')
+    # 17.11 gerçek koşusundan uzunluk aşımları (geri bildirim eşliği: alan başına sayı + hedef + kısaltma yolu)
+    ekle('uzun-coverdeck', dict(E, coverDeck='SBÜ İzmir Tepecik Eğitim Araştırma Hastanesi İnfeksiyon Hastalıkları ve '
+                                            'Klinik Mikrobiyoloji Kliniği beş yıl süreyle yeniden akredite edildi.'), 'x')
+    ekle('uzun-iki-alan', dict(E, coverDeck='ö' * 133, detailSummary='Uzun özet ' * 31 + 'sona erdi.'), 'x')
+    ekle('uzun-emoji', dict(E, detailTitle='🧪' * 73), 'x')
 
     # Onaylı 14 Kasım biçem örnekleri — her biri kendi metniyle kaynak (kapılardan GEÇMELİ)
     ornek = json.loads((HERE / 'ornekler.json').read_text(encoding='utf-8'))['items']
@@ -76,12 +81,13 @@ def vakalar():
 
 
 def main():
+    # İstem metinleri de eşlik kapsamında (TS uret.ts aynı metni modele vermeli). uret.py SDK'sız içe aktarılabilir.
+    import uret
     out = []
     for c in vakalar():
         r = kapilar.check(c['taslak'], c['item'], c['src'])
-        out.append({**c, 'beklenen': [[a, ok, d] for a, ok, d in r]})
-    # İstem metinleri de eşlik kapsamında (TS uret.ts aynı metni modele vermeli). uret.py SDK'sız içe aktarılabilir.
-    import uret
+        # Ret geri bildirimi (2026-11-18): TS kapiSorunlari aynı satırları üretmeli.
+        out.append({**c, 'beklenen': [[a, ok, d] for a, ok, d in r], 'geriBildirim': uret.kapi_sorunlari(r, c['taslak'])})
     url = json.loads((HERE / 'ornekler.json').read_text(encoding='utf-8'))['items'][0]['sourceUrl']
     istemler = {'uret': uret.SYSTEM_URET, 'dogrula': uret.SYSTEM_DOGRULA, 'orneklerHaric': url, 'ornekler': uret.ornekler(url),
                 'orneklerHepsi': uret.ornekler('https://yok'), 'leadCaption': uret.LEAD_CAPTION, 'denemeSayisi': uret.DENEME_SAYISI}
