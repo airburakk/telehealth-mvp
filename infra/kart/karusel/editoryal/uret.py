@@ -51,9 +51,11 @@ bilmediğin şeyi hiç anma.
 - Abartı yok: "çığır açan, devrim, umut verici, mucize, kanıtlandı, kesin tedavi" gibi sözcükler YASAK. "hekim" yerine \
 daima "doktor" yaz.
 - Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.
-- Uzunluk: coverTitle ≤ 40 karakter; coverDeck ≤ 115 karakter; detailTitle ≤ 65 karakter; detailSummary 150-250 karakter.
+- Uzunluk: coverTitle ≤ 36 karakter; coverDeck ≤ 90 karakter, tercihen tek cümle; detailTitle ≤ 60 karakter; detailSummary 150-220 karakter.
 - Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 \
 gibi değerler) girme. Tek ana fikir yeterli.
+- Kapak (coverTitle, coverDeck) teknik terim taşımaz: hedef molekül, mekanizma, hücre hattı veya yöntem adı yazma; konuyu \
+ve bulgunun aşamasını sade Türkçeyle söyle (ör. "Hücre kültüründe deneysel bulgu").
 - Sade, tarafsız haber dili. Özgün başlığı çevirme; konuyu bir doktorun anlayacağı kısa bir başlıkla anlat.
 
 Biçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):
@@ -72,7 +74,7 @@ Gerekçeyi bir kısa cümleyle yaz. Şüphedeysen "desteklenmez" seç."""
 
 # İstemdeki hedef uzunluklar (kapı sınırlarının biraz altında). Ret geri bildirimi modele bu hedefe göre kaç karakter
 # kısaltacağını söyler — 17.11 gerçek koşusu: yalnız "coverDeck=141" denince model 141 → 136 → 137 gezindi.
-HEDEF = {'coverTitle': 40, 'coverDeck': 115, 'detailTitle': 65, 'detailSummary': 250}
+HEDEF = {'coverTitle': 36, 'coverDeck': 90, 'detailTitle': 60, 'detailSummary': 220}
 KISALTMA_YOLU = ('- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını '
                  '(hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme.')
 
@@ -131,9 +133,13 @@ def edisyon_oku(p: Path) -> tuple[dict, list[dict]]:
     return ed, items
 
 
+# 18.11 üslup turu: 3 → 5 örnek (mevzuat + hayvan çalışması da görünsün); ≈ +250 giriş token'ı/çağrı.
+ORNEK_SAYISI = 5
+
+
 def ornekler(exclude_url: str) -> str:
     items = json.loads((HERE / 'ornekler.json').read_text(encoding='utf-8'))['items']
-    rows = [i for i in items if i['sourceUrl'] != exclude_url][:3]   # aynı haber örnek olarak verilmez
+    rows = [i for i in items if i['sourceUrl'] != exclude_url][:ORNEK_SAYISI]   # aynı haber örnek olarak verilmez
     return '\n'.join(json.dumps({k: i[k] for k in ('coverTitle', 'coverDeck', 'detailTitle', 'detailSummary')},
                                 ensure_ascii=False) for i in rows)
 

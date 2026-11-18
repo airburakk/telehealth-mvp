@@ -71,7 +71,7 @@ class GeriBildirim(unittest.TestCase):
 
     def test_uzun_alan_kac_karakter_kisaltilacagini_soyler(self):
         s = self.sorun(dict(E, coverDeck='ö' * 141))
-        self.assertIn('- uzunluk: coverDeck 141 karakter; sınır 125. Hedef en çok 115 → en az 26 karakter kısalt.', s)
+        self.assertIn('- uzunluk: coverDeck 141 karakter; sınır 125. Hedef en çok 90 → en az 51 karakter kısalt.', s)
         self.assertEqual(s[-1], uret.KISALTMA_YOLU)
 
     def test_kisa_alan_uzatma_ister_kisaltma_yolu_eklenmez(self):
