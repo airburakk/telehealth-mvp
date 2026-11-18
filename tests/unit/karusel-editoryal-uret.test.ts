@@ -7,7 +7,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it, vi } from "vitest";
 import eslik from "./karusel-kapilar-eslik.json";
 import {
-  calistir, DENEME_SAYISI, Hata, LEAD_CAPTION, ornekler, SYSTEM_DOGRULA, SYSTEM_URET, type Olustur,
+  calistir, DENEME_SAYISI, denemeMesaji, Hata, LEAD_CAPTION, ornekler, SYSTEM_DOGRULA, SYSTEM_URET, type Olustur,
 } from "@/lib/karusel-editoryal/uret";
 import { collect, htmlText, sourceText, webGetir, type Getir } from "@/lib/karusel-editoryal/kaynak";
 
@@ -39,19 +39,21 @@ const mesaj = (input: unknown, stop: Anthropic.Message["stop_reason"] = "tool_us
 /** Taslak isteğine E; doğrulamada `kotu` (1 tabanlı) öğe için 'abartili'. */
 function sahte(o: { kotu?: number; dogrulamaMetin?: boolean } = {}) {
   const cagri: string[] = [];
+  const taslakMesajlari: string[] = [];
   let oge = 0;
   const olustur: Olustur = async (p) => {
     const ad = (p.tool_choice as { name: string }).name;
     cagri.push(ad);
     const u = String(p.messages[0].content);
     if (ad === "submit_taslak") {
+      taslakMesajlari.push(u);
       oge = Number(/Başlık: Başlık (\d)/.exec(u)![1]);
       return mesaj({ detailSummary: E.detailSummary, coverTitle: E.coverTitle, detailTitle: E.detailTitle, coverDeck: E.coverDeck });
     }
     const iddialar = [{ alan: "detailSummary", iddia: "x", etiket: oge === o.kotu ? "abartili" : "desteklenir", gerekce: "y" }];
     return mesaj({ iddialar: o.dogrulamaMetin ? JSON.stringify(iddialar) : iddialar });
   };
-  return { olustur, cagri };
+  return { olustur, cagri, taslakMesajlari };
 }
 const getirYok: Getir = async () => { throw new Error("ağ yok"); };
 
@@ -64,6 +66,13 @@ describe("istemler — Python uret.py ile birebir", () => {
     expect(ornekler("https://yok")).toBe(p.orneklerHepsi);
     expect(LEAD_CAPTION).toBe(p.leadCaption);
     expect(DENEME_SAYISI).toBe(p.denemeSayisi);
+  });
+  it("deneme mesajı (ilk · önceki taslaklı tekrar · hata sonrası)", () => {
+    const m = p.denemeMesaji;
+    expect(denemeMesaji("Akademik", "KAYNAK X")).toBe(m.ilk);
+    expect(denemeMesaji("Akademik", "KAYNAK X", "- uzunluk: coverDeck 141 karakter",
+      { ...E, coverTitle: "Yapay zekâ 🤖 ve sağlık hukuku" })).toBe(m.tekrar);
+    expect(denemeMesaji("Sektörel", "KAYNAK Y", "Yanıt alınamadı; kurallara uyarak yeniden yaz.")).toBe(m.hataSonrasi);
   });
   it("biçem örnekleri kart'taki kopyayla aynı", () => {
     const kart = path.join(process.cwd(), "infra/kart/karusel/editoryal/ornekler.json");
@@ -112,6 +121,16 @@ describe("üretici", () => {
     expect(editorial).toBeNull();
     expect(qa.ogeler[2].denemeler).toHaveLength(DENEME_SAYISI);
     expect(qa.ogeler[2].taslak).toBeNull();
+  });
+
+  it("yeniden denemede model reddedilen taslağı karakter sayısıyla görür; ilk denemede görmez", async () => {
+    const s = sahte({ kotu: 3 });
+    await calistir(edisyon(), { olustur: s.olustur, getir: getirYok });
+    const oge3 = s.taslakMesajlari.filter((m) => m.includes("Başlık: Başlık 3"));
+    expect(oge3).toHaveLength(DENEME_SAYISI);
+    expect(oge3[0]).not.toContain("ÖNCEKİ TASLAK");
+    expect(oge3[1]).toContain(`ÖNCEKİ TASLAK:\n- coverTitle (27 karakter): ${E.coverTitle}`);
+    expect(oge3[1]).toContain('- detailSummary: "x" → abartili (y)');
   });
 
   it("JSON metnine sarılmış iddia dizisi kurtarılır", async () => {

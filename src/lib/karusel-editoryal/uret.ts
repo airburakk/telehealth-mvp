@@ -138,6 +138,24 @@ export function kapiSorunlari(gates: KapiSonucu[], e: Taslak): string[] {
   return out;
 }
 
+/**
+ * Bir üretim denemesinin kullanıcı mesajı (uret.py deneme_mesaji ile birebir; eşlik fikstürü kilitler). Yeniden denemede
+ * reddedilen taslak alan alan karakter sayısıyla gösterilir — 18.11 ikinci koşu: taslağı görmeyen model "23 karakter kısalt"
+ * denince sıfırdan yazıp yalnız 1–3 karakter kısalttı.
+ */
+export function denemeMesaji(akis: string, src: string, geri = "", onceki: Taslak | null = null): string {
+  let user = `AKIŞ: ${akis}\n\nKAYNAK METNİ:\n${src}`;
+  if (onceki) {
+    const satirlar = ALANLAR.map((k) => `- ${k} (${cpLen(onceki[k])} karakter): ${onceki[k]}`).join("\n");
+    user += `\n\nÖNCEKİ TASLAK:\n${satirlar}`;
+  }
+  if (geri) {
+    user += `\n\nÖNCEKİ TASLAK REDDEDİLDİ. Nedenleri:\n${geri}\nBu sorunları gidererek yeniden yaz.`;
+    if (onceki) user += " Sorunsuz alanları koruyabilir, sorunlu alanı önceki metni düzelterek yazabilirsin.";
+  }
+  return user;
+}
+
 /** Girdi/ortam hatası — model ÇAĞRILMADAN reddedilir (uç 400 döner). */
 export class Hata extends Error {}
 
@@ -270,9 +288,9 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
     const log: Deneme[] = [];
     let geri = "";
     let kabul: Taslak | null = null;
+    let onceki: Taslak | null = null;
     for (let deneme = 1; deneme <= DENEME_SAYISI; deneme++) {
-      let user = `AKIŞ: ${item.streamLabel}\n\nKAYNAK METNİ:\n${src}`;
-      if (geri) user += `\n\nÖNCEKİ TASLAK REDDEDİLDİ. Nedenleri:\n${geri}\nBu sorunları gidererek yeniden yaz.`;
+      const user = denemeMesaji(item.streamLabel, src, geri, onceki);
       let e: Taslak;
       try {
         e = taslakDogrula(await cagir(SYSTEM_URET.replace("{ornekler}", ornekler(item.url)), user, TASLAK_TOOL));
@@ -304,6 +322,7 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
         break;
       }
       geri = sorun.join("\n");
+      onceki = e;
     }
     rows.push({
       n, sourceUrl: item.url, streamLabel: item.streamLabel, kaynakOkundu: pkt.fetchedOk, kaynakHatasi: pkt.error,
