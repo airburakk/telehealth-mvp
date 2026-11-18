@@ -1,7 +1,7 @@
 {
  "kaynak": "infra/kart/karusel/editoryal/kapilar.py + uret.py (eslik_uret.py ile üretildi)",
  "istemler": {
-  "uret": "Doctorium Post, doktorlara yönelik günlük bir sağlık haberleri seçkisidir. Görevin: verilen TEK haber için Instagram karuselinde kullanılacak kısa Türkçe metinleri yazmak.\n\nKurallar (hepsi zorunlu):\n- Yalnız \"KAYNAK METNİ\"ndeki bilgiyi kullan. Kaynakta olmayan hiçbir sayı, tarih, kurum, sonuç veya yorum ekleme.\n- Sayıları kaynaktaki gibi yaz (ondalıkta Türkçe virgül kullanabilirsin: 19,66).\n- Laboratuvar, hücre kültürü, bilgisayar modeli veya hayvan çalışmasıysa özetin son cümlesi bunun insanlarda tedavi etkinliği göstermediğini açıkça söyler. Klinik araştırma kaydıysa (sonuç yoksa) \"bu bir araştırma duyurusudur, tedavi sonucu değildir\" anlamını taşıyan bir cümle bulunur.\n- Laboratuvar/hayvan çalışmasında BAŞLIKLAR da bulgunun nerede gözlendiğini söyler (\"farede\", \"hücre kültüründe\", \"hayvan çalışmasında\") ya da yalnız konuyu adlandırır (\"… incelendi\"); başlık bulguyu genel bir etki gibi sunmaz.\n- Mevzuat haberinde yalnız künye bilgisi: ne yayımlandı, sayısı, tarihi, hangi Resmî Gazete. Değerlendirme yok.\n- Kişi adı yazma (kurum adı yazılabilir). Kaynak hakkında açıklama cümlesi yazma (\"kaynakta … yok\" gibi); bilmediğin şeyi hiç anma.\n- Abartı yok: \"çığır açan, devrim, umut verici, mucize, kanıtlandı, kesin tedavi\" gibi sözcükler YASAK. \"hekim\" yerine daima \"doktor\" yaz.\n- Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.\n- Uzunluk: coverTitle ≤ 40 karakter; coverDeck ≤ 115 karakter; detailTitle ≤ 65 karakter; detailSummary 150-250 karakter.\n- Sade, tarafsız haber dili. Özgün başlığı çevirme; konuyu bir doktorun anlayacağı kısa bir başlıkla anlat.\n\nBiçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):\n{ornekler}",
+  "uret": "Doctorium Post, doktorlara yönelik günlük bir sağlık haberleri seçkisidir. Görevin: verilen TEK haber için Instagram karuselinde kullanılacak kısa Türkçe metinleri yazmak.\n\nKurallar (hepsi zorunlu):\n- Yalnız \"KAYNAK METNİ\"ndeki bilgiyi kullan. Kaynakta olmayan hiçbir sayı, tarih, kurum, sonuç veya yorum ekleme.\n- Sayıları kaynaktaki gibi yaz (ondalıkta Türkçe virgül kullanabilirsin: 19,66).\n- Laboratuvar, hücre kültürü, bilgisayar modeli veya hayvan çalışmasıysa özetin son cümlesi bunun insanlarda tedavi etkinliği göstermediğini açıkça söyler. Klinik araştırma kaydıysa (sonuç yoksa) \"bu bir araştırma duyurusudur, tedavi sonucu değildir\" anlamını taşıyan bir cümle bulunur.\n- Laboratuvar/hayvan çalışmasında BAŞLIKLAR da bulgunun nerede gözlendiğini söyler (\"farede\", \"hücre kültüründe\", \"hayvan çalışmasında\") ya da yalnız konuyu adlandırır (\"… incelendi\"); başlık bulguyu genel bir etki gibi sunmaz.\n- Mevzuat haberinde yalnız künye bilgisi: ne yayımlandı, sayısı, tarihi, hangi Resmî Gazete. Değerlendirme yok.\n- Kişi adı yazma (kurum adı yazılabilir). Kaynak hakkında açıklama cümlesi yazma (\"kaynakta … yok\" gibi); bilmediğin şeyi hiç anma.\n- Abartı yok: \"çığır açan, devrim, umut verici, mucize, kanıtlandı, kesin tedavi\" gibi sözcükler YASAK. \"hekim\" yerine daima \"doktor\" yaz.\n- Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.\n- Uzunluk: coverTitle ≤ 40 karakter; coverDeck ≤ 115 karakter; detailTitle ≤ 65 karakter; detailSummary 150-250 karakter.\n- Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 gibi değerler) girme. Tek ana fikir yeterli.\n- Sade, tarafsız haber dili. Özgün başlığı çevirme; konuyu bir doktorun anlayacağı kısa bir başlıkla anlat.\n\nBiçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):\n{ornekler}",
   "dogrula": "Bir sağlık haberi için yazılmış kısa metinleri KAYNAK METNİ'ne göre denetliyorsun. Görevin metni düzeltmek DEĞİL, her iddiayı etiketlemek.\n\nDört alanın (coverTitle, coverDeck, detailTitle, detailSummary) içindeki her olgusal iddiayı ayrı ayrı çıkar ve etiketle:\n- \"desteklenir\": iddia kaynak metinde açıkça yer alıyor ya da doğrudan çıkıyor.\n- \"desteklenmez\": kaynakta yok, kaynakla çelişiyor ya da kaynaktan daha fazlasını söylüyor (yeni sayı, kurum, sonuç).\n- \"abartili\": kaynakta var ama metin bulguyu olduğundan güçlü, kesin veya klinik olarak yararlı gösteriyor.\n\"Henüz insanlarda gösterilmedi\" gibi temkin cümleleri, kaynak klinik sonuç sunmuyorsa \"desteklenir\" sayılır.\nGerekçeyi bir kısa cümleyle yaz. Şüphedeysen \"desteklenmez\" seç.",
   "orneklerHaric": "https://doi.org/10.4103/rps.rps_237_25",
   "ornekler": "{\"coverTitle\": \"Böbrek kanserinde Faz 3 çalışma\", \"coverDeck\": \"Belzutifan ve zanzalintinib kombinasyonu inceleniyor. Tedavi sonuçları değil, çalışma kaydı.\", \"detailTitle\": \"İleri böbrek kanserinde Faz 3 kombinasyon çalışması\", \"detailSummary\": \"LITESPARK-034, ileri renal hücreli karsinomda belzutifan ve zanzalintinib kombinasyonunu belzutifan ve plaseboyla karşılaştırıyor. Amaç, genel ve hastalık ilerlemeden sağkalımı değerlendirmek; bu bir araştırma duyurusudur, tedavi sonucu değildir.\"}\n{\"coverTitle\": \"Tepecik’e yeniden akreditasyon\", \"coverDeck\": \"Uzmanlık eğitimi için beş yıllık yeniden akreditasyon.\", \"detailTitle\": \"Tepecik’in infeksiyon kliniğine beş yıllık akreditasyon\", \"detailSummary\": \"KLİMİK, Tepecik Eğitim Araştırma Hastanesi’nin İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniğinin uzmanlık eğitimi için beş yıl süreyle yeniden akredite edildiğini duyurdu. Belge 9 Kasım’daki ziyarette sunuldu.\"}\n{\"coverTitle\": \"Üniversite hastanelerine komite\", \"coverDeck\": \"11971 sayılı karar, 14 Kasım Resmî Gazete’de yayımlandı.\", \"detailTitle\": \"Üniversite hastaneleri için koordinasyon komitesi kararı\", \"detailSummary\": \"Üniversite hastaneleri için koordinasyon komitesi kurulmasına ilişkin 11971 sayılı Cumhurbaşkanı Kararı, 14 Kasım tarihli ve 33430 sayılı Resmî Gazete’de yayımlandı.\"}",
@@ -59,7 +59,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "temkin-klinik-oncesi-0",
@@ -110,6 +111,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
    ]
   },
   {
@@ -161,6 +165,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
    ]
   },
   {
@@ -212,6 +219,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
    ]
   },
   {
@@ -263,6 +273,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
    ]
   },
   {
@@ -314,6 +327,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: detailSummary 81 karakter; en az 90 olmalı → en az 9 karakter uzat (yalnız kaynaktaki bilgiyle)."
    ]
   },
   {
@@ -365,6 +381,10 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: detailSummary 81 karakter; en az 90 olmalı → en az 9 karakter uzat (yalnız kaynaktaki bilgiyle).",
+    "- sayilar: kaynakta yok: 11"
    ]
   },
   {
@@ -416,6 +436,10 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: detailSummary 83 karakter; en az 90 olmalı → en az 7 karakter uzat (yalnız kaynaktaki bilgiyle).",
+    "- sayilar: kaynakta yok: 12.000"
    ]
   },
   {
@@ -467,6 +491,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: detailSummary 89 karakter; en az 90 olmalı → en az 1 karakter uzat (yalnız kaynaktaki bilgiyle)."
    ]
   },
   {
@@ -518,6 +545,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- yasak_sozcuk: mucize"
    ]
   },
   {
@@ -569,6 +599,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- yasak_sozcuk: akredit"
    ]
   },
   {
@@ -620,7 +653,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "uzunluk-kisa",
@@ -671,6 +705,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: detailSummary 5 karakter; en az 90 olmalı → en az 85 karakter uzat (yalnız kaynaktaki bilgiyle)."
    ]
   },
   {
@@ -722,6 +759,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- baglanti_yok: metinde bağlantı var"
    ]
   },
   {
@@ -773,6 +813,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- yasak_sozcuk: hekim"
    ]
   },
   {
@@ -824,7 +867,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "sayi-ondalik",
@@ -875,6 +919,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: detailSummary 88 karakter; en az 90 olmalı → en az 2 karakter uzat (yalnız kaynaktaki bilgiyle)."
    ]
   },
   {
@@ -926,6 +973,10 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: detailSummary 88 karakter; en az 90 olmalı → en az 2 karakter uzat (yalnız kaynaktaki bilgiyle).",
+    "- sayilar: kaynakta yok: 19,67"
    ]
   },
   {
@@ -977,6 +1028,9 @@
      false,
      "Prof. Dr. Ayşe, Doç. Şükrü, Dr.Ömer"
     ]
+   ],
+   "geriBildirim": [
+    "- kisi_adi_yok: Prof. Dr. Ayşe, Doç. Şükrü, Dr.Ömer"
    ]
   },
   {
@@ -1028,6 +1082,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- ic_ses_yok: kaynakta, belirtilmemiş"
    ]
   },
   {
@@ -1084,6 +1141,9 @@
      false,
      "önemli, yeni dönem, olumlu"
     ]
+   ],
+   "geriBildirim": [
+    "- mevzuat_kunye: önemli, yeni dönem, olumlu"
    ]
   },
   {
@@ -1140,7 +1200,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "ilac-temkinsiz",
@@ -1191,6 +1252,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- temkin: klinik araştırma kaydı bulgu; temkin cümlesi yok"
    ]
   },
   {
@@ -1242,7 +1306,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "rat-sozcuk-sonu",
@@ -1293,7 +1358,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "rat-tam",
@@ -1344,6 +1410,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
    ]
   },
   {
@@ -1395,6 +1464,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
    ]
   },
   {
@@ -1446,7 +1518,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "garanti",
@@ -1497,6 +1570,9 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": [
+    "- yasak_sozcuk: garanti"
    ]
   },
   {
@@ -1548,6 +1624,174 @@
      true,
      ""
     ]
+   ],
+   "geriBildirim": []
+  },
+  {
+   "ad": "uzun-coverdeck",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "SBÜ İzmir Tepecik Eğitim Araştırma Hastanesi İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniği beş yıl süreyle yeniden akredite edildi.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "coverDeck=141"
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     false,
+     "akredit"
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: coverDeck 141 karakter; sınır 125. Hedef en çok 115 → en az 26 karakter kısalt.",
+    "- yasak_sozcuk: akredit",
+    "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını (hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme."
+   ]
+  },
+  {
+   "ad": "uzun-iki-alan",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "ööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet sona erdi."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "coverDeck=133, detailSummary=320"
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: coverDeck 133 karakter; sınır 125. Hedef en çok 115 → en az 18 karakter kısalt.",
+    "- uzunluk: detailSummary 320 karakter; sınır 270. Hedef en çok 250 → en az 70 karakter kısalt.",
+    "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını (hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme."
+   ]
+  },
+  {
+   "ad": "uzun-emoji",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     false,
+     "detailTitle=73"
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ],
+   "geriBildirim": [
+    "- uzunluk: detailTitle 73 karakter; sınır 72. Hedef en çok 65 → en az 8 karakter kısalt.",
+    "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını (hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme."
    ]
   },
   {
@@ -1599,7 +1843,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "ornek-1",
@@ -1650,7 +1895,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "ornek-2",
@@ -1701,7 +1947,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "ornek-3",
@@ -1752,7 +1999,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "ornek-4",
@@ -1803,7 +2051,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   },
   {
    "ad": "ornek-5",
@@ -1854,7 +2103,8 @@
      true,
      ""
     ]
-   ]
+   ],
+   "geriBildirim": []
   }
  ]
 }

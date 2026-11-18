@@ -11,7 +11,7 @@
 import { createHash } from "node:crypto";
 import type Anthropic from "@anthropic-ai/sdk";
 import { modelParams } from "@/lib/ai-model";
-import { ALANLAR, check, type Taslak } from "./kapilar";
+import { ALANLAR, check, cpLen, LIMITS, MIN_LEN, type KapiSonucu, type Taslak } from "./kapilar";
 import { collect, sourceText, type EdisyonOgesi, type Getir } from "./kaynak";
 import ornekVerisi from "./ornekler.json";
 
@@ -43,6 +43,8 @@ export const SYSTEM_URET =
   'daima "doktor" yaz.\n' +
   "- Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.\n" +
   "- Uzunluk: coverTitle ≤ 40 karakter; coverDeck ≤ 115 karakter; detailTitle ≤ 65 karakter; detailSummary 150-250 karakter.\n" +
+  "- Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 " +
+  "gibi değerler) girme. Tek ana fikir yeterli.\n" +
   "- Sade, tarafsız haber dili. Özgün başlığı çevirme; konuyu bir doktorun anlayacağı kısa bir başlıkla anlat.\n\n" +
   "Biçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):\n" +
   "{ornekler}";
@@ -104,6 +106,37 @@ const DOGRULAMA_TOOL: Anthropic.Tool = {
     additionalProperties: false,
   },
 };
+
+// İstemdeki hedef uzunluklar (kapı sınırlarının biraz altında) — uret.py HEDEF ile aynı. Ret geri bildirimi modele bu hedefe
+// göre kaç karakter kısaltacağını söyler (17.11 gerçek koşusu: yalnız "coverDeck=141" denince model 141 → 136 → 137 gezindi).
+export const HEDEF: Record<(typeof ALANLAR)[number], number> = { coverTitle: 40, coverDeck: 115, detailTitle: 65, detailSummary: 250 };
+export const KISALTMA_YOLU =
+  "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını " +
+  "(hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme.";
+
+/** Başarısız deterministik kapılar → modele gidecek ret satırları (uret.py kapi_sorunlari ile birebir; eşlik fikstürü kilitler). */
+export function kapiSorunlari(gates: KapiSonucu[], e: Taslak): string[] {
+  const out: string[] = [];
+  let uzun = false;
+  for (const [a, ok, d] of gates) {
+    if (ok) continue;
+    if (a !== "uzunluk") {
+      out.push(`- ${a}: ${d}`);
+      continue;
+    }
+    for (const k of ALANLAR) {
+      const n = cpLen(e[k]);
+      if (n > LIMITS[k]) {
+        out.push(`- uzunluk: ${k} ${n} karakter; sınır ${LIMITS[k]}. Hedef en çok ${HEDEF[k]} → en az ${n - HEDEF[k]} karakter kısalt.`);
+        uzun = true;
+      } else if (n < MIN_LEN[k]) {
+        out.push(`- uzunluk: ${k} ${n} karakter; en az ${MIN_LEN[k]} olmalı → en az ${MIN_LEN[k] - n} karakter uzat (yalnız kaynaktaki bilgiyle).`);
+      }
+    }
+  }
+  if (uzun) out.push(KISALTMA_YOLU);
+  return out;
+}
 
 /** Girdi/ortam hatası — model ÇAĞRILMADAN reddedilir (uç 400 döner). */
 export class Hata extends Error {}
@@ -249,7 +282,7 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
         continue;
       }
       const gates = check(e, item, src);
-      const sorun = gates.filter(([, ok]) => !ok).map(([a, , d]) => `- ${a}: ${d}`);
+      const sorun = kapiSorunlari(gates, e);
       const rec: Extract<Deneme, { taslak: Taslak }> = {
         deneme, taslak: e, kapilar: gates.map(([ad, gecti, ayrinti]) => ({ ad, gecti, ayrinti })), sonuc: "KALDI",
       };
