@@ -16,7 +16,7 @@ import crypto from "node:crypto";
 import { execFile } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { pipeline } from "node:stream/promises";
+import { dosyaAkit } from "./dosya-akisi.mjs";
 import { fileURLToPath } from "node:url";
 import { yetkili } from "./social-rubrik.mjs";
 
@@ -226,7 +226,7 @@ export function createKarusel({ dir, token, mesgul = () => false, cizici = pytho
     try { st = fs.statSync(yol); } catch { return json(res, 404, { hata: "yok" }); }
     res.writeHead(200, { "Content-Type": "image/png", "Content-Length": st.size, "Cache-Control": "no-store" });
     if (req.method === "HEAD") return res.end();
-    await pipeline(fs.createReadStream(yol), res);
+    await dosyaAkit(yol, res, log);
   }
 
   /** GET /karusel/kapi/<gün> (Bearer): o günün kapı kararı — 07:50 akışının "karusel GEÇTİ mi?" okuması (plan adım 8) içindir. */
