@@ -29,6 +29,10 @@ describe("kapılar — Python eşliği", () => {
     expect(v.geriBildirim[0]).toBe("- uzunluk: coverDeck 141 karakter (18 kelime); sınır 125 karakter. En çok 12 kelime yaz → en az 6 kelime çıkar.");
     expect(v.geriBildirim.at(-1)).toBe(KISALTMA_YOLU);
   });
+  it("kapak başlığı aşımı da kelime cinsinden geri bildirim alır", () => {
+    const v = vakalar.find((x) => x.ad === "uzun-covertitle")!;
+    expect(v.geriBildirim[0]).toBe("- uzunluk: coverTitle 45 karakter (6 kelime); sınır 44 karakter. En çok 5 kelime yaz → en az 1 kelime çıkar.");
+  });
   it("onaylı 14 Kasım metinleri kapılardan geçer", () => {
     for (const v of vakalar.filter((x) => x.ad.startsWith("ornek-"))) expect(passed(check(v.taslak, v.item, v.src)), v.ad).toBe(true);
   });

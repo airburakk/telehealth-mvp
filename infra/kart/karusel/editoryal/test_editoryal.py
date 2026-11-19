@@ -79,6 +79,11 @@ class GeriBildirim(unittest.TestCase):
         self.assertIn('- uzunluk: detailTitle 80 karakter; sınır 72. Hedef en çok 60 → en az 20 karakter kısalt.', s)
         self.assertEqual(s[-1], uret.KISALTMA_YOLU)
 
+    def test_kapak_basligi_kelime_hedefiyle_kisaltilir(self):
+        s = self.sorun(dict(E, coverTitle='İleri böbrek kanserinde yeni tedavi çalışması'))
+        self.assertIn('- uzunluk: coverTitle 45 karakter (6 kelime); sınır 44 karakter. En çok 5 kelime yaz → en az 1 kelime çıkar.', s)
+        self.assertEqual(s[-1], uret.KISALTMA_YOLU)
+
     def test_kisa_alan_uzatma_ister_kisaltma_yolu_eklenmez(self):
         self.assertEqual(self.sorun(dict(E, detailSummary='Kısa.')),
                          ['- uzunluk: detailSummary 5 karakter; en az 90 olmalı → en az 85 karakter uzat (yalnız kaynaktaki bilgiyle).'])
