@@ -71,6 +71,8 @@ def vakalar():
                                             'Klinik Mikrobiyoloji Kliniği beş yıl süreyle yeniden akredite edildi.'), 'x')
     ekle('uzun-iki-alan', dict(E, coverDeck='ö' * 133, detailSummary='Uzun özet ' * 31 + 'sona erdi.'), 'x')
     ekle('uzun-emoji', dict(E, detailTitle='🧪' * 73), 'x')
+    # 19.11 gerçek koşu: 45 karakter / 6 kelime kapak başlığı → kelime yolundan geri bildirim.
+    ekle('uzun-covertitle', dict(E, coverTitle='İleri böbrek kanserinde yeni tedavi çalışması'), 'x')
 
     # Onaylı 14 Kasım biçem örnekleri — her biri kendi metniyle kaynak (kapılardan GEÇMELİ)
     ornek = json.loads((HERE / 'ornekler.json').read_text(encoding='utf-8'))['items']

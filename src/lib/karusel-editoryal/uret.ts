@@ -42,11 +42,13 @@ export const SYSTEM_URET =
   '- Abartı yok: "çığır açan, devrim, umut verici, mucize, kanıtlandı, kesin tedavi" gibi sözcükler YASAK. "hekim" yerine ' +
   'daima "doktor" yaz.\n' +
   "- Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.\n" +
-  "- Uzunluk: coverTitle ≤ 36 karakter; coverDeck en çok 12 kelime (1-2 kısa cümle); detailTitle ≤ 60 karakter; detailSummary en çok 28 kelime (2-3 kısa cümle; temkin cümlesi gerekiyorsa sonuncusu).\n" +
+  "- Uzunluk: coverTitle en çok 5 kelime; coverDeck en çok 12 kelime (1-2 kısa cümle); detailTitle ≤ 60 karakter; detailSummary en çok 28 kelime (2-3 kısa cümle; temkin cümlesi gerekiyorsa sonuncusu).\n" +
   "- Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 " +
   "gibi değerler) girme. Tek ana fikir yeterli.\n" +
   "- Kapak (coverTitle, coverDeck) teknik terim taşımaz: hedef molekül, mekanizma, hücre hattı veya yöntem adı yazma; konuyu " +
   've bulgunun aşamasını sade Türkçeyle söyle (ör. "Hücre kültüründe deneysel bulgu").\n' +
+  '- Haber bir klinik araştırma duyurusuysa (hasta alımı, devam eden çalışma) başlıklar "çalışma" veya "araştırma" ' +
+  'sözcüğünü korur; kısaltırken "yeni tedavi" gibi sonuç izlenimi veren bir ifadeye dönüştürme.\n' +
   "- Sade, tarafsız haber dili. Özgün başlığı çevirme; konuyu bir doktorun anlayacağı kısa bir başlıkla anlat.\n\n" +
   "Biçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):\n" +
   "{ornekler}";
@@ -72,7 +74,7 @@ const TASLAK_TOOL: Anthropic.Tool = {
   input_schema: {
     type: "object",
     properties: {
-      coverTitle: { type: "string", description: "Kapak için çok kısa başlık" },
+      coverTitle: { type: "string", description: "Kapak için çok kısa başlık, en çok 5 kelime" },
       coverDeck: { type: "string", description: "Kapak için en çok 12 kelime, 1-2 kısa cümle" },
       detailTitle: { type: "string", description: "Haber kartı başlığı" },
       detailSummary: { type: "string", description: "Haber kartı özeti, en çok 28 kelime, 2-3 kısa cümle" },
@@ -113,7 +115,8 @@ const DOGRULAMA_TOOL: Anthropic.Tool = {
 // göre kaç karakter kısaltacağını söyler (17.11 gerçek koşusu: yalnız "coverDeck=141" denince model 141 → 136 → 137 gezindi).
 export const HEDEF: Record<(typeof ALANLAR)[number], number> = { coverTitle: 36, coverDeck: 90, detailTitle: 60, detailSummary: 220 };
 // 19.11 cümle kuralı: açıklama/özet hedefi KELİME cinsinden — karakter hedefi tutmadı (özet 301 → 301 → 295). uret.py ile aynı.
-export const KELIME_HEDEF: Partial<Record<(typeof ALANLAR)[number], number>> = { coverDeck: 12, detailSummary: 28 };
+// 19.11 başlık kuralı: kapak başlığı da kelime cinsinden (45 karakter → karakter geri bildirimiyle 2. denemede hiç kısalmadı).
+export const KELIME_HEDEF: Partial<Record<(typeof ALANLAR)[number], number>> = { coverTitle: 5, coverDeck: 12, detailSummary: 28 };
 /** Python `len(s.split())` ile aynı: boşluk dizilerine göre böl, boş parçaları sayma. */
 export const kelimeSay = (s: string) => s.split(/\s+/).filter(Boolean).length;
 export const KISALTMA_YOLU =
