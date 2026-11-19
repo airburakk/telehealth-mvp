@@ -16,8 +16,9 @@ import { collect, sourceText, type EdisyonOgesi, type Getir } from "./kaynak";
 import ornekVerisi from "./ornekler.json";
 
 export const DEFAULT_MODEL = "claude-haiku-5-5";
-// Plan "bir kez yeniden üret" diyor; Atölye ölçümü (13–16 Kasım) 3 denemeyle yapıldı — 👤 kararı bekleniyor (Python ile aynı).
-export const DENEME_SAYISI = 3;
+// 👤 19.11: 3 → 4 deneme (uret.py ile aynı). 18–19.11 koşularında 6 öğeden biri 3. denemede doğrulamaya (abartı) takılıp hak bitince
+// günü düşürdü; doğrulama yalnız kapılar geçince koşar, uzunluğa harcanan deneme abartı düzeltmesinin hakkını yiyordu.
+export const DENEME_SAYISI = 4;
 // USD / MTok (giriş, çıkış) — uret.py ile aynı tablo (claude-api fiyat önbelleği 2026-11-03). Tahminîdir; Console esastır.
 const PRICES: Record<string, [number, number]> = {
   "claude-haiku-5-5": [0.1, 0.5], "claude-haiku-4-5": [1.0, 5.0], "claude-sonnet-5-5": [2.0, 10.0],
