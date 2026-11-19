@@ -28,8 +28,9 @@ import kapilar  # noqa: E402
 import kaynak  # noqa: E402
 
 DEFAULT_MODEL = 'claude-haiku-5-5'
-# Plan "bir kez yeniden üret" diyor; Atölye ölçümü (13–16 Kasım) 3 denemeyle yapıldı — 👤 kararı bekleniyor.
-DENEME_SAYISI = 3
+# 👤 19.11: 3 → 4 deneme. 18–19.11 koşularında 6 öğeden biri 3. denemede doğrulamaya (abartı) takılıp hak bitince günü düşürdü;
+# doğrulama yalnız kapılar geçince koşar, uzunluğa harcanan deneme abartı düzeltmesinin hakkını yiyordu.
+DENEME_SAYISI = 4
 # USD / MTok (giriş, çıkış) — claude-api fiyat tablosu (önbellek 2026-11-03). Tahminîdir; Console esastır.
 PRICES = {'claude-haiku-5-5': (0.10, 0.50), 'claude-haiku-4-5': (1.0, 5.0), 'claude-sonnet-5-5': (2.0, 10.0)}
 LEAD_CAPTION = 'Temsili illüstrasyon · Yapay zekâ ile oluşturulmuştur'
