@@ -42,7 +42,7 @@ export const SYSTEM_URET =
   '- Abartı yok: "çığır açan, devrim, umut verici, mucize, kanıtlandı, kesin tedavi" gibi sözcükler YASAK. "hekim" yerine ' +
   'daima "doktor" yaz.\n' +
   "- Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.\n" +
-  "- Uzunluk: coverTitle ≤ 36 karakter; coverDeck ≤ 90 karakter, tercihen tek cümle; detailTitle ≤ 60 karakter; detailSummary 150-220 karakter.\n" +
+  "- Uzunluk: coverTitle ≤ 36 karakter; coverDeck en çok 12 kelime (1-2 kısa cümle); detailTitle ≤ 60 karakter; detailSummary en çok 28 kelime (2-3 kısa cümle; temkin cümlesi gerekiyorsa sonuncusu).\n" +
   "- Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 " +
   "gibi değerler) girme. Tek ana fikir yeterli.\n" +
   "- Kapak (coverTitle, coverDeck) teknik terim taşımaz: hedef molekül, mekanizma, hücre hattı veya yöntem adı yazma; konuyu " +
@@ -73,9 +73,9 @@ const TASLAK_TOOL: Anthropic.Tool = {
     type: "object",
     properties: {
       coverTitle: { type: "string", description: "Kapak için çok kısa başlık" },
-      coverDeck: { type: "string", description: "Kapak için 1-2 kısa cümle" },
+      coverDeck: { type: "string", description: "Kapak için en çok 12 kelime, 1-2 kısa cümle" },
       detailTitle: { type: "string", description: "Haber kartı başlığı" },
-      detailSummary: { type: "string", description: "Haber kartı özeti, 2-3 cümle" },
+      detailSummary: { type: "string", description: "Haber kartı özeti, en çok 28 kelime, 2-3 kısa cümle" },
     },
     required: [...ALANLAR],
     additionalProperties: false,
@@ -112,6 +112,10 @@ const DOGRULAMA_TOOL: Anthropic.Tool = {
 // İstemdeki hedef uzunluklar (kapı sınırlarının biraz altında) — uret.py HEDEF ile aynı. Ret geri bildirimi modele bu hedefe
 // göre kaç karakter kısaltacağını söyler (17.11 gerçek koşusu: yalnız "coverDeck=141" denince model 141 → 136 → 137 gezindi).
 export const HEDEF: Record<(typeof ALANLAR)[number], number> = { coverTitle: 36, coverDeck: 90, detailTitle: 60, detailSummary: 220 };
+// 19.11 cümle kuralı: açıklama/özet hedefi KELİME cinsinden — karakter hedefi tutmadı (özet 301 → 301 → 295). uret.py ile aynı.
+export const KELIME_HEDEF: Partial<Record<(typeof ALANLAR)[number], number>> = { coverDeck: 12, detailSummary: 28 };
+/** Python `len(s.split())` ile aynı: boşluk dizilerine göre böl, boş parçaları sayma. */
+export const kelimeSay = (s: string) => s.split(/\s+/).filter(Boolean).length;
 export const KISALTMA_YOLU =
   "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını " +
   "(hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme.";
@@ -129,7 +133,13 @@ export function kapiSorunlari(gates: KapiSonucu[], e: Taslak): string[] {
     for (const k of ALANLAR) {
       const n = cpLen(e[k]);
       if (n > LIMITS[k]) {
-        out.push(`- uzunluk: ${k} ${n} karakter; sınır ${LIMITS[k]}. Hedef en çok ${HEDEF[k]} → en az ${n - HEDEF[k]} karakter kısalt.`);
+        const kh = KELIME_HEDEF[k];
+        if (kh !== undefined) {
+          const w = kelimeSay(e[k]);
+          out.push(`- uzunluk: ${k} ${n} karakter (${w} kelime); sınır ${LIMITS[k]} karakter. En çok ${kh} kelime yaz → en az ${Math.max(1, w - kh)} kelime çıkar.`);
+        } else {
+          out.push(`- uzunluk: ${k} ${n} karakter; sınır ${LIMITS[k]}. Hedef en çok ${HEDEF[k]} → en az ${n - HEDEF[k]} karakter kısalt.`);
+        }
         uzun = true;
       } else if (n < MIN_LEN[k]) {
         out.push(`- uzunluk: ${k} ${n} karakter; en az ${MIN_LEN[k]} olmalı → en az ${MIN_LEN[k] - n} karakter uzat (yalnız kaynaktaki bilgiyle).`);
@@ -185,8 +195,8 @@ export function edisyonOku(ed: unknown): { ed: Edisyon; items: EdisyonOgesi[] } 
 /** Python `json.dumps(d, ensure_ascii=False)` biçimi (", " ve ": " ayırıcılı) — istem metni Python'la aynı kalsın. */
 const pyDumps = (d: Record<string, string>) => "{" + Object.entries(d).map(([k, v]) => `${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(", ") + "}";
 
-// 18.11 üslup turu: 3 → 5 örnek (mevzuat + hayvan çalışması da görünsün); ≈ +250 giriş token'ı/çağrı (uret.py ile aynı).
-export const ORNEK_SAYISI = 5;
+// 19.11: 5 → 3 örneğe geri (18.11 koşusu: 5 örnek kısalık kazandırmadı, yalnız token + süre ekledi). uret.py ile aynı.
+export const ORNEK_SAYISI = 3;
 
 export function ornekler(excludeUrl: string): string {
   return ornekVerisi.items

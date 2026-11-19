@@ -70,8 +70,13 @@ class GeriBildirim(unittest.TestCase):
         return uret.kapi_sorunlari(kapilar.check(e, {'streamLabel': 'Sektörel', 'url': 'https://x'}, 'x'), e)
 
     def test_uzun_alan_kac_karakter_kisaltilacagini_soyler(self):
-        s = self.sorun(dict(E, coverDeck='ö' * 141))
-        self.assertIn('- uzunluk: coverDeck 141 karakter; sınır 125. Hedef en çok 90 → en az 51 karakter kısalt.', s)
+        s = self.sorun(dict(E, coverDeck=' '.join(['kelime'] * 20)))
+        self.assertIn('- uzunluk: coverDeck 139 karakter (20 kelime); sınır 125 karakter. En çok 12 kelime yaz → en az 8 kelime çıkar.', s)
+        self.assertEqual(s[-1], uret.KISALTMA_YOLU)
+
+    def test_baslik_karakter_hedefiyle_kisaltilir(self):
+        s = self.sorun(dict(E, detailTitle='ö' * 80))
+        self.assertIn('- uzunluk: detailTitle 80 karakter; sınır 72. Hedef en çok 60 → en az 20 karakter kısalt.', s)
         self.assertEqual(s[-1], uret.KISALTMA_YOLU)
 
     def test_kisa_alan_uzatma_ister_kisaltma_yolu_eklenmez(self):
