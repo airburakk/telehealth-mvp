@@ -24,9 +24,9 @@ describe("kapılar — Python eşliği", () => {
   it.each(vakalar.map((v) => [v.ad, v] as const))("geri bildirim: %s", (_ad, v) => {
     expect(kapiSorunlari(check(v.taslak, v.item, v.src), v.taslak)).toEqual(v.geriBildirim);
   });
-  it("uzunluk aşımı geri bildirimi sayı + hedef + kısaltma yolu içerir", () => {
+  it("uzunluk aşımı geri bildirimi kelime hedefi + kısaltma yolu içerir", () => {
     const v = vakalar.find((x) => x.ad === "uzun-coverdeck")!;
-    expect(v.geriBildirim[0]).toBe("- uzunluk: coverDeck 141 karakter; sınır 125. Hedef en çok 90 → en az 51 karakter kısalt.");
+    expect(v.geriBildirim[0]).toBe("- uzunluk: coverDeck 141 karakter (18 kelime); sınır 125 karakter. En çok 12 kelime yaz → en az 6 kelime çıkar.");
     expect(v.geriBildirim.at(-1)).toBe(KISALTMA_YOLU);
   });
   it("onaylı 14 Kasım metinleri kapılardan geçer", () => {

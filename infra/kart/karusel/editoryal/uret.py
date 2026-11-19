@@ -51,7 +51,7 @@ bilmediğin şeyi hiç anma.
 - Abartı yok: "çığır açan, devrim, umut verici, mucize, kanıtlandı, kesin tedavi" gibi sözcükler YASAK. "hekim" yerine \
 daima "doktor" yaz.
 - Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.
-- Uzunluk: coverTitle ≤ 36 karakter; coverDeck ≤ 90 karakter, tercihen tek cümle; detailTitle ≤ 60 karakter; detailSummary 150-220 karakter.
+- Uzunluk: coverTitle ≤ 36 karakter; coverDeck en çok 12 kelime (1-2 kısa cümle); detailTitle ≤ 60 karakter; detailSummary en çok 28 kelime (2-3 kısa cümle; temkin cümlesi gerekiyorsa sonuncusu).
 - Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 \
 gibi değerler) girme. Tek ana fikir yeterli.
 - Kapak (coverTitle, coverDeck) teknik terim taşımaz: hedef molekül, mekanizma, hücre hattı veya yöntem adı yazma; konuyu \
@@ -75,6 +75,8 @@ Gerekçeyi bir kısa cümleyle yaz. Şüphedeysen "desteklenmez" seç."""
 # İstemdeki hedef uzunluklar (kapı sınırlarının biraz altında). Ret geri bildirimi modele bu hedefe göre kaç karakter
 # kısaltacağını söyler — 17.11 gerçek koşusu: yalnız "coverDeck=141" denince model 141 → 136 → 137 gezindi.
 HEDEF = {'coverTitle': 36, 'coverDeck': 90, 'detailTitle': 60, 'detailSummary': 220}
+# 19.11 cümle kuralı: açıklama/özet hedefi KELİME cinsinden — karakter hedefi tutmadı (özet 301 → 301 → 295).
+KELIME_HEDEF = {'coverDeck': 12, 'detailSummary': 28}
 KISALTMA_YOLU = ('- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını '
                  '(hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme.')
 
@@ -91,8 +93,13 @@ def kapi_sorunlari(gates, e: dict) -> list[str]:
         for k in kapilar.LIMITS:
             n = len(e[k])
             if n > kapilar.LIMITS[k]:
-                out.append(f'- uzunluk: {k} {n} karakter; sınır {kapilar.LIMITS[k]}. Hedef en çok {HEDEF[k]} → '
-                           f'en az {n - HEDEF[k]} karakter kısalt.')
+                if k in KELIME_HEDEF:
+                    w = len(e[k].split())
+                    out.append(f'- uzunluk: {k} {n} karakter ({w} kelime); sınır {kapilar.LIMITS[k]} karakter. '
+                               f'En çok {KELIME_HEDEF[k]} kelime yaz → en az {max(1, w - KELIME_HEDEF[k])} kelime çıkar.')
+                else:
+                    out.append(f'- uzunluk: {k} {n} karakter; sınır {kapilar.LIMITS[k]}. Hedef en çok {HEDEF[k]} → '
+                               f'en az {n - HEDEF[k]} karakter kısalt.')
                 uzun = True
             elif n < kapilar.MIN_LEN[k]:
                 out.append(f'- uzunluk: {k} {n} karakter; en az {kapilar.MIN_LEN[k]} olmalı → '
@@ -133,8 +140,8 @@ def edisyon_oku(p: Path) -> tuple[dict, list[dict]]:
     return ed, items
 
 
-# 18.11 üslup turu: 3 → 5 örnek (mevzuat + hayvan çalışması da görünsün); ≈ +250 giriş token'ı/çağrı.
-ORNEK_SAYISI = 5
+# 19.11: 5 → 3 örneğe geri (18.11 koşusu: 5 örnek kısalık kazandırmadı, yalnız token + süre ekledi).
+ORNEK_SAYISI = 3
 
 
 def ornekler(exclude_url: str) -> str:
@@ -172,9 +179,9 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
 
     class Taslak(BaseModel):
         coverTitle: str = Field(description='Kapak için çok kısa başlık')
-        coverDeck: str = Field(description='Kapak için 1-2 kısa cümle')
+        coverDeck: str = Field(description='Kapak için en çok 12 kelime, 1-2 kısa cümle')
         detailTitle: str = Field(description='Haber kartı başlığı')
-        detailSummary: str = Field(description='Haber kartı özeti, 2-3 cümle')
+        detailSummary: str = Field(description='Haber kartı özeti, en çok 28 kelime, 2-3 kısa cümle')
 
     class Iddia(BaseModel):
         alan: Literal['coverTitle', 'coverDeck', 'detailTitle', 'detailSummary']
