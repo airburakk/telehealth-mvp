@@ -46,6 +46,8 @@ export const SYSTEM_URET =
   "- Uzunluk: coverTitle en çok 5 kelime; coverDeck en çok 12 kelime (1-2 kısa cümle); detailTitle ≤ 60 karakter; detailSummary en çok 28 kelime (2-3 kısa cümle; temkin cümlesi gerekiyorsa sonuncusu).\n" +
   "- Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 " +
   "gibi değerler) girme. Tek ana fikir yeterli.\n" +
+  '- Uzun kimyasal ad veya formül (ör. "N-(α-…)" biçimli adlar) yazma; ana bileşiğin adı + "türevleri" gibi kısa, genel bir adla an. ' +
+  'Yazdığın her özel adı (ilaç, molekül, kurum, çalışma adı) kaynaktaki yazımıyla aynen kullan; harfini değiştirme.\n' +
   "- Kapak (coverTitle, coverDeck) teknik terim taşımaz: hedef molekül, mekanizma, hücre hattı veya yöntem adı yazma; konuyu " +
   've bulgunun aşamasını sade Türkçeyle söyle (ör. "Hücre kültüründe deneysel bulgu").\n' +
   '- Haber bir klinik araştırma duyurusuysa (hasta alımı, devam eden çalışma) başlıklar "çalışma" veya "araştırma" ' +
@@ -62,6 +64,7 @@ export const SYSTEM_DOGRULA =
   '- "desteklenmez": kaynakta yok, kaynakla çelişiyor ya da kaynaktan daha fazlasını söylüyor (yeni sayı, kurum, sonuç).\n' +
   '- "abartili": kaynakta var ama metin bulguyu olduğundan güçlü, kesin veya klinik olarak yararlı gösteriyor.\n' +
   '"Henüz insanlarda gösterilmedi" gibi temkin cümleleri, kaynak klinik sonuç sunmuyorsa "desteklenir" sayılır.\n' +
+  'Özel ad (ilaç, molekül, kurum, çalışma adı) kaynaktakinden farklı yazılmışsa — tek harf bile — o iddia "desteklenmez"dir; dil farkından gelen düzenli Türkçe karşılık (ör. -oyl → -oil) fark sayılmaz.\n' +
   'Gerekçeyi bir kısa cümleyle yaz. Şüphedeysen "desteklenmez" seç.';
 
 const ETIKETLER = ["desteklenir", "desteklenmez", "abartili"] as const;
