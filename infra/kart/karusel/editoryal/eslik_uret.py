@@ -89,9 +89,12 @@ def main():
     for c in vakalar():
         r = kapilar.check(c['taslak'], c['item'], c['src'])
         # Ret geri bildirimi (2026-11-18): TS kapiSorunlari aynı satırları üretmeli.
-        out.append({**c, 'beklenen': [[a, ok, d] for a, ok, d in r], 'geriBildirim': uret.kapi_sorunlari(r, c['taslak'])})
+        # Kısaltma adımı (2026-11-21): uygunluk + mesaj TS kisaltilacakAlanlar/kisaltmaMesaji ile aynı olmalı.
+        al = uret.kisaltilacak_alanlar(r, c['taslak'])
+        out.append({**c, 'beklenen': [[a, ok, d] for a, ok, d in r], 'geriBildirim': uret.kapi_sorunlari(r, c['taslak']),
+                    'kisaltilacak': al, 'kisaltmaMesaji': uret.kisaltma_mesaji(c['taslak'], al) if al else None})
     url = json.loads((HERE / 'ornekler.json').read_text(encoding='utf-8'))['items'][0]['sourceUrl']
-    istemler = {'uret': uret.SYSTEM_URET, 'dogrula': uret.SYSTEM_DOGRULA, 'orneklerHaric': url, 'ornekler': uret.ornekler(url),
+    istemler = {'uret': uret.SYSTEM_URET, 'dogrula': uret.SYSTEM_DOGRULA, 'kisalt': uret.SYSTEM_KISALT, 'orneklerHaric': url, 'ornekler': uret.ornekler(url),
                 'orneklerHepsi': uret.ornekler('https://yok'), 'leadCaption': uret.LEAD_CAPTION, 'denemeSayisi': uret.DENEME_SAYISI,
                 # Deneme mesajı (2026-11-18): yeniden denemede önceki taslak alan alan karakter sayısıyla (emoji = 1 karakter).
                 'denemeMesaji': {

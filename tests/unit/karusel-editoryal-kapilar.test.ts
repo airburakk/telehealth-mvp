@@ -8,11 +8,11 @@ import { kapiSorunlari, KISALTMA_YOLU } from "@/lib/karusel-editoryal/uret";
 
 type Vaka = {
   ad: string; taslak: Taslak; item: { streamLabel: string; url: string }; src: string;
-  beklenen: [string, boolean, string][]; geriBildirim: string[];
+  beklenen: [string, boolean, string][]; geriBildirim: string[]; kisaltilacak: string[]; kisaltmaMesaji: string | null;
 };
 
 describe("kapılar — Python eşliği", () => {
-  const vakalar = eslik.vakalar as Vaka[];
+  const vakalar = eslik.vakalar as unknown as Vaka[];
   it("fikstür dolu (≥30 vaka, onaylı 14 Kasım örnekleri dahil)", () => {
     expect(vakalar.length).toBeGreaterThanOrEqual(30);
     expect(vakalar.filter((v) => v.ad.startsWith("ornek-")).length).toBe(6);

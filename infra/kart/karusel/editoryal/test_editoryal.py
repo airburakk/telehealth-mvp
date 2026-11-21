@@ -120,6 +120,32 @@ class SahteIstemci:
                                      stop_reason='end_turn', parsed_output=out)
 
 
+UZUN_OZET = 'Uzun özet ' * 31 + 'sona erdi.'   # 320 karakter → yalnız uzunluk kapısı kalır
+KISA_OZET = E['detailSummary']
+
+
+class KisaltanIstemci(SahteIstemci):
+    """Öğe `uzun_oge`'nin taslağında özet sınırı aşar; kısaltma yanıtı kısa özet + DEĞİŞTİRİLMİŞ başlık döner (yok sayılmalı)."""
+    def __init__(self, uzun_oge=2, kisaltma_basarisiz=False):
+        super().__init__()
+        self.uzun, self.basarisiz, self.kisaltma_mesajlari = uzun_oge, kisaltma_basarisiz, []
+
+    def parse(self, *, output_format, messages, **kw):
+        ad = output_format.__name__
+        if ad == 'Kisaltma':
+            self.cagri.append(ad)
+            self.kisaltma_mesajlari.append(messages[0]['content'])
+            if self.basarisiz:
+                raise RuntimeError('ağ koptu')
+            out = output_format(**dict(E, detailSummary=KISA_OZET, coverTitle='Değiştirilmiş başlık metni'))
+            return types.SimpleNamespace(usage=types.SimpleNamespace(input_tokens=100, output_tokens=50),
+                                         stop_reason='end_turn', parsed_output=out)
+        r = super().parse(output_format=output_format, messages=messages, **kw)
+        if ad == 'Taslak' and self.oge == self.uzun:
+            r.parsed_output = output_format(**dict(E, detailSummary=UZUN_OZET))
+        return r
+
+
 class Uretici(unittest.TestCase):
     def setUp(self):
         self._t = tempfile.TemporaryDirectory()
@@ -132,6 +158,32 @@ class Uretici(unittest.TestCase):
     def tearDown(self):
         kaynak.collect = self._collect
         self._t.cleanup()
+
+    def test_yalniz_uzunluk_kalinca_kisaltma_adimi_ayni_denemede_kurtarir(self):
+        ist = KisaltanIstemci(uzun_oge=2)
+        qa = uret.calistir(self.girdi, self.cikti, ist, 'claude-haiku-5-5')
+        self.assertEqual(qa['gun'], 'GECTI')
+        og = qa['ogeler'][1]
+        self.assertEqual(len(og['denemeler']), 1)                     # yeniden yazma denemesi harcanmadı
+        d = og['denemeler'][0]
+        self.assertEqual(d['kisaltma']['alanlar'], ['detailSummary'])
+        self.assertEqual(d['kisaltma']['taslak']['detailSummary'], UZUN_OZET)   # iz: kısaltma ÖNCESİ
+        self.assertFalse(all(k['gecti'] for k in d['kisaltma']['kapilar']))
+        self.assertEqual(d['taslak']['detailSummary'], KISA_OZET)              # kayıt: kısaltma SONRASI
+        self.assertEqual(d['taslak']['coverTitle'], E['coverTitle'])           # hedef dışı alan KODDA korundu
+        self.assertTrue(all(k['gecti'] for k in d['kapilar']) and d['dogrulama'])
+        self.assertEqual(qa['cagri'], 13)                                      # 12 + 1 kısaltma
+        self.assertEqual(ist.kisaltma_mesajlari, [uret.kisaltma_mesaji(dict(E, detailSummary=UZUN_OZET), ['detailSummary'])])
+
+    def test_kisaltma_cagrisi_duserse_eski_yol_surer(self):
+        qa = uret.calistir(self.girdi, self.cikti, KisaltanIstemci(uzun_oge=2, kisaltma_basarisiz=True), 'claude-haiku-5-5')
+        og = qa['ogeler'][1]
+        self.assertEqual(og['sonuc'], 'KALDI')
+        self.assertEqual(len(og['denemeler']), uret.DENEME_SAYISI)
+        d = og['denemeler'][0]
+        self.assertIn('ağ koptu', d['kisaltma']['hata'])
+        self.assertEqual(d['taslak']['detailSummary'], UZUN_OZET)
+        self.assertNotIn('dogrulama', d)
 
     def test_alti_oge_gecer_ve_cizici_semasi_dogru(self):
         qa = uret.calistir(self.girdi, self.cikti, SahteIstemci(), 'claude-haiku-5-5')
