@@ -13,6 +13,7 @@ import { skeletonPayload } from "@/lib/social-calendar/skeleton";
 import { STATUS_LABEL, isEditable } from "@/lib/social-calendar/status";
 import { AuraPanel } from "@/components/ui/AuraPanel";
 import { EtkinlikSecici } from "./EtkinlikSecici";
+import { FirsatSecici } from "./FirsatSecici";
 import { PublishPanel } from "./PublishPanel";
 import { BTN_DANGER, BTN_PRIMARY, BTN_SECOND, INPUT, api, fmt, type ApiResult, type Flash, type PickStats } from "./client-shared";
 
@@ -224,6 +225,21 @@ export function SlotEditor({ initial, series }: { initial: PlanItemView; series:
             if (r.item) adopt(r.item);
             setPreviews(null);
             setFlash({ kind: "ok", text: "Etkinlikler seçildi, taslak üretildi. Slaytları ve altyazıyı kontrol edin, kaydedip onaylayın." });
+          }}
+        />
+      )}
+
+      {/* ── Öğrenci köşesi (v6.349): onaylı Kariyer EDU fırsatlarından en çok 3 seçim → taslak ─────────────── */}
+      {series.sourceKind === "kariyer-edu" && (
+        <FirsatSecici
+          item={item}
+          editable={editable}
+          busy={busy}
+          run={run}
+          onPicked={(r) => {
+            if (r.item) adopt(r.item);
+            setPreviews(null);
+            setFlash({ kind: "ok", text: "Fırsatlar seçildi, taslak üretildi. Slaytları ve altyazıyı kontrol edin, kaydedip onaylayın." });
           }}
         />
       )}
