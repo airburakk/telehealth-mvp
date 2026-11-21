@@ -7,8 +7,10 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it, vi } from "vitest";
 import eslik from "./karusel-kapilar-eslik.json";
 import {
-  calistir, DENEME_SAYISI, denemeMesaji, Hata, LEAD_CAPTION, ornekler, SYSTEM_DOGRULA, SYSTEM_URET, type Olustur,
+  calistir, DENEME_SAYISI, denemeMesaji, Hata, kisaltilacakAlanlar, kisaltmaMesaji, LEAD_CAPTION, ornekler, SYSTEM_DOGRULA,
+  SYSTEM_KISALT, SYSTEM_URET, type Olustur,
 } from "@/lib/karusel-editoryal/uret";
+import { type KapiSonucu, type Taslak } from "@/lib/karusel-editoryal/kapilar";
 import { collect, htmlText, sourceText, webGetir, type Getir } from "@/lib/karusel-editoryal/kaynak";
 
 const E = {
@@ -62,6 +64,7 @@ describe("istemler — Python uret.py ile birebir", () => {
   it("sistem istemleri + örnekler + sabitler", () => {
     expect(SYSTEM_URET).toBe(p.uret);
     expect(SYSTEM_DOGRULA).toBe(p.dogrula);
+    expect(SYSTEM_KISALT).toBe(p.kisalt);
     expect(ornekler(p.orneklerHaric)).toBe(p.ornekler);
     expect(ornekler("https://yok")).toBe(p.orneklerHepsi);
     expect(LEAD_CAPTION).toBe(p.leadCaption);
@@ -74,6 +77,14 @@ describe("istemler — Python uret.py ile birebir", () => {
       { ...E, coverTitle: "Yapay zekâ 🤖 ve sağlık hukuku" })).toBe(m.tekrar);
     expect(denemeMesaji("Sektörel", "KAYNAK Y", "Yanıt alınamadı; kurallara uyarak yeniden yaz.")).toBe(m.hataSonrasi);
   });
+  it("kısaltma adımı: uygunluk + mesaj (40 vaka)", () => {
+    for (const v of eslik.vakalar) {
+      const gates = v.beklenen as KapiSonucu[];
+      const al = kisaltilacakAlanlar(gates, v.taslak as Taslak);
+      expect(al, v.ad).toEqual(v.kisaltilacak);
+      expect(al.length ? kisaltmaMesaji(v.taslak as Taslak, al) : null, v.ad).toBe(v.kisaltmaMesaji);
+    }
+  });
   it("biçem örnekleri kart'taki kopyayla aynı", () => {
     const kart = path.join(process.cwd(), "infra/kart/karusel/editoryal/ornekler.json");
     const yerel = path.join(process.cwd(), "src/lib/karusel-editoryal/ornekler.json");
@@ -81,7 +92,62 @@ describe("istemler — Python uret.py ile birebir", () => {
   });
 });
 
+const UZUN_OZET = "Uzun özet ".repeat(31) + "sona erdi.";   // 320 karakter → yalnız uzunluk kapısı kalır
+
+/** `uzun` öğenin taslağında özet sınırı aşar; kısaltma kısa özet + DEĞİŞTİRİLMİŞ başlık döner (yok sayılmalı). */
+function kisaltan(o: { uzun: number; basarisiz?: boolean }) {
+  const s = sahte();
+  const kisaltmaMesajlari: string[] = [];
+  let oge = 0;
+  const olustur: Olustur = async (p) => {
+    const ad = (p.tool_choice as { name: string }).name;
+    const u = String(p.messages[0].content);
+    if (ad === "submit_kisaltma") {
+      s.cagri.push(ad);
+      kisaltmaMesajlari.push(u);
+      if (o.basarisiz) throw new Error("ağ koptu");
+      return mesaj({ ...E, coverTitle: "Değiştirilmiş başlık metni" });
+    }
+    const r = await s.olustur(p);
+    if (ad === "submit_taslak") {
+      oge = Number(/Başlık: Başlık (\d)/.exec(u)![1]);
+      if (oge === o.uzun) return mesaj({ ...E, detailSummary: UZUN_OZET });
+    }
+    return r;
+  };
+  return { olustur, cagri: s.cagri, kisaltmaMesajlari };
+}
+
 describe("üretici", () => {
+  it("yalnız uzunluk kalınca kısaltma adımı aynı denemede kurtarır; hedef dışı alan KODDA korunur", async () => {
+    const k = kisaltan({ uzun: 2 });
+    const { qa } = await calistir(edisyon(), { olustur: k.olustur, getir: getirYok });
+    expect(qa.gun).toBe("GECTI");
+    const og = qa.ogeler[1];
+    expect(og.denemeler).toHaveLength(1);
+    const d = og.denemeler[0] as Extract<(typeof og.denemeler)[number], { taslak: Taslak }>;
+    expect(d.kisaltma!.alanlar).toEqual(["detailSummary"]);
+    expect(d.kisaltma!.taslak.detailSummary).toBe(UZUN_OZET);
+    expect(d.kisaltma!.kapilar.every((x) => x.gecti)).toBe(false);
+    expect(d.taslak.detailSummary).toBe(E.detailSummary);
+    expect(d.taslak.coverTitle).toBe(E.coverTitle);
+    expect(d.kapilar.every((x) => x.gecti) && d.dogrulama!.length > 0).toBe(true);
+    expect(qa.cagri).toBe(13);
+    expect(k.kisaltmaMesajlari).toEqual([kisaltmaMesaji({ ...E, detailSummary: UZUN_OZET }, ["detailSummary"])]);
+  });
+
+  it("kısaltma çağrısı düşerse eski yol sürer (yeniden yazma, sonunda KALDI)", async () => {
+    const { qa } = await calistir(edisyon(), { olustur: kisaltan({ uzun: 2, basarisiz: true }).olustur, getir: getirYok });
+    const og = qa.ogeler[1];
+    expect(og.sonuc).toBe("KALDI");
+    expect(og.denemeler).toHaveLength(DENEME_SAYISI);
+    const d = og.denemeler[0] as Extract<(typeof og.denemeler)[number], { taslak: Taslak }>;
+    expect(d.kisaltma!.hata).toContain("ağ koptu");
+    expect(d.taslak.detailSummary).toBe(UZUN_OZET);
+    expect(d.dogrulama).toBeUndefined();
+  });
+
+
   it("6 öğe geçer → GEÇTİ, 12 çağrı, v3 çizici şeması (alan sırası sabit)", async () => {
     const s = sahte();
     const { qa, editorial } = await calistir(edisyon(), { olustur: s.olustur, getir: getirYok, model: "claude-haiku-5-5" });

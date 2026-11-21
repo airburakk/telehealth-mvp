@@ -56,6 +56,16 @@ export const SYSTEM_URET =
   "Biçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):\n" +
   "{ornekler}";
 
+// 21.11 👤 "ayrı kısaltma adımı": yalnız uzunluk kapısı kalınca metin baştan yeniden yazılmaz; ayrı çağrıda yalnız uzun
+// alan kısaltılır, sonra kapılar + doğrulama yeniden koşar (20.11 koşusu: özet 4 denemede 271 → 285 → 286). uret.py ile aynı.
+export const SYSTEM_KISALT =
+  "Bir sağlık haberi kartının bazı alanları uzunluk sınırını aşıyor. Görevin YALNIZ belirtilen alanları kısaltmak; başka hiçbir şeyi değiştirme.\n\n" +
+  "Kurallar (hepsi zorunlu):\n" +
+  "- Yalnız metinde zaten olan bilgiyi kullan; yeni sayı, tarih, kurum, sonuç veya iddia ekleme.\n" +
+  "- Önce şunları çıkar: kurum ve araştırmacı adları, ölçüm ayrıntıları (hücre hattı adı, IC50 gibi değerler), tekrar eden ifadeler.\n" +
+  "- Bulgunun nerede gözlendiğini (fare, sinek, hücre kültürü, insan hücresi vb.) ve temkin cümlesinin anlamını koru; gerekirse daha kısa söyle.\n" +
+  "- Kısaltılacak alanın verilen kelime hedefini AŞMA. Kısaltılmayacak alanları aynen geri yaz.";
+
 export const SYSTEM_DOGRULA =
   "Bir sağlık haberi için yazılmış kısa metinleri KAYNAK METNİ'ne göre denetliyorsun. Görevin metni " +
   "düzeltmek DEĞİL, her iddiayı etiketlemek.\n\n" +
@@ -87,6 +97,8 @@ const TASLAK_TOOL: Anthropic.Tool = {
     additionalProperties: false,
   },
 };
+
+const KISALTMA_TOOL: Anthropic.Tool = { ...TASLAK_TOOL, name: "submit_kisaltma", description: "Kısaltılmış metni gönder." };
 
 const DOGRULAMA_TOOL: Anthropic.Tool = {
   name: "submit_dogrulama",
@@ -155,6 +167,29 @@ export function kapiSorunlari(gates: KapiSonucu[], e: Taslak): string[] {
   }
   if (uzun) out.push(KISALTMA_YOLU);
   return out;
+}
+
+/**
+ * Kısaltma adımına uygun mu? YALNIZ başarısız kapı "uzunluk" ise ve hiçbir alan alt sınırın altında değilse sınırı aşan
+ * alanlar döner (sabit sırada); aksi hâlde boş (uret.py kisaltilacak_alanlar ile birebir; eşlik fikstürü kilitler).
+ */
+export function kisaltilacakAlanlar(gates: KapiSonucu[], e: Taslak): (typeof ALANLAR)[number][] {
+  const kalan = gates.filter(([, ok]) => !ok).map(([a]) => a);
+  if (kalan.length !== 1 || kalan[0] !== "uzunluk") return [];
+  if (ALANLAR.some((k) => cpLen(e[k]) < MIN_LEN[k])) return [];
+  return ALANLAR.filter((k) => cpLen(e[k]) > LIMITS[k]);
+}
+
+/** Kısaltma çağrısının kullanıcı mesajı — hedef kelime, metnin kendi ortalama kelime uzunluğundan (uret.py ile birebir). */
+export function kisaltmaMesaji(e: Taslak, alanlar: readonly (typeof ALANLAR)[number][]): string {
+  const hedefler = alanlar.map((k) => {
+    const n = cpLen(e[k]);
+    const w = kelimeSay(e[k]);
+    const hk = Math.max(3, Math.floor((HEDEF[k] * w) / n));
+    return `- ${k}: ${n} karakter (${w} kelime); sınır ${LIMITS[k]} karakter. En çok ${hk} kelime yaz.`;
+  }).join("\n");
+  const metin = ALANLAR.map((k) => `- ${k}: ${e[k]}`).join("\n");
+  return `KISALTILACAK ALANLAR:\n${hedefler}\n\nMETİN:\n${metin}`;
 }
 
 /**
@@ -232,7 +267,9 @@ class Sayac {
 type KapiKaydi = { ad: string; gecti: boolean; ayrinti: string };
 export type Deneme =
   | { deneme: number; hata: string }
-  | { deneme: number; taslak: Taslak; kapilar: KapiKaydi[]; dogrulama?: Iddia[]; sonuc: "GECTI" | "KALDI" };
+  | { deneme: number; taslak: Taslak; kapilar: KapiKaydi[]; kisaltma?: Kisaltma; dogrulama?: Iddia[]; sonuc: "GECTI" | "KALDI" };
+/** Kısaltma adımı izi: `taslak`/`kapilar` kısaltma ÖNCESİ; kaydın kendi taslak/kapilar alanları kısaltma SONRASI. */
+export type Kisaltma = { alanlar: (typeof ALANLAR)[number][]; taslak: Taslak; kapilar: KapiKaydi[]; hata?: string };
 export type OgeKaydi = {
   n: number; sourceUrl: string; streamLabel: string; kaynakOkundu: boolean; kaynakHatasi: string | null;
   sonuc: "GECTI" | "KALDI"; denemeler: Deneme[]; taslak: Taslak | null;
@@ -321,10 +358,25 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
         geri = "Yanıt alınamadı; kurallara uyarak yeniden yaz.";
         continue;
       }
-      const gates = check(e, item, src);
+      let gates = check(e, item, src);
+      const kayit = (g: KapiSonucu[]) => g.map(([ad, gecti, ayrinti]) => ({ ad, gecti, ayrinti }));
+      let kisaltma: Kisaltma | undefined;
+      const alanlar = kisaltilacakAlanlar(gates, e);
+      if (alanlar.length) {   // yalnız uzunluk kaldıysa: ayrı çağrıda yalnız uzun alan kısaltılır (öteki alanlar KODDA korunur)
+        kisaltma = { alanlar, taslak: e, kapilar: kayit(gates) };
+        try {
+          const k = taslakDogrula(await cagir(SYSTEM_KISALT, kisaltmaMesaji(e, alanlar), KISALTMA_TOOL));
+          const yeni: Taslak = { ...e };
+          for (const a of alanlar) yeni[a] = k[a];
+          e = yeni;
+          gates = check(e, item, src);
+        } catch (exc) {
+          kisaltma.hata = kisa(exc, 200);
+        }
+      }
       const sorun = kapiSorunlari(gates, e);
       const rec: Extract<Deneme, { taslak: Taslak }> = {
-        deneme, taslak: e, kapilar: gates.map(([ad, gecti, ayrinti]) => ({ ad, gecti, ayrinti })), sonuc: "KALDI",
+        deneme, taslak: e, kapilar: kayit(gates), ...(kisaltma ? { kisaltma } : {}), sonuc: "KALDI",
       };
       if (!sorun.length) {   // deterministik kapılar geçtiyse ikinci model doğrulaması
         try {

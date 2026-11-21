@@ -66,6 +66,17 @@ sözcüğünü korur; kısaltırken "yeni tedavi" gibi sonuç izlenimi veren bir
 Biçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):
 {ornekler}"""
 
+# 21.11 👤 "ayrı kısaltma adımı": yalnız uzunluk kapısı kalınca metin baştan yeniden yazılmaz; ayrı çağrıda yalnız uzun
+# alan kısaltılır, sonra kapılar + doğrulama yeniden koşar (20.11 koşusu: özet 4 denemede 271 → 285 → 286).
+SYSTEM_KISALT = """Bir sağlık haberi kartının bazı alanları uzunluk sınırını aşıyor. Görevin YALNIZ belirtilen alanları kısaltmak; başka hiçbir şeyi değiştirme.
+
+Kurallar (hepsi zorunlu):
+- Yalnız metinde zaten olan bilgiyi kullan; yeni sayı, tarih, kurum, sonuç veya iddia ekleme.
+- Önce şunları çıkar: kurum ve araştırmacı adları, ölçüm ayrıntıları (hücre hattı adı, IC50 gibi değerler), tekrar eden ifadeler.
+- Bulgunun nerede gözlendiğini (fare, sinek, hücre kültürü, insan hücresi vb.) ve temkin cümlesinin anlamını koru; gerekirse daha kısa söyle.
+- Kısaltılacak alanın verilen kelime hedefini AŞMA. Kısaltılmayacak alanları aynen geri yaz."""
+
+
 SYSTEM_DOGRULA = """Bir sağlık haberi için yazılmış kısa metinleri KAYNAK METNİ'ne göre denetliyorsun. Görevin metni \
 düzeltmek DEĞİL, her iddiayı etiketlemek.
 
@@ -114,6 +125,25 @@ def kapi_sorunlari(gates, e: dict) -> list[str]:
     if uzun:
         out.append(KISALTMA_YOLU)
     return out
+
+
+def kisaltilacak_alanlar(gates, e: dict) -> list[str]:
+    """YALNIZ başarısız kapı "uzunluk" ise ve hiçbir alan alt sınırın altında değilse sınırı aşan alanlar (sabit sırada)."""
+    kalan = [a for a, ok, _ in gates if not ok]
+    if kalan != ['uzunluk'] or any(len(e[k]) < kapilar.MIN_LEN[k] for k in kapilar.LIMITS):
+        return []
+    return [k for k in kapilar.LIMITS if len(e[k]) > kapilar.LIMITS[k]]
+
+
+def kisaltma_mesaji(e: dict, alanlar: list[str]) -> str:
+    """Kısaltma çağrısının kullanıcı mesajı — hedef kelime, metnin kendi ortalama kelime uzunluğundan."""
+    hedefler = []
+    for k in alanlar:
+        n, w = len(e[k]), len(e[k].split())
+        hk = max(3, (HEDEF[k] * w) // n)
+        hedefler.append(f'- {k}: {n} karakter ({w} kelime); sınır {kapilar.LIMITS[k]} karakter. En çok {hk} kelime yaz.')
+    metin = '\n'.join(f'- {k}: {e[k]}' for k in kapilar.LIMITS)
+    return 'KISALTILACAK ALANLAR:\n' + '\n'.join(hedefler) + '\n\nMETİN:\n' + metin
 
 
 def deneme_mesaji(akis: str, src: str, geri: str = '', onceki: dict | None = None) -> str:
@@ -190,6 +220,9 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
         detailTitle: str = Field(description='Haber kartı başlığı')
         detailSummary: str = Field(description='Haber kartı özeti, en çok 28 kelime, 2-3 kısa cümle')
 
+    class Kisaltma(Taslak):   # ayrı ad: kayıt/sahte istemci taslak çağrısıyla karışmasın (TS submit_kisaltma)
+        pass
+
     class Iddia(BaseModel):
         alan: Literal['coverTitle', 'coverDeck', 'detailTitle', 'detailSummary']
         iddia: str
@@ -225,7 +258,20 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
                 geri = 'Yanıt alınamadı; kurallara uyarak yeniden yaz.'
                 continue
             gates = kapilar.check(e, item, src)
-            rec = {'deneme': deneme, 'taslak': e, 'kapilar': [{'ad': a, 'gecti': ok, 'ayrinti': d} for a, ok, d in gates]}
+            kayit = lambda g: [{'ad': a, 'gecti': ok, 'ayrinti': d} for a, ok, d in g]  # noqa: E731
+            kis = None
+            alanlar = kisaltilacak_alanlar(gates, e)
+            if alanlar:   # yalnız uzunluk kaldıysa: ayrı çağrıda yalnız uzun alan kısaltılır (öteki alanlar KODDA korunur)
+                kis = {'alanlar': alanlar, 'taslak': e, 'kapilar': kayit(gates)}
+                try:
+                    k = parse(SYSTEM_KISALT, kisaltma_mesaji(e, alanlar), Kisaltma).model_dump()
+                    e = {**e, **{a: k[a] for a in alanlar}}
+                    gates = kapilar.check(e, item, src)
+                except Exception as exc:  # noqa: BLE001
+                    kis['hata'] = str(exc)[:200]
+            rec = {'deneme': deneme, 'taslak': e, 'kapilar': kayit(gates)}
+            if kis:
+                rec['kisaltma'] = kis
             sorun = kapi_sorunlari(gates, e)
             if not sorun:   # deterministik kapılar geçtiyse ikinci model doğrulaması
                 try:

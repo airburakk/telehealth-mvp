@@ -3,6 +3,7 @@
  "istemler": {
   "uret": "Doctorium Post, doktorlara yönelik günlük bir sağlık haberleri seçkisidir. Görevin: verilen TEK haber için Instagram karuselinde kullanılacak kısa Türkçe metinleri yazmak.\n\nKurallar (hepsi zorunlu):\n- Yalnız \"KAYNAK METNİ\"ndeki bilgiyi kullan. Kaynakta olmayan hiçbir sayı, tarih, kurum, sonuç veya yorum ekleme.\n- Sayıları kaynaktaki gibi yaz (ondalıkta Türkçe virgül kullanabilirsin: 19,66).\n- Laboratuvar, hücre kültürü, bilgisayar modeli veya hayvan çalışmasıysa özetin son cümlesi bunun insanlarda tedavi etkinliği göstermediğini açıkça söyler. Klinik araştırma kaydıysa (sonuç yoksa) \"bu bir araştırma duyurusudur, tedavi sonucu değildir\" anlamını taşıyan bir cümle bulunur.\n- Laboratuvar/hayvan çalışmasında BAŞLIKLAR da bulgunun nerede gözlendiğini söyler (\"farede\", \"hücre kültüründe\", \"hayvan çalışmasında\") ya da yalnız konuyu adlandırır (\"… incelendi\"); başlık bulguyu genel bir etki gibi sunmaz.\n- Mevzuat haberinde yalnız künye bilgisi: ne yayımlandı, sayısı, tarihi, hangi Resmî Gazete. Değerlendirme yok.\n- Kişi adı yazma (kurum adı yazılabilir). Kaynak hakkında açıklama cümlesi yazma (\"kaynakta … yok\" gibi); bilmediğin şeyi hiç anma.\n- Abartı yok: \"çığır açan, devrim, umut verici, mucize, kanıtlandı, kesin tedavi\" gibi sözcükler YASAK. \"hekim\" yerine daima \"doktor\" yaz.\n- Metne bağlantı, kaynak adı listesi veya etiket (#) koyma; künye kartta ayrıca yazılıyor.\n- Uzunluk: coverTitle en çok 5 kelime; coverDeck en çok 12 kelime (1-2 kısa cümle); detailTitle ≤ 60 karakter; detailSummary en çok 28 kelime (2-3 kısa cümle; temkin cümlesi gerekiyorsa sonuncusu).\n- Kısa yaz: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarına (hücre hattı adı, IC50 gibi değerler) girme. Tek ana fikir yeterli.\n- Uzun kimyasal ad veya formül (ör. \"N-(α-…)\" biçimli adlar) yazma; ana bileşiğin adı + \"türevleri\" gibi kısa, genel bir adla an. Yazdığın her özel adı (ilaç, molekül, kurum, çalışma adı) kaynaktaki yazımıyla aynen kullan; harfini değiştirme.\n- Kapak (coverTitle, coverDeck) teknik terim taşımaz: hedef molekül, mekanizma, hücre hattı veya yöntem adı yazma; konuyu ve bulgunun aşamasını sade Türkçeyle söyle (ör. \"Hücre kültüründe deneysel bulgu\").\n- Haber bir klinik araştırma duyurusuysa (hasta alımı, devam eden çalışma) başlıklar \"çalışma\" veya \"araştırma\" sözcüğünü korur; kısaltırken \"yeni tedavi\" gibi sonuç izlenimi veren bir ifadeye dönüştürme.\n- Sade, tarafsız haber dili. Özgün başlığı çevirme; konuyu bir doktorun anlayacağı kısa bir başlıkla anlat.\n\nBiçem örnekleri (onaylı yayından; içeriklerini KOPYALAMA, yalnız ton ve uzunluk için):\n{ornekler}",
   "dogrula": "Bir sağlık haberi için yazılmış kısa metinleri KAYNAK METNİ'ne göre denetliyorsun. Görevin metni düzeltmek DEĞİL, her iddiayı etiketlemek.\n\nDört alanın (coverTitle, coverDeck, detailTitle, detailSummary) içindeki her olgusal iddiayı ayrı ayrı çıkar ve etiketle:\n- \"desteklenir\": iddia kaynak metinde açıkça yer alıyor ya da doğrudan çıkıyor.\n- \"desteklenmez\": kaynakta yok, kaynakla çelişiyor ya da kaynaktan daha fazlasını söylüyor (yeni sayı, kurum, sonuç).\n- \"abartili\": kaynakta var ama metin bulguyu olduğundan güçlü, kesin veya klinik olarak yararlı gösteriyor.\n\"Henüz insanlarda gösterilmedi\" gibi temkin cümleleri, kaynak klinik sonuç sunmuyorsa \"desteklenir\" sayılır.\nÖzel ad (ilaç, molekül, kurum, çalışma adı) kaynaktakinden farklı yazılmışsa — tek harf bile — o iddia \"desteklenmez\"dir; dil farkından gelen düzenli Türkçe karşılık (ör. -oyl → -oil) fark sayılmaz.\nGerekçeyi bir kısa cümleyle yaz. Şüphedeysen \"desteklenmez\" seç.",
+  "kisalt": "Bir sağlık haberi kartının bazı alanları uzunluk sınırını aşıyor. Görevin YALNIZ belirtilen alanları kısaltmak; başka hiçbir şeyi değiştirme.\n\nKurallar (hepsi zorunlu):\n- Yalnız metinde zaten olan bilgiyi kullan; yeni sayı, tarih, kurum, sonuç veya iddia ekleme.\n- Önce şunları çıkar: kurum ve araştırmacı adları, ölçüm ayrıntıları (hücre hattı adı, IC50 gibi değerler), tekrar eden ifadeler.\n- Bulgunun nerede gözlendiğini (fare, sinek, hücre kültürü, insan hücresi vb.) ve temkin cümlesinin anlamını koru; gerekirse daha kısa söyle.\n- Kısaltılacak alanın verilen kelime hedefini AŞMA. Kısaltılmayacak alanları aynen geri yaz.",
   "orneklerHaric": "https://doi.org/10.4103/rps.rps_237_25",
   "ornekler": "{\"coverTitle\": \"Böbrek kanserinde Faz 3 çalışma\", \"coverDeck\": \"Belzutifan ve zanzalintinib kombinasyonu inceleniyor. Tedavi sonuçları değil, çalışma kaydı.\", \"detailTitle\": \"İleri böbrek kanserinde Faz 3 kombinasyon çalışması\", \"detailSummary\": \"LITESPARK-034, ileri renal hücreli karsinomda belzutifan ve zanzalintinib kombinasyonunu belzutifan ve plaseboyla karşılaştırıyor. Amaç, genel ve hastalık ilerlemeden sağkalımı değerlendirmek; bu bir araştırma duyurusudur, tedavi sonucu değildir.\"}\n{\"coverTitle\": \"Tepecik’e yeniden akreditasyon\", \"coverDeck\": \"Uzmanlık eğitimi için beş yıllık yeniden akreditasyon.\", \"detailTitle\": \"Tepecik’in infeksiyon kliniğine beş yıllık akreditasyon\", \"detailSummary\": \"KLİMİK, Tepecik Eğitim Araştırma Hastanesi’nin İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniğinin uzmanlık eğitimi için beş yıl süreyle yeniden akredite edildiğini duyurdu. Belge 9 Kasım’daki ziyarette sunuldu.\"}\n{\"coverTitle\": \"Üniversite hastanelerine komite\", \"coverDeck\": \"11971 sayılı karar, 14 Kasım Resmî Gazete’de yayımlandı.\", \"detailTitle\": \"Üniversite hastaneleri için koordinasyon komitesi kararı\", \"detailSummary\": \"Üniversite hastaneleri için koordinasyon komitesi kurulmasına ilişkin 11971 sayılı Cumhurbaşkanı Kararı, 14 Kasım tarihli ve 33430 sayılı Resmî Gazete’de yayımlandı.\"}",
   "orneklerHepsi": "{\"coverTitle\": \"Kanser hücrelerinde hidralazin türevleri\", \"coverDeck\": \"Hücre kültüründe incelenen yeni bileşikler, ileri araştırmalar için aday. İnsanlarda etkinlik henüz gösterilmedi.\", \"detailTitle\": \"Hidralazin türevleri kanser hücrelerinde incelendi\", \"detailSummary\": \"Yeni hidralazin türevleri, hücre kültürü ve bilgisayar modellemeleriyle değerlendirildi. 4f adlı bileşik ileri araştırmalar için aday olarak belirlendi. Bu laboratuvar bulguları, insanlarda tedavi etkinliği göstermez.\"}\n{\"coverTitle\": \"Böbrek kanserinde Faz 3 çalışma\", \"coverDeck\": \"Belzutifan ve zanzalintinib kombinasyonu inceleniyor. Tedavi sonuçları değil, çalışma kaydı.\", \"detailTitle\": \"İleri böbrek kanserinde Faz 3 kombinasyon çalışması\", \"detailSummary\": \"LITESPARK-034, ileri renal hücreli karsinomda belzutifan ve zanzalintinib kombinasyonunu belzutifan ve plaseboyla karşılaştırıyor. Amaç, genel ve hastalık ilerlemeden sağkalımı değerlendirmek; bu bir araştırma duyurusudur, tedavi sonucu değildir.\"}\n{\"coverTitle\": \"Tepecik’e yeniden akreditasyon\", \"coverDeck\": \"Uzmanlık eğitimi için beş yıllık yeniden akreditasyon.\", \"detailTitle\": \"Tepecik’in infeksiyon kliniğine beş yıllık akreditasyon\", \"detailSummary\": \"KLİMİK, Tepecik Eğitim Araştırma Hastanesi’nin İnfeksiyon Hastalıkları ve Klinik Mikrobiyoloji Kliniğinin uzmanlık eğitimi için beş yıl süreyle yeniden akredite edildiğini duyurdu. Belge 9 Kasım’daki ziyarette sunuldu.\"}",
@@ -65,7 +66,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "temkin-klinik-oncesi-0",
@@ -119,7 +122,9 @@
    ],
    "geriBildirim": [
     "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "temkin-klinik-oncesi-1",
@@ -173,7 +178,9 @@
    ],
    "geriBildirim": [
     "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "temkin-klinik-oncesi-2",
@@ -227,7 +234,9 @@
    ],
    "geriBildirim": [
     "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "temkin-klinik-oncesi-3",
@@ -281,7 +290,9 @@
    ],
    "geriBildirim": [
     "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "bin-0",
@@ -335,7 +346,9 @@
    ],
    "geriBildirim": [
     "- uzunluk: detailSummary 81 karakter; en az 90 olmalı → en az 9 karakter uzat (yalnız kaynaktaki bilgiyle)."
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "bin-1",
@@ -390,7 +403,9 @@
    "geriBildirim": [
     "- uzunluk: detailSummary 81 karakter; en az 90 olmalı → en az 9 karakter uzat (yalnız kaynaktaki bilgiyle).",
     "- sayilar: kaynakta yok: 11"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "bin-2",
@@ -445,7 +460,9 @@
    "geriBildirim": [
     "- uzunluk: detailSummary 83 karakter; en az 90 olmalı → en az 7 karakter uzat (yalnız kaynaktaki bilgiyle).",
     "- sayilar: kaynakta yok: 12.000"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "bin-3",
@@ -499,7 +516,9 @@
    ],
    "geriBildirim": [
     "- uzunluk: detailSummary 89 karakter; en az 90 olmalı → en az 1 karakter uzat (yalnız kaynaktaki bilgiyle)."
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "yasak-mucize",
@@ -553,7 +572,9 @@
    ],
    "geriBildirim": [
     "- yasak_sozcuk: mucize"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "akredit-kaynaksiz",
@@ -607,7 +628,9 @@
    ],
    "geriBildirim": [
     "- yasak_sozcuk: akredit"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "akredit-kaynakli",
@@ -659,7 +682,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "uzunluk-kisa",
@@ -713,7 +738,9 @@
    ],
    "geriBildirim": [
     "- uzunluk: detailSummary 5 karakter; en az 90 olmalı → en az 85 karakter uzat (yalnız kaynaktaki bilgiyle)."
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "baglanti",
@@ -767,7 +794,9 @@
    ],
    "geriBildirim": [
     "- baglanti_yok: metinde bağlantı var"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "hekim-buyuk",
@@ -821,7 +850,9 @@
    ],
    "geriBildirim": [
     "- yasak_sozcuk: hekim"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "insanlarda-buyuk",
@@ -873,7 +904,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "sayi-ondalik",
@@ -927,7 +960,9 @@
    ],
    "geriBildirim": [
     "- uzunluk: detailSummary 88 karakter; en az 90 olmalı → en az 2 karakter uzat (yalnız kaynaktaki bilgiyle)."
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "sayi-eksik",
@@ -982,7 +1017,9 @@
    "geriBildirim": [
     "- uzunluk: detailSummary 88 karakter; en az 90 olmalı → en az 2 karakter uzat (yalnız kaynaktaki bilgiyle).",
     "- sayilar: kaynakta yok: 19,67"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "kisi-adi",
@@ -1036,7 +1073,9 @@
    ],
    "geriBildirim": [
     "- kisi_adi_yok: Prof. Dr. Ayşe, Doç. Şükrü, Dr.Ömer"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "ic-ses",
@@ -1090,7 +1129,9 @@
    ],
    "geriBildirim": [
     "- ic_ses_yok: kaynakta, belirtilmemiş"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "mevzuat-yorum",
@@ -1149,7 +1190,9 @@
    ],
    "geriBildirim": [
     "- mevzuat_kunye: önemli, yeni dönem, olumlu"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "mevzuat-temiz",
@@ -1206,7 +1249,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "ilac-temkinsiz",
@@ -1260,7 +1305,9 @@
    ],
    "geriBildirim": [
     "- temkin: klinik araştırma kaydı bulgu; temkin cümlesi yok"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "ilac-temkinli",
@@ -1312,7 +1359,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "rat-sozcuk-sonu",
@@ -1364,7 +1413,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "rat-tam",
@@ -1418,7 +1469,9 @@
    ],
    "geriBildirim": [
     "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "in-vitro",
@@ -1472,7 +1525,9 @@
    ],
    "geriBildirim": [
     "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "kesin-tedavi",
@@ -1524,7 +1579,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "garanti",
@@ -1578,7 +1635,9 @@
    ],
    "geriBildirim": [
     "- yasak_sozcuk: garanti"
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "emoji-uzunluk",
@@ -1630,7 +1689,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "uzun-coverdeck",
@@ -1686,7 +1747,9 @@
     "- uzunluk: coverDeck 141 karakter (18 kelime); sınır 125 karakter. En çok 12 kelime yaz → en az 6 kelime çıkar.",
     "- yasak_sozcuk: akredit",
     "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını (hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme."
-   ]
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "uzun-iki-alan",
@@ -1742,7 +1805,12 @@
     "- uzunluk: coverDeck 133 karakter (1 kelime); sınır 125 karakter. En çok 12 kelime yaz → en az 1 kelime çıkar.",
     "- uzunluk: detailSummary 320 karakter (64 kelime); sınır 270 karakter. En çok 28 kelime yaz → en az 36 kelime çıkar.",
     "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını (hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme."
-   ]
+   ],
+   "kisaltilacak": [
+    "coverDeck",
+    "detailSummary"
+   ],
+   "kisaltmaMesaji": "KISALTILACAK ALANLAR:\n- coverDeck: 133 karakter (1 kelime); sınır 125 karakter. En çok 3 kelime yaz.\n- detailSummary: 320 karakter (64 kelime); sınır 270 karakter. En çok 44 kelime yaz.\n\nMETİN:\n- coverTitle: Yapay zekâ ve sağlık hukuku\n- coverDeck: ööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö\n- detailTitle: Yapay zekâ sağlık hukuku kapsamında değerlendirildi\n- detailSummary: Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet Uzun özet sona erdi."
   },
   {
    "ad": "uzun-emoji",
@@ -1797,7 +1865,11 @@
    "geriBildirim": [
     "- uzunluk: detailTitle 73 karakter; sınır 72. Hedef en çok 60 → en az 13 karakter kısalt.",
     "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını (hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme."
-   ]
+   ],
+   "kisaltilacak": [
+    "detailTitle"
+   ],
+   "kisaltmaMesaji": "KISALTILACAK ALANLAR:\n- detailTitle: 73 karakter (1 kelime); sınır 72 karakter. En çok 3 kelime yaz.\n\nMETİN:\n- coverTitle: Yapay zekâ ve sağlık hukuku\n- coverDeck: Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.\n- detailTitle: 🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪\n- detailSummary: Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
   },
   {
    "ad": "uzun-covertitle",
@@ -1852,7 +1924,11 @@
    "geriBildirim": [
     "- uzunluk: coverTitle 45 karakter (6 kelime); sınır 44 karakter. En çok 5 kelime yaz → en az 1 kelime çıkar.",
     "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını (hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme."
-   ]
+   ],
+   "kisaltilacak": [
+    "coverTitle"
+   ],
+   "kisaltmaMesaji": "KISALTILACAK ALANLAR:\n- coverTitle: 45 karakter (6 kelime); sınır 44 karakter. En çok 4 kelime yaz.\n\nMETİN:\n- coverTitle: İleri böbrek kanserinde yeni tedavi çalışması\n- coverDeck: Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.\n- detailTitle: Yapay zekâ sağlık hukuku kapsamında değerlendirildi\n- detailSummary: Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
   },
   {
    "ad": "ornek-0",
@@ -1904,7 +1980,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "ornek-1",
@@ -1956,7 +2034,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "ornek-2",
@@ -2008,7 +2088,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "ornek-3",
@@ -2060,7 +2142,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "ornek-4",
@@ -2112,7 +2196,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "ornek-5",
@@ -2164,7 +2250,9 @@
      ""
     ]
    ],
-   "geriBildirim": []
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   }
  ]
 }
