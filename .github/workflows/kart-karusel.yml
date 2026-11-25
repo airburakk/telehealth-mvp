@@ -114,6 +114,7 @@ jobs:
           cp uret-kapi.json cikti/kapi/kapi-karari.json
           # Yayın adımının yapacağı denetim: mühür, İNDİRİLEN dosyalarla ve gönderilen editorial ile yeniden hesaplanır
           docker cp kart:/app/karusel/editoryal/kalite_kapisi.py kalite_kapisi.py
+          docker cp kart:/app/karusel/editoryal/ictihat.py ictihat.py   # kapı içtihat şablonunu içe aktarır (2026-11-25)
           python3 - <<'PY'
           import json, pathlib, kalite_kapisi as kk
           k = json.loads(pathlib.Path("uret-kapi.json").read_text(encoding="utf-8"))

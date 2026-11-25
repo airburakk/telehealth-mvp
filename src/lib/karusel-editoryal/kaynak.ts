@@ -13,7 +13,12 @@ const YENIDEN_MS = 2_000;
 const AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
 export type EdisyonOgesi = {
-  url: string;
+  /** Seçki öğe kimliği (edisyon yakalama zorunlu tutar) — editoryalde `itemId` olarak taşınır. */
+  id?: string;
+  /** İçtihatta null (Yargıtay kararının kalıcı bağlantısı yok — ictihat.ts); öteki akışlarda zorunlu. */
+  url: string | null;
+  /** Seçki ucunun akış anahtarı ("ictihat" → şablon yolu, model çağrılmaz). */
+  stream?: string | null;
   title: string;
   sourceName: string;
   streamLabel: string;
@@ -123,8 +128,8 @@ async function resmigazete(pdfUrl: string, title: string, getir: Getir): Promise
   return parts.join("\n");
 }
 
-/** Bir öğe için kaynak paketi. Okuma hatası fail-open: yalnız edisyon metni kalır, hata QA'ya yazılır. */
-export async function collect(item: EdisyonOgesi, getir: Getir): Promise<KaynakPaketi> {
+/** Edisyondaki künye + özet metni (kaynak sayfa çekilmeden). İçtihat şablonunun kapı kaynağı da budur. */
+export function edisyonMetni(item: EdisyonOgesi): string {
   const day = (item.publishedAt ?? "").slice(0, 10);
   let meta = `Kaynak: ${item.sourceName} · Akış: ${item.streamLabel ?? ""}`;
   if (day) {
@@ -132,10 +137,16 @@ export async function collect(item: EdisyonOgesi, getir: Getir): Promise<KaynakP
     meta += ` · Yayım tarihi: ${Number(d)} ${AYLAR[Number(mo) - 1]} ${y}`;
   }
   // Yedek cümle (summaryLongFallback) kaynak bilgisi değildir → yalnız başlık.
-  const edition = item.summaryLongFallback
+  return item.summaryLongFallback
     ? `${meta}\nBaşlık: ${item.title}`
     : `${meta}\nBaşlık: ${item.title}\nÖzet: ${item.summaryLong ?? ""}`;
+}
+
+/** Bir öğe için kaynak paketi. Okuma hatası fail-open: yalnız edisyon metni kalır, hata QA'ya yazılır. */
+export async function collect(item: EdisyonOgesi, getir: Getir): Promise<KaynakPaketi> {
+  const edition = edisyonMetni(item);
   const url = item.url;
+  if (!url) return { edition, fetched: "", fetchedOk: false, error: "bağlantı yok" };
   let fetched = "";
   let error: string | null = null;
   try {

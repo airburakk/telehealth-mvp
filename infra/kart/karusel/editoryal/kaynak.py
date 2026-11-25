@@ -90,8 +90,8 @@ def _resmigazete(pdf_url: str, title: str, cache: Path) -> str:
     return '\n'.join(parts)
 
 
-def collect(item: dict, cache: Path) -> dict:
-    """Bir öğe için kaynak paketi: {'edition': str, 'fetched': str, 'fetchedOk': bool, 'error': str|None}."""
+def edisyon_metni(item: dict) -> str:
+    """Edisyondaki künye + özet metni (kaynak sayfa çekilmeden). İçtihat şablonunun kapı kaynağı da budur."""
     day = (item.get('publishedAt') or '')[:10]
     meta = f"Kaynak: {item['sourceName']} · Akış: {item.get('streamLabel', '')}"
     if day:
@@ -100,7 +100,15 @@ def collect(item: dict, cache: Path) -> dict:
     edition = f"{meta}\nBaşlık: {item['title']}\nÖzet: {item.get('summaryLong') or ''}"
     if item.get('summaryLongFallback'):
         edition = f"{meta}\nBaşlık: {item['title']}"   # yedek cümle kaynak bilgisi değildir
-    url, fetched, err = item['url'], '', None
+    return edition
+
+
+def collect(item: dict, cache: Path) -> dict:
+    """Bir öğe için kaynak paketi: {'edition': str, 'fetched': str, 'fetchedOk': bool, 'error': str|None}."""
+    edition = edisyon_metni(item)
+    url, fetched, err = item.get('url'), '', None
+    if not url:
+        return {'edition': edition, 'fetched': '', 'fetchedOk': False, 'error': 'bağlantı yok'}
     try:
         if item['sourceName'] == 'Europe PMC' and url.startswith('https://doi.org/'):
             fetched = _europepmc(url.removeprefix('https://doi.org/'), cache)

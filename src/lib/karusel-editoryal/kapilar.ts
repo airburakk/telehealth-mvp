@@ -11,7 +11,7 @@
 //   · Python `len()` kod noktası sayar; JS `.length` UTF-16 birimi → `[...s].length`.
 
 export type Taslak = { coverTitle: string; coverDeck: string; detailTitle: string; detailSummary: string };
-export type KapiItem = { streamLabel?: string; url?: string };
+export type KapiItem = { streamLabel?: string; url?: string | null };
 export type KapiSonucu = [ad: string, gecti: boolean, ayrinti: string];
 
 export const ALANLAR = ["coverTitle", "coverDeck", "detailTitle", "detailSummary"] as const;
