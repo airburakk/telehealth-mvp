@@ -272,7 +272,7 @@ export type Deneme =
 /** Kısaltma adımı izi: `taslak`/`kapilar` kısaltma ÖNCESİ; kaydın kendi taslak/kapilar alanları kısaltma SONRASI. */
 export type Kisaltma = { alanlar: (typeof ALANLAR)[number][]; taslak: Taslak; kapilar: KapiKaydi[]; hata?: string };
 export type OgeKaydi = {
-  n: number; sourceUrl: string | null; streamLabel: string; kaynakOkundu: boolean; kaynakHatasi: string | null;
+  n: number; itemId: string | null; sourceUrl: string | null; streamLabel: string; kaynakOkundu: boolean; kaynakHatasi: string | null;
   sonuc: "GECTI" | "KALDI"; denemeler: Deneme[]; taslak: Taslak | null;
 };
 export type QaEditoryal = {
@@ -286,6 +286,8 @@ export function editorialKur(day: string, edSha: string, model: string, rows: Og
     schemaVersion: 1, day, origin: `otomatik (${model}); insan onayı yok — kapılar + ikinci model doğrulaması`,
     edition: { rawBodySha256: edSha }, leadImage: { path: "gorseller/kapak.png", caption: LEAD_CAPTION },
     items: rows.map((r) => ({
+      // itemId: çizici bağlantısız (içtihat) öğeyi bununla eşler — URL'si null iki öğe yer değiştiremesin.
+      ...(r.itemId ? { itemId: r.itemId } : {}),
       sourceUrl: r.sourceUrl, coverCategory: r.streamLabel, detailCategory: r.streamLabel,
       coverTitle: r.taslak!.coverTitle, coverDeck: r.taslak!.coverDeck, detailTitle: r.taslak!.detailTitle, detailSummary: r.taslak!.detailSummary,
       image: `gorseller/haber-${r.n}.png`,
@@ -351,7 +353,7 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
       const gates = check(e, item, src);
       const ok = gates.every(([, g]) => g);
       rows.push({
-        n, sourceUrl: item.url, streamLabel: item.streamLabel, kaynakOkundu: false, kaynakHatasi: null,
+        n, itemId: item.id ?? null, sourceUrl: item.url, streamLabel: item.streamLabel, kaynakOkundu: false, kaynakHatasi: null,
         sonuc: ok ? "GECTI" : "KALDI", taslak: ok ? e : null,
         denemeler: [{ deneme: 1, taslak: e, kapilar: gates.map(([ad, gecti, ayrinti]) => ({ ad, gecti, ayrinti })), sablon: "ictihat", sonuc: ok ? "GECTI" : "KALDI" }],
       });
@@ -360,7 +362,7 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
     // İçtihat dışı öğede bağlantı ZORUNLU: metnin tek dayanağı kaynak sayfadır → bağlantısız öğe fail-closed düşer.
     if (!item.url) {
       rows.push({
-        n, sourceUrl: null, streamLabel: item.streamLabel, kaynakOkundu: false, kaynakHatasi: "bağlantı yok",
+        n, itemId: item.id ?? null, sourceUrl: null, streamLabel: item.streamLabel, kaynakOkundu: false, kaynakHatasi: "bağlantı yok",
         sonuc: "KALDI", taslak: null, denemeler: [{ deneme: 1, hata: "içtihat dışı öğede bağlantı yok" }],
       });
       continue;
@@ -422,7 +424,7 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
       onceki = e;
     }
     rows.push({
-      n, sourceUrl: item.url, streamLabel: item.streamLabel, kaynakOkundu: pkt.fetchedOk, kaynakHatasi: pkt.error,
+      n, itemId: item.id ?? null, sourceUrl: item.url, streamLabel: item.streamLabel, kaynakOkundu: pkt.fetchedOk, kaynakHatasi: pkt.error,
       sonuc: kabul ? "GECTI" : "KALDI", denemeler: log, taslak: kabul,
     });
   }

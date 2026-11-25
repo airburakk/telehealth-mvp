@@ -90,7 +90,7 @@ describe("üretici — içtihat günü (Salı/Perşembe)", () => {
 
   it("içtihat öğesi modelsiz şablonla GEÇER, gün 6/6 GEÇTİ; editorial sourceUrl null taşır", async () => {
     const s = sahte();
-    const { qa, editorial } = await calistir(edisyon({ 5: { ...ic.item } }), { olustur: s.olustur, getir: getirYok });
+    const { qa, editorial } = await calistir(edisyon({ 5: { ...ic.item, id: "ictihat-1" } }), { olustur: s.olustur, getir: getirYok });
     expect(qa.gun).toBe("GECTI");
     expect(s.basliklar).toHaveLength(5);                      // içtihata taslak çağrısı GİTMEDİ
     expect(s.basliklar).not.toContain(ic.item.title);
@@ -99,7 +99,8 @@ describe("üretici — içtihat günü (Salı/Perşembe)", () => {
     expect(og.denemeler).toHaveLength(1);
     expect(og.denemeler[0]).toMatchObject({ deneme: 1, sablon: "ictihat", sonuc: "GECTI" });
     expect("dogrulama" in og.denemeler[0]).toBe(false);
-    expect(editorial!.items[5]).toMatchObject({ sourceUrl: null, coverCategory: "Arşivden İçtihat", ...ic.taslak });
+    expect(editorial!.items[5]).toMatchObject({ itemId: "ictihat-1", sourceUrl: null, coverCategory: "Arşivden İçtihat", ...ic.taslak });
+    expect("itemId" in editorial!.items[0]).toBe(false);      // kimliksiz öğe alan taşımaz (eski biçimle aynı)
   });
 
   it("içtihat dışı öğede bağlantı yoksa model çağrılmadan düşer → gün KALDI", async () => {

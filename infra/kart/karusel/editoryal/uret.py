@@ -207,7 +207,8 @@ def editorial_kur(day: str, ed_sha: str, model: str, rows: list[dict]) -> dict:
     """v3 çizicinin beklediği şema; görseller sabit adlarla (gorseller/kapak.png · gorseller/haber-N.png)."""
     return {'schemaVersion': 1, 'day': day, 'origin': f'otomatik ({model}); insan onayı yok — kapılar + ikinci model doğrulaması',
             'edition': {'rawBodySha256': ed_sha}, 'leadImage': {'path': 'gorseller/kapak.png', 'caption': LEAD_CAPTION},
-            'items': [{'sourceUrl': r['sourceUrl'], 'coverCategory': r['streamLabel'], 'detailCategory': r['streamLabel'],
+            'items': [{**({'itemId': r['itemId']} if r.get('itemId') else {}),   # çizici bağlantısız öğeyi kimlikle eşler
+                       'sourceUrl': r['sourceUrl'], 'coverCategory': r['streamLabel'], 'detailCategory': r['streamLabel'],
                        **r['taslak'], 'image': f"gorseller/haber-{r['n']}.png"} for r in rows]}
 
 
@@ -253,15 +254,15 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
             e = ictihat.ictihat_taslagi(item)
             gates = kapilar.check(e, item, src)
             ok = all(g for _, g, _ in gates)
-            rows.append({'n': n, 'sourceUrl': item.get('url'), 'streamLabel': item['streamLabel'], 'kaynakOkundu': False,
-                         'kaynakHatasi': None, 'sonuc': 'GECTI' if ok else 'KALDI',
+            rows.append({'n': n, 'itemId': item.get('id'), 'sourceUrl': item.get('url'), 'streamLabel': item['streamLabel'],
+                         'kaynakOkundu': False, 'kaynakHatasi': None, 'sonuc': 'GECTI' if ok else 'KALDI',
                          'denemeler': [{'deneme': 1, 'taslak': e, 'kapilar': [{'ad': a, 'gecti': g, 'ayrinti': d} for a, g, d in gates],
                                         'sablon': 'ictihat', 'sonuc': 'GECTI' if ok else 'KALDI'}],
                          'taslak': e if ok else None})
             continue
         # İçtihat dışı öğede bağlantı ZORUNLU (metnin tek dayanağı kaynak sayfa) → bağlantısız öğe fail-closed düşer.
         if not item.get('url'):
-            rows.append({'n': n, 'sourceUrl': None, 'streamLabel': item['streamLabel'], 'kaynakOkundu': False,
+            rows.append({'n': n, 'itemId': item.get('id'), 'sourceUrl': None, 'streamLabel': item['streamLabel'], 'kaynakOkundu': False,
                          'kaynakHatasi': 'bağlantı yok', 'sonuc': 'KALDI',
                          'denemeler': [{'deneme': 1, 'hata': 'içtihat dışı öğede bağlantı yok'}], 'taslak': None})
             continue
@@ -308,7 +309,8 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
                 kabul = e
                 break
             geri, onceki = '\n'.join(sorun), e
-        rows.append({'n': n, 'sourceUrl': item['url'], 'streamLabel': item['streamLabel'], 'kaynakOkundu': pkt['fetchedOk'],
+        rows.append({'n': n, 'itemId': item.get('id'), 'sourceUrl': item['url'], 'streamLabel': item['streamLabel'],
+                     'kaynakOkundu': pkt['fetchedOk'],
                      'kaynakHatasi': pkt['error'], 'sonuc': 'GECTI' if kabul else 'KALDI', 'denemeler': log, 'taslak': kabul})
 
     gecti = len(rows) == 6 and all(r['taslak'] for r in rows)

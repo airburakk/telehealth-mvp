@@ -32,6 +32,8 @@ IMG_GAP = 44           # özetin son satır adımından görsele boşluk (onayl�
 MIN_IMG = 330          # görsel için asgari yükseklik
 CAPTION = 'Temsili görsel · Yapay zekâ ile oluşturulmuştur'
 IMAGE_NAME = re.compile(r'^gorseller/(kapak|haber-[1-6])\.png$')
+ICTIHAT_STREAM = 'ictihat'
+KUNYE_RE = re.compile(r'E\. \S+, K\. \S+')
 
 
 class Hata(Exception):
@@ -55,6 +57,28 @@ def image_path(girdi: Path, rel: str) -> Path:
     return p
 
 
+def eslestir(n: int, it: dict, e: dict) -> None:
+    """Editoryal öğe ↔ edisyon öğesi. Editoryal `itemId` taşıyorsa kimlik birebir tutmalı; URL de her durumda tutmalı.
+    Bağlantısız öğe (Yargıtay kararının kalıcı adresi yok) yalnız içtihat akışında ve yalnız kimlikle eşleşir — iki
+    bağlantısız öğe `None == None` diye yer değiştirebilirdi; kimlik bu boşluğu kapatır (fail-closed)."""
+    if 'itemId' in e and e['itemId'] != it.get('id'):
+        raise Hata(f'öğe {n}: editoryal kimlik edisyonla uyuşmuyor')
+    if it.get('url') != e.get('sourceUrl'):
+        raise Hata(f'öğe {n}: editoryal sıra/URL edisyonla uyuşmuyor')
+    if not it.get('url'):
+        if it.get('stream') != ICTIHAT_STREAM:
+            raise Hata(f'öğe {n}: bağlantısız öğe yalnız içtihat akışında olabilir')
+        if not isinstance(it.get('id'), str) or not it['id'] or e.get('itemId') != it['id']:
+            raise Hata(f'öğe {n}: bağlantısız öğe kimlikle eşleşmeli')
+
+
+def kunye(it: dict) -> str:
+    """Bağlantısız (içtihat) öğede adres satırının yerine: başlıktaki esas/karar künyesi + nereden bulunacağı.
+    Yeni bilgi üretmez — künye edisyon başlığından alınır (hukuk-ingest: `Yargıtay <daire> · E. x, K. y`)."""
+    m = KUNYE_RE.search(it['title'])
+    return f"{m.group(0) if m else it['title'].strip()} · Yargıtay karar arama sistemi"
+
+
 def load(girdi: Path):
     ed = json.loads((girdi / 'edition.json').read_bytes())
     day = ed.get('day')
@@ -68,12 +92,11 @@ def load(girdi: Path):
         raise Hata('editoryal katman bu edisyona bağlı değil')
     if len(items) != 6 or len(edit['items']) != 6:
         raise Hata('tam altı öğe gerekli')
-    for it, e in zip(items, edit['items']):
-        if it['url'] != e['sourceUrl']:
-            raise Hata('editoryal sıra/URL edisyonla uyuşmuyor: ' + e['sourceUrl'])
+    for n, (it, e) in enumerate(zip(items, edit['items']), 1):
+        eslestir(n, it, e)
         for k in ('coverTitle', 'coverDeck', 'detailTitle', 'detailSummary', 'image', 'coverCategory', 'detailCategory'):
             if not isinstance(e.get(k), str) or not e[k].strip():
-                raise Hata(f'eksik alan {k}: ' + e['sourceUrl'])
+                raise Hata(f'öğe {n}: eksik alan {k}')
         image_path(girdi, e['image'])
     image_path(girdi, edit['leadImage']['path'])
     return day, ed, items, edit
@@ -108,7 +131,10 @@ def detail(payload, girdi, index, it, e):
     stats.append(dr._draw_text(image, CAPTION, (72, 1046, 936, 24), 16, field='caption', fill=dr.MUTED))
     stats.append(dr._draw_text(image, 'KAYNAK', (72, 1082, 936, 44), 18, 17, field='sourceContext', fill=dr.MUTED, bold=True))
     stats.append(dr._draw_text(image, it['sourceName'], (72, 1132, 936, 30), 22, 20, field='sourceName', fill=dr.MUTED))
-    stats.append(dr._draw_text(image, it['url'], (72, 1178, 936, 70), 20, 18, field='sourceUrl', fill=dr.MUTED, url=True))
+    if it.get('url'):
+        stats.append(dr._draw_text(image, it['url'], (72, 1178, 936, 70), 20, 18, field='sourceUrl', fill=dr.MUTED, url=True))
+    else:
+        stats.append(dr._draw_text(image, kunye(it), (72, 1178, 936, 70), 20, 18, field='sourceKunye', fill=dr.MUTED))
     return image, {'titleSize': ts, 'summarySize': ss, 'imageBox': [72, top, 936, IMG_BOTTOM - top]}
 
 
@@ -119,7 +145,7 @@ def render(girdi: Path, out: Path) -> dict:
     for i, (it, e) in enumerate(zip(items, edit['items'])):
         im, lay = detail(payload, girdi, i, it, e)
         cards[i + 2] = im
-        qa_cards.append({'card': i + 2, 'itemId': it['id'], 'sourceUrl': it['url'], 'detailTitle': e['detailTitle'],
+        qa_cards.append({'card': i + 2, 'itemId': it['id'], 'sourceUrl': it.get('url'), 'detailTitle': e['detailTitle'],
                          'image': e['image'], 'imageSha256': sha(image_path(girdi, e['image']).read_bytes()), **lay})
     cover, _ = nc.cover([e['coverTitle'] for e in edit['items']], issue_day=day,
                         lead_image_path=str(image_path(girdi, edit['leadImage']['path'])),

@@ -13,6 +13,8 @@ const YENIDEN_MS = 2_000;
 const AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
 export type EdisyonOgesi = {
+  /** Seçki öğe kimliği (edisyon yakalama zorunlu tutar) — editoryalde `itemId` olarak taşınır. */
+  id?: string;
   /** İçtihatta null (Yargıtay kararının kalıcı bağlantısı yok — ictihat.ts); öteki akışlarda zorunlu. */
   url: string | null;
   /** Seçki ucunun akış anahtarı ("ictihat" → şablon yolu, model çağrılmaz). */

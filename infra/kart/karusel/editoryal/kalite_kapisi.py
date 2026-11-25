@@ -98,6 +98,9 @@ def degerlendir(gun_dir: Path, kart_dir: Path, edition_path: Path) -> dict:
         k(og.get('sonuc') == 'GECTI' and son.get('sonuc') == 'GECTI', f'öğe {n}: editoryal kapıdan geçmedi')
         k(all(x.get('gecti') for x in son.get('kapilar', [])) and bool(son.get('kapilar')), f'öğe {n}: deterministik kapı kaydı eksik/kırık')
         ed_item = ed_items[n - 1] if n <= len(ed_items) else {}
+        k('itemId' not in it or it['itemId'] == ed_item.get('id'), f'öğe {n}: editoryal kimlik edisyonla uyuşmuyor')
+        if not ed_item.get('url'):   # bağlantısız öğe yalnız kimlikle eşleşir (render.py eslestir ile aynı kural)
+            k(bool(ed_item.get('id')) and it.get('itemId') == ed_item.get('id'), f'öğe {n}: bağlantısız öğe kimlikle eşleşmeli')
         if ictihat.ictihat_mi(ed_item):
             # İçtihat şablonu (model yok): ikinci model doğrulaması yerine metin aynı kuralla YENİDEN üretilip karşılaştırılır.
             k(son.get('sablon') == 'ictihat' and son.get('taslak') == ictihat.ictihat_taslagi(ed_item),

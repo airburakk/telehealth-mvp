@@ -30,7 +30,7 @@ def png(w, h, tohum):
 def kur(kok: Path, ic: dict | None = None):
     """Tutarlı (GEÇMESİ gereken) bir gün: edisyon → editoryal → görsel → çizim."""
     urls = [f'https://ornek.org/{i}' for i in range(1, 7)]
-    ed_items = [{'url': u, 'streamLabel': 'Akademik'} for u in urls]
+    ed_items = [{'id': f'oge-{i}', 'url': u, 'streamLabel': 'Akademik'} for i, u in enumerate(urls, 1)]
     if ic:   # 6. öğe içtihat (bağlantısız) — 24.11 Salı biçimi
         urls[5] = None
         ed_items[5] = ic
@@ -44,7 +44,8 @@ def kur(kok: Path, ic: dict | None = None):
     if ic:
         taslaklar[5] = ictihat.ictihat_taslagi(ic)
     edit = {'day': DAY, 'edition': {'rawBodySha256': edition['rawBodySha256']},
-            'items': [{'sourceUrl': u, 'coverCategory': 'Akademik', **t} for u, t in zip(urls, taslaklar)]}
+            'items': [{'itemId': o['id'], 'sourceUrl': u, 'coverCategory': 'Akademik', **t}
+                      for o, u, t in zip(ed_items, urls, taslaklar)]}
     eb = json.dumps(edit, ensure_ascii=False).encode()
     (gun / 'editorial.json').write_bytes(eb)
     deneme = lambda t: {'sonuc': 'GECTI', 'taslak': t, 'kapilar': [{'ad': 'uzunluk', 'gecti': True}],  # noqa: E731
@@ -163,11 +164,7 @@ class Kapi(unittest.TestCase):
         self.kaldi('testOnly')
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
-IC = {'stream': 'ictihat', 'streamLabel': 'Arşivden İçtihat', 'url': None,
+IC = {'id': 'ictihat-1', 'stream': 'ictihat', 'streamLabel': 'Arşivden İçtihat', 'url': None,
       'title': 'Yargıtay 3. Hukuk Dairesi · E. 2025/6274, K. 2026/3304', 'sourceName': 'Yargıtay — 3. Hukuk Dairesi',
       'summaryLong': 'Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat.', 'summaryLongFallback': False}
 
@@ -200,3 +197,21 @@ class IctihatGunu(unittest.TestCase):
     def test_sablon_isareti_icin_ictihat_olmayan_oge_kalir(self):
         jdegis(self.gun / 'QA-editoryal.json', lambda d: d['ogeler'][0]['denemeler'][-1].update(sablon='ictihat'))
         self.kaldi('şablon/bağlantı yalnız içtihatta')
+
+    def test_yanlis_kimlik_kalir(self):
+        jdegis(self.gun / 'editorial.json', lambda d: d['items'][2].update(itemId='baska'))
+        self.kaldi('öğe 3: editoryal kimlik edisyonla uyuşmuyor')
+
+    def test_kimliksiz_baglantisiz_oge_kalir(self):
+        jdegis(self.gun / 'editorial.json', lambda d: d['items'][5].pop('itemId'))
+        self.kaldi('öğe 6: bağlantısız öğe kimlikle eşleşmeli')
+
+    def test_kimliksiz_eski_editoryal_baglantili_ogede_gecer(self):
+        """Geriye uyum: itemId'siz (yeni sürüm öncesi) editoryal bağlantılı öğelerde URL ile eşleşir."""
+        jdegis(self.gun / 'editorial.json', lambda d: [i.pop('itemId') for i in d['items'][:5]])
+        r = kk.degerlendir(self.gun, self.kart, self.ed)
+        self.assertNotIn('kimlik', ' '.join(r['sorunlar']))
+
+
+if __name__ == '__main__':
+    unittest.main()
