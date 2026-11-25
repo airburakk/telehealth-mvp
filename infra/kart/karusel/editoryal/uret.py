@@ -26,6 +26,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import kapilar  # noqa: E402
 import kaynak  # noqa: E402
+import ictihat  # noqa: E402
 
 DEFAULT_MODEL = 'claude-haiku-5-5'
 # 👤 19.11: 3 → 4 deneme. 18–19.11 koşularında 6 öğeden biri 3. denemede doğrulamaya (abartı) takılıp hak bitince günü düşürdü;
@@ -246,6 +247,24 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
         return r.parsed_output
 
     for n, item in enumerate(items, 1):
+        # İçtihat: sabah kartının yolu — künye + konu satırından şablon; model ve kaynak sayfa YOK (ictihat.py).
+        if ictihat.ictihat_mi(item):
+            src = kaynak.edisyon_metni(item)
+            e = ictihat.ictihat_taslagi(item)
+            gates = kapilar.check(e, item, src)
+            ok = all(g for _, g, _ in gates)
+            rows.append({'n': n, 'sourceUrl': item.get('url'), 'streamLabel': item['streamLabel'], 'kaynakOkundu': False,
+                         'kaynakHatasi': None, 'sonuc': 'GECTI' if ok else 'KALDI',
+                         'denemeler': [{'deneme': 1, 'taslak': e, 'kapilar': [{'ad': a, 'gecti': g, 'ayrinti': d} for a, g, d in gates],
+                                        'sablon': 'ictihat', 'sonuc': 'GECTI' if ok else 'KALDI'}],
+                         'taslak': e if ok else None})
+            continue
+        # İçtihat dışı öğede bağlantı ZORUNLU (metnin tek dayanağı kaynak sayfa) → bağlantısız öğe fail-closed düşer.
+        if not item.get('url'):
+            rows.append({'n': n, 'sourceUrl': None, 'streamLabel': item['streamLabel'], 'kaynakOkundu': False,
+                         'kaynakHatasi': 'bağlantı yok', 'sonuc': 'KALDI',
+                         'denemeler': [{'deneme': 1, 'hata': 'içtihat dışı öğede bağlantı yok'}], 'taslak': None})
+            continue
         pkt = kaynak.collect(item, cikti / 'onbellek')
         src = kaynak.source_text(pkt)
         log, geri, kabul, onceki = [], '', None, None

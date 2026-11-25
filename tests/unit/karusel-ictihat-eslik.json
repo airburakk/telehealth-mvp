@@ -1,0 +1,861 @@
+{
+ "kaynak": "infra/kart/karusel/editoryal/ictihat.py (eslik_uret.py ile üretildi)",
+ "not": "Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir.",
+ "vakalar": [
+  {
+   "ad": "gercek-1",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/6274, K. 2026/3304",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/6274, K. 2026/3304\nÖzet: Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat.",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/6274, K. 2026/3304",
+    "detailSummary": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "gercek-2",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2026/87, K. 2026/3186",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Malpraktis, Tazminat, Manevi tazminat.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2026/87, K. 2026/3186\nÖzet: Konu: Malpraktis, Tazminat, Manevi tazminat.",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Tazminat, Manevi tazminat.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2026/87, K. 2026/3186",
+    "detailSummary": "Konu: Malpraktis, Tazminat, Manevi tazminat. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "gercek-3",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/6201, K. 2026/3211",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Malpraktis, Tazminat, Komplikasyon.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/6201, K. 2026/3211\nÖzet: Konu: Malpraktis, Tazminat, Komplikasyon.",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Tazminat, Komplikasyon.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/6201, K. 2026/3211",
+    "detailSummary": "Konu: Malpraktis, Tazminat, Komplikasyon. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "gercek-5",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/6022, K. 2026/3076",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Tazminat, Manevi tazminat, Aydınlatılmış onam.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/6022, K. 2026/3076\nÖzet: Konu: Tazminat, Manevi tazminat, Aydınlatılmış onam.",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Tazminat, Manevi tazminat, Aydınlatılmış onam.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/6022, K. 2026/3076",
+    "detailSummary": "Konu: Tazminat, Manevi tazminat, Aydınlatılmış onam. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "gercek-7",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/6029, K. 2026/2864",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Tazminat, Manevi tazminat, Özen yükümlülüğü.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/6029, K. 2026/2864\nÖzet: Konu: Tazminat, Manevi tazminat, Özen yükümlülüğü.",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Tazminat, Manevi tazminat, Özen yükümlülüğü.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/6029, K. 2026/2864",
+    "detailSummary": "Konu: Tazminat, Manevi tazminat, Özen yükümlülüğü. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "gercek-8-dayanak",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/6156, K. 2026/2829",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Malpraktis, Tazminat, Manevi tazminat. Dayanak: TBK m.56.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/6156, K. 2026/2829\nÖzet: Konu: Malpraktis, Tazminat, Manevi tazminat. Dayanak: TBK m.56.",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Tazminat, Manevi tazminat.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/6156, K. 2026/2829",
+    "detailSummary": "Konu: Malpraktis, Tazminat, Manevi tazminat. Dayanak: TBK m.56. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "konu-kisa",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/1, K. 2026/2",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Tazminat.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/1, K. 2026/2\nÖzet: Konu: Tazminat.",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Tazminat. Künyesi haber kartında.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/1, K. 2026/2",
+    "detailSummary": "Konu: Tazminat. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "konusuz-bos",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/3, K. 2026/4",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/3, K. 2026/4\nÖzet: ",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Künyesi haber kartında yer alan bir Yargıtay kararı.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/3, K. 2026/4",
+    "detailSummary": "Yargıtay 3. Hukuk Dairesi kararı. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "konusuz-dayanakli",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/5, K. 2026/6",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Dayanak: TBK m.49.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/5, K. 2026/6\nÖzet: Dayanak: TBK m.49.",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Künyesi haber kartında yer alan bir Yargıtay kararı.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/5, K. 2026/6",
+    "detailSummary": "Dayanak: TBK m.49. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "yedek-cumle",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/7, K. 2026/8",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Yargıtay kararı; ayrıntı kaynak bağlantısında.",
+    "summaryLongFallback": true
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/7, K. 2026/8",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Künyesi haber kartında yer alan bir Yargıtay kararı.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/7, K. 2026/8",
+    "detailSummary": "Yargıtay 3. Hukuk Dairesi kararı. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "ozet-uzun",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 3. Hukuk Dairesi · E. 2025/9, K. 2026/10",
+    "sourceName": "Yargıtay — 3. Hukuk Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Malpraktis, Yanlış tedavi/tanı, Aydınlatılmış onam. Dayanak: TBK m.40, TBK m.41, TBK m.42, TBK m.43, TBK m.44, TBK m.45, TBK m.46, TBK m.47, TBK m.48, TBK m.49, TBK m.50, TBK m.51, TBK m.52, TBK m.53, TBK m.54, TBK m.55, TBK m.56, TBK m.57, TBK m.58, TBK m.59.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 3. Hukuk Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 3. Hukuk Dairesi · E. 2025/9, K. 2026/10\nÖzet: Konu: Malpraktis, Yanlış tedavi/tanı, Aydınlatılmış onam. Dayanak: TBK m.40, TBK m.41, TBK m.42, TBK m.43, TBK m.44, TBK m.45, TBK m.46, TBK m.47, TBK m.48, TBK m.49, TBK m.50, TBK m.51, TBK m.52, TBK m.53, TBK m.54, TBK m.55, TBK m.56, TBK m.57, TBK m.58, TBK m.59.",
+   "taslak": {
+    "coverTitle": "Yargıtay 3. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Yanlış tedavi/tanı, Aydınlatılmış onam.",
+    "detailTitle": "Yargıtay 3. Hukuk Dairesi · E. 2025/9, K. 2026/10",
+    "detailSummary": "Konu: Malpraktis, Yanlış tedavi/tanı, Aydınlatılmış onam. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "genel-kurul",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay Hukuk Genel Kurulu · E. 2024/11, K. 2025/12",
+    "sourceName": "Yargıtay — Hukuk Genel Kurulu",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Malpraktis, Tazminat.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — Hukuk Genel Kurulu · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay Hukuk Genel Kurulu · E. 2024/11, K. 2025/12\nÖzet: Konu: Malpraktis, Tazminat.",
+   "taslak": {
+    "coverTitle": "Yargıtay Hukuk Genel Kurulu kararı",
+    "coverDeck": "Konu: Malpraktis, Tazminat. Künyesi haber kartında.",
+    "detailTitle": "Yargıtay Hukuk Genel Kurulu · E. 2024/11, K. 2025/12",
+    "detailSummary": "Konu: Malpraktis, Tazminat. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "daire-uzun",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay Hukuk Genel Kurulu · E. 2024/13, K. 2025/14",
+    "sourceName": "Yargıtay — Çok Uzun Adlı Bir Daire Çok Uzun Adlı Bir Daire ",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Malpraktis, Tazminat.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — Çok Uzun Adlı Bir Daire Çok Uzun Adlı Bir Daire  · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay Hukuk Genel Kurulu · E. 2024/13, K. 2025/14\nÖzet: Konu: Malpraktis, Tazminat.",
+   "taslak": {
+    "coverTitle": "Yargıtay kararı",
+    "coverDeck": "Konu: Malpraktis, Tazminat. Künyesi haber kartında.",
+    "detailTitle": "Yargıtay Hukuk Genel Kurulu · E. 2024/13, K. 2025/14",
+    "detailSummary": "Konu: Malpraktis, Tazminat. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "kaynak-onekisiz",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 12. Ceza Dairesi · E. 2024/15, K. 2025/16",
+    "sourceName": "Yargıtay",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Taksirle yaralama, Malpraktis.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 12. Ceza Dairesi · E. 2024/15, K. 2025/16\nÖzet: Konu: Taksirle yaralama, Malpraktis.",
+   "taslak": {
+    "coverTitle": "Yargıtay kararı",
+    "coverDeck": "Konu: Taksirle yaralama, Malpraktis.",
+    "detailTitle": "Yargıtay 12. Ceza Dairesi · E. 2024/15, K. 2025/16",
+    "detailSummary": "Konu: Taksirle yaralama, Malpraktis. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  },
+  {
+   "ad": "baslik-uzun",
+   "item": {
+    "stream": "ictihat",
+    "streamLabel": "Arşivden İçtihat",
+    "url": null,
+    "title": "Yargıtay 12. Ceza Dairesi · E. 2024/123456, K. 2025/654321 · Ek karar · Düzeltme ve birleştirme",
+    "sourceName": "Yargıtay — 12. Ceza Dairesi",
+    "publishedAt": "2026-10-14T00:00:00.000Z",
+    "summaryLong": "Konu: Malpraktis.",
+    "summaryLongFallback": false
+   },
+   "edisyonMetni": "Kaynak: Yargıtay — 12. Ceza Dairesi · Akış: Arşivden İçtihat · Yayım tarihi: 14 Ekim 2026\nBaşlık: Yargıtay 12. Ceza Dairesi · E. 2024/123456, K. 2025/654321 · Ek karar · Düzeltme ve birleştirme\nÖzet: Konu: Malpraktis.",
+   "taslak": {
+    "coverTitle": "Yargıtay 12. Ceza Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis. Künyesi haber kartında.",
+    "detailTitle": "Yargıtay 12. CD · E. 2024/123456, K. 2025/654321 · Ek karar · Düzeltme ve birleştirme",
+    "detailSummary": "Konu: Malpraktis. Karar metni kişisel veri içerebildiği için paylaşılmaz; tam metne Yargıtay karar arama sisteminden esas ve karar numarasıyla ulaşılabilir."
+   },
+   "kapilar": [
+    [
+     "uzunluk",
+     false,
+     "detailTitle=85"
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ]
+  }
+ ]
+}

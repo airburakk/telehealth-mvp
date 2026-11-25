@@ -20,6 +20,9 @@ import struct
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ictihat  # noqa: E402  (içtihat şablonu — model yok; metin burada yeniden üretilip karşılaştırılır)
+
 GORSEL_ADLARI = ['kapak'] + [f'haber-{i}' for i in range(1, 7)]
 KART_ADLARI = [f'{i:02d}.png' for i in range(1, 9)]
 KART_BOYUT = (1080, 1350)
@@ -71,9 +74,10 @@ def degerlendir(gun_dir: Path, kart_dir: Path, edition_path: Path) -> dict:
     k(not ed.get('testOnly'), 'edisyon testOnly işaretli')
     gun = ed.get('day')
     try:
-        ed_urls = [i['url'] for i in json.loads(ed['rawBodyUtf8'])['items']]
+        ed_items = json.loads(ed['rawBodyUtf8'])['items']
+        ed_urls = [i['url'] for i in ed_items]
     except (KeyError, TypeError, ValueError):
-        ed_urls = []
+        ed_items, ed_urls = [], []
     k(len(ed_urls) == 6, f'edisyonda 6 öğe yok ({len(ed_urls)})')
 
     # --- [A] editoryal ---
@@ -93,8 +97,15 @@ def degerlendir(gun_dir: Path, kart_dir: Path, edition_path: Path) -> dict:
         son = (og.get('denemeler') or [{}])[-1]
         k(og.get('sonuc') == 'GECTI' and son.get('sonuc') == 'GECTI', f'öğe {n}: editoryal kapıdan geçmedi')
         k(all(x.get('gecti') for x in son.get('kapilar', [])) and bool(son.get('kapilar')), f'öğe {n}: deterministik kapı kaydı eksik/kırık')
-        etiketler = [d.get('etiket') for d in son.get('dogrulama', [])]
-        k(bool(etiketler) and all(e == 'desteklenir' for e in etiketler), f'öğe {n}: ikinci model doğrulaması temiz değil')
+        ed_item = ed_items[n - 1] if n <= len(ed_items) else {}
+        if ictihat.ictihat_mi(ed_item):
+            # İçtihat şablonu (model yok): ikinci model doğrulaması yerine metin aynı kuralla YENİDEN üretilip karşılaştırılır.
+            k(son.get('sablon') == 'ictihat' and son.get('taslak') == ictihat.ictihat_taslagi(ed_item),
+              f'öğe {n}: içtihat metni şablonla uyuşmuyor')
+        else:
+            k(son.get('sablon') is None and bool(ed_item.get('url')), f'öğe {n}: şablon/bağlantı yalnız içtihatta')
+            etiketler = [d.get('etiket') for d in son.get('dogrulama', [])]
+            k(bool(etiketler) and all(e == 'desteklenir' for e in etiketler), f'öğe {n}: ikinci model doğrulaması temiz değil')
         k({a: it.get(a) for a in alanlar} == {a: (og.get('taslak') or {}).get(a) for a in alanlar},
           f'öğe {n}: metin kapıdan SONRA değişmiş')
 

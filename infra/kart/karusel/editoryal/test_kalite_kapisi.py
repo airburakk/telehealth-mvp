@@ -13,6 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kalite_kapisi as kk  # noqa: E402
+import ictihat  # noqa: E402
 
 DAY = '2026-11-14'
 ALAN = ('coverTitle', 'coverDeck', 'detailTitle', 'detailSummary')
@@ -26,16 +27,22 @@ def png(w, h, tohum):
     return b'\x89PNG\r\n\x1a\n' + b'\x00\x00\x00\x0dIHDR' + struct.pack('>II', w, h) + tohum.encode()
 
 
-def kur(kok: Path):
+def kur(kok: Path, ic: dict | None = None):
     """Tutarlı (GEÇMESİ gereken) bir gün: edisyon → editoryal → görsel → çizim."""
     urls = [f'https://ornek.org/{i}' for i in range(1, 7)]
-    body = json.dumps({'items': [{'url': u, 'streamLabel': 'Akademik'} for u in urls]})
+    ed_items = [{'url': u, 'streamLabel': 'Akademik'} for u in urls]
+    if ic:   # 6. öğe içtihat (bağlantısız) — 24.11 Salı biçimi
+        urls[5] = None
+        ed_items[5] = ic
+    body = json.dumps({'items': ed_items})
     edition = {'day': DAY, 'rawBodyUtf8': body, 'rawBodySha256': sha(body.encode())}
     gun, kart = kok / 'gun', kok / 'kartlar'
     (gun / 'gorseller').mkdir(parents=True)
     kart.mkdir()
     (kok / 'edition.json').write_text(json.dumps(edition), encoding='utf-8')
     taslaklar = [{a: f'{a} {i}' for a in ALAN} for i in range(1, 7)]
+    if ic:
+        taslaklar[5] = ictihat.ictihat_taslagi(ic)
     edit = {'day': DAY, 'edition': {'rawBodySha256': edition['rawBodySha256']},
             'items': [{'sourceUrl': u, 'coverCategory': 'Akademik', **t} for u, t in zip(urls, taslaklar)]}
     eb = json.dumps(edit, ensure_ascii=False).encode()
@@ -44,6 +51,9 @@ def kur(kok: Path):
                         'dogrulama': [{'etiket': 'desteklenir'}]}
     qa_a = {'day': DAY, 'gun': 'GECTI', 'editionRawSha256': edition['rawBodySha256'], 'tahminiUsd': 0.01,
             'ogeler': [{'sonuc': 'GECTI', 'taslak': t, 'denemeler': [deneme(t)]} for t in taslaklar]}
+    if ic:   # şablon kaydı: model doğrulaması YOK, sablon işareti VAR
+        qa_a['ogeler'][5]['denemeler'] = [{'sonuc': 'GECTI', 'taslak': taslaklar[5], 'kapilar': [{'ad': 'uzunluk', 'gecti': True}],
+                                           'sablon': 'ictihat'}]
     (gun / 'QA-editoryal.json').write_text(json.dumps(qa_a), encoding='utf-8')
     gor = []
     for ad in kk.GORSEL_ADLARI:
@@ -155,3 +165,38 @@ class Kapi(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+IC = {'stream': 'ictihat', 'streamLabel': 'Arşivden İçtihat', 'url': None,
+      'title': 'Yargıtay 3. Hukuk Dairesi · E. 2025/6274, K. 2026/3304', 'sourceName': 'Yargıtay — 3. Hukuk Dairesi',
+      'summaryLong': 'Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat.', 'summaryLongFallback': False}
+
+
+class IctihatGunu(unittest.TestCase):
+    """2026-11-25: bağlantısız içtihat öğesi şablonla geçer; şablon dışı metin ya da yanlış yerde şablon KALDI."""
+    def setUp(self):
+        self._t = tempfile.TemporaryDirectory()
+        self.gun, self.kart, self.ed = kur(Path(self._t.name), IC)
+
+    def tearDown(self):
+        self._t.cleanup()
+
+    def kaldi(self, parca):
+        r = kk.degerlendir(self.gun, self.kart, self.ed)
+        self.assertEqual(r['karar'], 'KALDI')
+        self.assertTrue(any(parca in s for s in r['sorunlar']), r['sorunlar'])
+
+    def test_tutarli_ictihat_gunu_gecer(self):
+        r = kk.degerlendir(self.gun, self.kart, self.ed)
+        self.assertEqual(r['karar'], 'GECTI', r['sorunlar'])
+        self.assertTrue(r['muhur'])
+
+    def test_sablon_disi_metin_kalir(self):
+        def bozuk(d):
+            d['ogeler'][5]['denemeler'][-1]['taslak'] = dict(d['ogeler'][5]['taslak'], coverDeck='Yargıtay doktoru haklı buldu.')
+        jdegis(self.gun / 'QA-editoryal.json', bozuk)
+        self.kaldi('içtihat metni şablonla uyuşmuyor')
+
+    def test_sablon_isareti_icin_ictihat_olmayan_oge_kalir(self):
+        jdegis(self.gun / 'QA-editoryal.json', lambda d: d['ogeler'][0]['denemeler'][-1].update(sablon='ictihat'))
+        self.kaldi('şablon/bağlantı yalnız içtihatta')

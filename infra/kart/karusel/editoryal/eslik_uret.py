@@ -13,6 +13,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import kapilar  # noqa: E402
+import ictihat  # noqa: E402
+import kaynak  # noqa: E402
 
 KOK = HERE.parents[3]
 HEDEF = KOK / 'tests' / 'unit' / 'karusel-kapilar-eslik.json'
@@ -82,7 +84,49 @@ def vakalar():
     return v
 
 
+ICTIHAT_HEDEF = KOK / 'tests' / 'unit' / 'karusel-ictihat-eslik.json'
+_OZET_UZUN = 'Konu: Malpraktis, Yanlış tedavi/tanı, Aydınlatılmış onam. Dayanak: ' + ', '.join(f'TBK m.{i}' for i in range(40, 60)) + '.'
+
+
+def ictihat_vakalari():
+    """İçtihat şablonu eşliği (2026-11-25): ilk 6 vaka DEV'deki gerçek kararların kart satırı (künye + sözlük satırı)."""
+    def oge(ad, title, kaynak_adi, ozet, yedek=False, akis='Arşivden İçtihat'):
+        return {'ad': ad, 'item': {'stream': 'ictihat', 'streamLabel': akis, 'url': None, 'title': title, 'sourceName': kaynak_adi,
+                                   'publishedAt': '2026-10-14T00:00:00.000Z', 'summaryLong': ozet, 'summaryLongFallback': yedek}}
+    d3 = 'Yargıtay — 3. Hukuk Dairesi'
+    v = [
+        oge('gercek-1', 'Yargıtay 3. Hukuk Dairesi · E. 2025/6274, K. 2026/3304', d3, 'Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat.'),
+        oge('gercek-2', 'Yargıtay 3. Hukuk Dairesi · E. 2026/87, K. 2026/3186', d3, 'Konu: Malpraktis, Tazminat, Manevi tazminat.'),
+        oge('gercek-3', 'Yargıtay 3. Hukuk Dairesi · E. 2025/6201, K. 2026/3211', d3, 'Konu: Malpraktis, Tazminat, Komplikasyon.'),
+        oge('gercek-5', 'Yargıtay 3. Hukuk Dairesi · E. 2025/6022, K. 2026/3076', d3, 'Konu: Tazminat, Manevi tazminat, Aydınlatılmış onam.'),
+        oge('gercek-7', 'Yargıtay 3. Hukuk Dairesi · E. 2025/6029, K. 2026/2864', d3, 'Konu: Tazminat, Manevi tazminat, Özen yükümlülüğü.'),
+        oge('gercek-8-dayanak', 'Yargıtay 3. Hukuk Dairesi · E. 2025/6156, K. 2026/2829', d3,
+            'Konu: Malpraktis, Tazminat, Manevi tazminat. Dayanak: TBK m.56.', akis='İçtihat'),
+        oge('konu-kisa', 'Yargıtay 3. Hukuk Dairesi · E. 2025/1, K. 2026/2', d3, 'Konu: Tazminat.'),
+        oge('konusuz-bos', 'Yargıtay 3. Hukuk Dairesi · E. 2025/3, K. 2026/4', d3, ''),
+        oge('konusuz-dayanakli', 'Yargıtay 3. Hukuk Dairesi · E. 2025/5, K. 2026/6', d3, 'Dayanak: TBK m.49.'),
+        oge('yedek-cumle', 'Yargıtay 3. Hukuk Dairesi · E. 2025/7, K. 2026/8', d3, 'Yargıtay kararı; ayrıntı kaynak bağlantısında.', yedek=True),
+        oge('ozet-uzun', 'Yargıtay 3. Hukuk Dairesi · E. 2025/9, K. 2026/10', d3, _OZET_UZUN),
+        oge('genel-kurul', 'Yargıtay Hukuk Genel Kurulu · E. 2024/11, K. 2025/12', 'Yargıtay — Hukuk Genel Kurulu', 'Konu: Malpraktis, Tazminat.'),
+        oge('daire-uzun', 'Yargıtay Hukuk Genel Kurulu · E. 2024/13, K. 2025/14', 'Yargıtay — ' + 'Çok Uzun Adlı Bir Daire ' * 2,
+            'Konu: Malpraktis, Tazminat.'),
+        oge('kaynak-onekisiz', 'Yargıtay 12. Ceza Dairesi · E. 2024/15, K. 2025/16', 'Yargıtay', 'Konu: Taksirle yaralama, Malpraktis.'),
+        oge('baslik-uzun', 'Yargıtay 12. Ceza Dairesi · E. 2024/123456, K. 2025/654321 · Ek karar · Düzeltme ve birleştirme',
+            'Yargıtay — 12. Ceza Dairesi', 'Konu: Malpraktis.'),
+    ]
+    out = []
+    for c in v:
+        src = kaynak.edisyon_metni(c['item'])
+        t = ictihat.ictihat_taslagi(c['item'])
+        out.append({**c, 'edisyonMetni': src, 'taslak': t, 'kapilar': [[a, ok, d] for a, ok, d in kapilar.check(t, c['item'], src)]})
+    return out
+
+
 def main():
+    ic = ictihat_vakalari()
+    ICTIHAT_HEDEF.write_text(json.dumps({'kaynak': 'infra/kart/karusel/editoryal/ictihat.py (eslik_uret.py ile üretildi)',
+                                         'not': ictihat.ICTIHAT_NOTU, 'vakalar': ic}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    print(f'{len(ic)} içtihat vakası → {ICTIHAT_HEDEF.relative_to(KOK)}')
     # İstem metinleri de eşlik kapsamında (TS uret.ts aynı metni modele vermeli). uret.py SDK'sız içe aktarılabilir.
     import uret
     out = []
