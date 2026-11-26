@@ -15,9 +15,9 @@ type Vaka = { konum: number; taslak: { coverTitle: string; coverDeck: string }; 
 const vakalar = eslik.vakalar as unknown as Vaka[];
 
 describe("kapak sığma — Python eşliği", () => {
-  it("ölçü tablosu iki kopyada bayt bayt aynı (TS ↔ kart imajı)", () => {
-    const oku = (p: string) => readFileSync(resolve(__dirname, "../..", p));
-    expect(oku("src/lib/karusel-editoryal/kapak-olculeri.json").equals(oku("infra/kart/karusel/editoryal/kapak-olculeri.json"))).toBe(true);
+  it("ölçü tablosu iki kopyada aynı (TS ↔ kart imajı; içerik düzeyinde — Windows checkout'ta src/ CRLF olabilir)", () => {
+    const oku = (p: string) => JSON.parse(readFileSync(resolve(__dirname, "../..", p), "utf8"));
+    expect(oku("src/lib/karusel-editoryal/kapak-olculeri.json")).toEqual(oku("infra/kart/karusel/editoryal/kapak-olculeri.json"));
   });
   it("fikstür dolu; 3. konumda (prova bulgusu) hem geçen hem kalan vaka var", () => {
     expect(vakalar.length).toBeGreaterThanOrEqual(180);
