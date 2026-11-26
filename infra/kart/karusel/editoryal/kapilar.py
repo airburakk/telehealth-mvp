@@ -8,6 +8,8 @@ from __future__ import annotations
 import re
 import unicodedata
 
+from kapak_sigma import kapak_sigma
+
 LIMITS = {'coverTitle': 44, 'coverDeck': 125, 'detailTitle': 72, 'detailSummary': 270}
 MIN_LEN = {'coverTitle': 12, 'coverDeck': 30, 'detailTitle': 20, 'detailSummary': 90}
 
@@ -42,7 +44,7 @@ def _num_forms(n: str) -> set[str]:
     return {n, n.replace(',', '.'), n.replace('.', ',')}
 
 
-def check(e: dict, item: dict, src: str) -> list[tuple[str, bool, str]]:
+def check(e: dict, item: dict, src: str, konum: int | None = None) -> list[tuple[str, bool, str]]:
     out: list[tuple[str, bool, str]] = []
     text = ' '.join(e[k] for k in LIMITS)
     ft, fs = _fold(text), _fold(src)
@@ -90,6 +92,11 @@ def check(e: dict, item: dict, src: str) -> list[tuple[str, bool, str]]:
     if item.get('streamLabel') == 'Mevzuat':
         evalw = [w for w in ('önemli', 'kritik', 'büyük', 'köklü', 'yeni dönem', 'beklenen', 'olumlu', 'olumsuz') if w in ft]
         out.append(('mevzuat_kunye', not evalw, ', '.join(evalw)))
+
+    # 7) kapak sığması (2026-11-26) — kapaktaki KONUMUNUN kutusuna sığıyor mu (kapak_sigma.py). Konum verilmezse koşmaz
+    #    (eşlik fikstürü + kalite kapısının yeniden üretim karşılaştırması konumsuz çağırır).
+    if konum is not None:
+        out.append(('kapak_sigma', *kapak_sigma(e, konum)))
     return out
 
 

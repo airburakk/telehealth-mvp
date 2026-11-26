@@ -1,0 +1,3484 @@
+{
+ "kaynak": "infra/kart/karusel/editoryal/kapak_sigma.py (eslik_uret.py ile üretildi)",
+ "geriBildirim": {
+  "taslak": {
+   "coverTitle": "Yapay zekâ ve sağlık hukuku",
+   "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında bilimsel toplantı düzenliyor. Doktorlar davetli.",
+   "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+   "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+  },
+  "konumlar": {
+   "3": [
+    "- kapak_sigma: coverDeck 3. konumda kapaktaki kutuya sığmıyor (14 kelime); bu konumda en çok 13 kelime → en az 1 kelime çıkar"
+   ],
+   "4": []
+  }
+ },
+ "vakalar": [
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyonu azalttı. Randomize klinik çalışma sonucu, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyonu azalttı. Randomize klinik çalışma sonucu, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyonu azalttı. Randomize klinik çalışma sonucu, 168 gebe."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (13 kelime); bu konumda en çok 10 kelime → en az 3 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyonu azalttı. Randomize klinik çalışma sonucu, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyonu azalttı. Randomize klinik çalışma sonucu, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyonu azalttı. Randomize klinik çalışma sonucu, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyon insidansı azaldı. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyon insidansı azaldı. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyon insidansı azaldı. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (13 kelime); bu konumda en çok 10 kelime → en az 3 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyon insidansı azaldı. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyon insidansı azaldı. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyon insidansı azaldı. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Noradrenalin infüzyonuna eklenen bacak sarılması, hipotansiyon insidansını düşürdü. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Noradrenalin infüzyonuna eklenen bacak sarılması, hipotansiyon insidansını düşürdü. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Noradrenalin infüzyonuna eklenen bacak sarılması, hipotansiyon insidansını düşürdü. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (13 kelime); bu konumda en çok 10 kelime → en az 3 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Noradrenalin infüzyonuna eklenen bacak sarılması, hipotansiyon insidansını düşürdü. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Noradrenalin infüzyonuna eklenen bacak sarılması, hipotansiyon insidansını düşürdü. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Sezaryende bacak sarılması",
+    "coverDeck": "Noradrenalin infüzyonuna eklenen bacak sarılması, hipotansiyon insidansını düşürdü. Randomize klinik çalışma, 168 gebe."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Postpartum dönemde ruh sağlığı ihtiyacı",
+    "coverDeck": "16 eyaletteki bir ankette doğum sonrası kadınların %32'si ruh sağlığı bakımına ihtiyaç duyduğunu bildirdi. Başlıca engeller ekonomik ve yapısal."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    20,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Postpartum dönemde ruh sağlığı ihtiyacı",
+    "coverDeck": "16 eyaletteki bir ankette doğum sonrası kadınların %32'si ruh sağlığı bakımına ihtiyaç duyduğunu bildirdi. Başlıca engeller ekonomik ve yapısal."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 2. konumda kapaktaki kutuya sığmıyor (19 kelime); bu konumda en çok 18 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Postpartum dönemde ruh sağlığı ihtiyacı",
+    "coverDeck": "16 eyaletteki bir ankette doğum sonrası kadınların %32'si ruh sağlığı bakımına ihtiyaç duyduğunu bildirdi. Başlıca engeller ekonomik ve yapısal."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (19 kelime); bu konumda en çok 15 kelime → en az 4 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Postpartum dönemde ruh sağlığı ihtiyacı",
+    "coverDeck": "16 eyaletteki bir ankette doğum sonrası kadınların %32'si ruh sağlığı bakımına ihtiyaç duyduğunu bildirdi. Başlıca engeller ekonomik ve yapısal."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    19,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Postpartum dönemde ruh sağlığı ihtiyacı",
+    "coverDeck": "16 eyaletteki bir ankette doğum sonrası kadınların %32'si ruh sağlığı bakımına ihtiyaç duyduğunu bildirdi. Başlıca engeller ekonomik ve yapısal."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    19,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Postpartum dönemde ruh sağlığı ihtiyacı",
+    "coverDeck": "16 eyaletteki bir ankette doğum sonrası kadınların %32'si ruh sağlığı bakımına ihtiyaç duyduğunu bildirdi. Başlıca engeller ekonomik ve yapısal."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    19,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Doğum sonrası ruh sağlığı bakımı",
+    "coverDeck": "16 eyaletteki ankette doğum sonrası kadınların %32'si bakıma ihtiyaç duyduğunu bildirdi. Başlıca engeller lojistik."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Doğum sonrası ruh sağlığı bakımı",
+    "coverDeck": "16 eyaletteki ankette doğum sonrası kadınların %32'si bakıma ihtiyaç duyduğunu bildirdi. Başlıca engeller lojistik."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Doğum sonrası ruh sağlığı bakımı",
+    "coverDeck": "16 eyaletteki ankette doğum sonrası kadınların %32'si bakıma ihtiyaç duyduğunu bildirdi. Başlıca engeller lojistik."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (14 kelime); bu konumda en çok 13 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Doğum sonrası ruh sağlığı bakımı",
+    "coverDeck": "16 eyaletteki ankette doğum sonrası kadınların %32'si bakıma ihtiyaç duyduğunu bildirdi. Başlıca engeller lojistik."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Doğum sonrası ruh sağlığı bakımı",
+    "coverDeck": "16 eyaletteki ankette doğum sonrası kadınların %32'si bakıma ihtiyaç duyduğunu bildirdi. Başlıca engeller lojistik."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Doğum sonrası ruh sağlığı bakımı",
+    "coverDeck": "16 eyaletteki ankette doğum sonrası kadınların %32'si bakıma ihtiyaç duyduğunu bildirdi. Başlıca engeller lojistik."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Bağışıklık hücreleri dokuda görüntülendi",
+    "coverDeck": "Yeni görüntüleme yöntemi, antikor üreten hücre gruplarının doku içindeki yerini gösteriyor. Bulgular fare çalışmasından."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Bağışıklık hücreleri dokuda görüntülendi",
+    "coverDeck": "Yeni görüntüleme yöntemi, antikor üreten hücre gruplarının doku içindeki yerini gösteriyor. Bulgular fare çalışmasından."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Bağışıklık hücreleri dokuda görüntülendi",
+    "coverDeck": "Yeni görüntüleme yöntemi, antikor üreten hücre gruplarının doku içindeki yerini gösteriyor. Bulgular fare çalışmasından."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (14 kelime); bu konumda en çok 13 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Bağışıklık hücreleri dokuda görüntülendi",
+    "coverDeck": "Yeni görüntüleme yöntemi, antikor üreten hücre gruplarının doku içindeki yerini gösteriyor. Bulgular fare çalışmasından."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Bağışıklık hücreleri dokuda görüntülendi",
+    "coverDeck": "Yeni görüntüleme yöntemi, antikor üreten hücre gruplarının doku içindeki yerini gösteriyor. Bulgular fare çalışmasından."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Bağışıklık hücreleri dokuda görüntülendi",
+    "coverDeck": "Yeni görüntüleme yöntemi, antikor üreten hücre gruplarının doku içindeki yerini gösteriyor. Bulgular fare çalışmasından."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "BT rehberli biyopsi robotu",
+    "coverDeck": "Uzman doktor becerilerinden öğrenen paylaşımlı kontrol yöntemi incelendi. Domuz deneyleri ve fantom çalışmasında doğrulandı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "BT rehberli biyopsi robotu",
+    "coverDeck": "Uzman doktor becerilerinden öğrenen paylaşımlı kontrol yöntemi incelendi. Domuz deneyleri ve fantom çalışmasında doğrulandı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "BT rehberli biyopsi robotu",
+    "coverDeck": "Uzman doktor becerilerinden öğrenen paylaşımlı kontrol yöntemi incelendi. Domuz deneyleri ve fantom çalışmasında doğrulandı."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (14 kelime); bu konumda en çok 12 kelime → en az 2 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "BT rehberli biyopsi robotu",
+    "coverDeck": "Uzman doktor becerilerinden öğrenen paylaşımlı kontrol yöntemi incelendi. Domuz deneyleri ve fantom çalışmasında doğrulandı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "BT rehberli biyopsi robotu",
+    "coverDeck": "Uzman doktor becerilerinden öğrenen paylaşımlı kontrol yöntemi incelendi. Domuz deneyleri ve fantom çalışmasında doğrulandı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "BT rehberli biyopsi robotu",
+    "coverDeck": "Uzman doktor becerilerinden öğrenen paylaşımlı kontrol yöntemi incelendi. Domuz deneyleri ve fantom çalışmasında doğrulandı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Pediatrik acilde hemşire deneyimleri",
+    "coverDeck": "Hemşirelerin pediatrik acil araç deneyimleri nitel yöntemle incelendi. Bulgular akademik bir çalışma özeti olarak sunuluyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Pediatrik acilde hemşire deneyimleri",
+    "coverDeck": "Hemşirelerin pediatrik acil araç deneyimleri nitel yöntemle incelendi. Bulgular akademik bir çalışma özeti olarak sunuluyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Pediatrik acilde hemşire deneyimleri",
+    "coverDeck": "Hemşirelerin pediatrik acil araç deneyimleri nitel yöntemle incelendi. Bulgular akademik bir çalışma özeti olarak sunuluyor."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (15 kelime); bu konumda en çok 13 kelime → en az 2 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Pediatrik acilde hemşire deneyimleri",
+    "coverDeck": "Hemşirelerin pediatrik acil araç deneyimleri nitel yöntemle incelendi. Bulgular akademik bir çalışma özeti olarak sunuluyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Pediatrik acilde hemşire deneyimleri",
+    "coverDeck": "Hemşirelerin pediatrik acil araç deneyimleri nitel yöntemle incelendi. Bulgular akademik bir çalışma özeti olarak sunuluyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Pediatrik acilde hemşire deneyimleri",
+    "coverDeck": "Hemşirelerin pediatrik acil araç deneyimleri nitel yöntemle incelendi. Bulgular akademik bir çalışma özeti olarak sunuluyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, cinsiyet gelişim bozukluklarında dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, cinsiyet gelişim bozukluklarında dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, cinsiyet gelişim bozukluklarında dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 3. konumda kapakta açıklamanın üstüne biniyor (6 kelime); bu konumda en çok 5 kelime → en az 1 kelime çıkar; coverDeck 3. konumda kapaktaki kutuya sığmıyor (14 kelime); bu konumda en çok 11 kelime → en az 3 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, cinsiyet gelişim bozukluklarında dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, cinsiyet gelişim bozukluklarında dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, cinsiyet gelişim bozukluklarında dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    3
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri ele alıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri ele alıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    22,
+    3
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri ele alıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 3. konumda kapakta açıklamanın üstüne biniyor (6 kelime); bu konumda en çok 5 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    20,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri ele alıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri ele alıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri ele alıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozukluklarında İslam hukuku",
+    "coverDeck": "Dinî normların ardındaki etik ilkeler ele alınıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozukluklarında İslam hukuku",
+    "coverDeck": "Dinî normların ardındaki etik ilkeler ele alınıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    22,
+    3
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozukluklarında İslam hukuku",
+    "coverDeck": "Dinî normların ardındaki etik ilkeler ele alınıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 3. konumda kapakta açıklamanın üstüne biniyor (5 kelime); bu konumda en çok 4 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    20,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozukluklarında İslam hukuku",
+    "coverDeck": "Dinî normların ardındaki etik ilkeler ele alınıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozukluklarında İslam hukuku",
+    "coverDeck": "Dinî normların ardındaki etik ilkeler ele alınıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozukluklarında İslam hukuku",
+    "coverDeck": "Dinî normların ardındaki etik ilkeler ele alınıyor. Akademik bir doktrin yazısı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derlemede 66 hasta incelendi. Yüz ve saçlı deri cerrahisi ile ilişki olabilir, nedensellik kanıtlanmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derlemede 66 hasta incelendi. Yüz ve saçlı deri cerrahisi ile ilişki olabilir, nedensellik kanıtlanmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derlemede 66 hasta incelendi. Yüz ve saçlı deri cerrahisi ile ilişki olabilir, nedensellik kanıtlanmadı."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (15 kelime); bu konumda en çok 14 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derlemede 66 hasta incelendi. Yüz ve saçlı deri cerrahisi ile ilişki olabilir, nedensellik kanıtlanmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derlemede 66 hasta incelendi. Yüz ve saçlı deri cerrahisi ile ilişki olabilir, nedensellik kanıtlanmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derlemede 66 hasta incelendi. Yüz ve saçlı deri cerrahisi ile ilişki olabilir, nedensellik kanıtlanmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırması. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırması. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırması. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 3. konumda kapakta açıklamanın üstüne biniyor (5 kelime); bu konumda en çok 4 kelime → en az 1 kelime çıkar; coverDeck 3. konumda kapaktaki kutuya sığmıyor (14 kelime); bu konumda en çok 13 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırması. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırması. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırması. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırılıyor. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırılıyor. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırılıyor. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 3. konumda kapakta açıklamanın üstüne biniyor (5 kelime); bu konumda en çok 4 kelime → en az 1 kelime çıkar; coverDeck 3. konumda kapaktaki kutuya sığmıyor (14 kelime); bu konumda en çok 13 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırılıyor. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırılıyor. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+    "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırılıyor. Bu bir araştırma duyurusu, sonuç değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında toplantı düzenliyor. HPV, aşılama, tarama ve tedavi ele alınacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    20,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında toplantı düzenliyor. HPV, aşılama, tarama ve tedavi ele alınacak."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 2. konumda kapaktaki kutuya sığmıyor (18 kelime); bu konumda en çok 17 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında toplantı düzenliyor. HPV, aşılama, tarama ve tedavi ele alınacak."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (18 kelime); bu konumda en çok 13 kelime → en az 5 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında toplantı düzenliyor. HPV, aşılama, tarama ve tedavi ele alınacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    19,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında toplantı düzenliyor. HPV, aşılama, tarama ve tedavi ele alınacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    19,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında toplantı düzenliyor. HPV, aşılama, tarama ve tedavi ele alınacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    19,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi bilimsel toplantı düzenliyor. HPV, aşılama ve tarama konuşulacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi bilimsel toplantı düzenliyor. HPV, aşılama ve tarama konuşulacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    3
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi bilimsel toplantı düzenliyor. HPV, aşılama ve tarama konuşulacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi bilimsel toplantı düzenliyor. HPV, aşılama ve tarama konuşulacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi bilimsel toplantı düzenliyor. HPV, aşılama ve tarama konuşulacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi bilimsel toplantı düzenliyor. HPV, aşılama ve tarama konuşulacak."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Doktor tükenmişliği ve verimlilik",
+    "coverDeck": "Algılanan verimli çalışma ortamı, daha az tükenmişlikle ilişkili bulundu. Çalışma saatinden bağımsız sonuç."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Doktor tükenmişliği ve verimlilik",
+    "coverDeck": "Algılanan verimli çalışma ortamı, daha az tükenmişlikle ilişkili bulundu. Çalışma saatinden bağımsız sonuç."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Doktor tükenmişliği ve verimlilik",
+    "coverDeck": "Algılanan verimli çalışma ortamı, daha az tükenmişlikle ilişkili bulundu. Çalışma saatinden bağımsız sonuç."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    19,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Doktor tükenmişliği ve verimlilik",
+    "coverDeck": "Algılanan verimli çalışma ortamı, daha az tükenmişlikle ilişkili bulundu. Çalışma saatinden bağımsız sonuç."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Doktor tükenmişliği ve verimlilik",
+    "coverDeck": "Algılanan verimli çalışma ortamı, daha az tükenmişlikle ilişkili bulundu. Çalışma saatinden bağımsız sonuç."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Doktor tükenmişliği ve verimlilik",
+    "coverDeck": "Algılanan verimli çalışma ortamı, daha az tükenmişlikle ilişkili bulundu. Çalışma saatinden bağımsız sonuç."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "İbero-Latin Amerika'da çocuk yoğun bakım",
+    "coverDeck": "339 çocuk yoğun bakım ünitesinin kaynakları karşılaştırıldı. Personel ve protokol uygulamalarında büyük farklar var."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "İbero-Latin Amerika'da çocuk yoğun bakım",
+    "coverDeck": "339 çocuk yoğun bakım ünitesinin kaynakları karşılaştırıldı. Personel ve protokol uygulamalarında büyük farklar var."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "İbero-Latin Amerika'da çocuk yoğun bakım",
+    "coverDeck": "339 çocuk yoğun bakım ünitesinin kaynakları karşılaştırıldı. Personel ve protokol uygulamalarında büyük farklar var."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 3. konumda kapakta açıklamanın üstüne biniyor (5 kelime); bu konumda en çok 3 kelime → en az 2 kelime çıkar; coverDeck 3. konumda kapaktaki kutuya sığmıyor (14 kelime); bu konumda en çok 12 kelime → en az 2 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "İbero-Latin Amerika'da çocuk yoğun bakım",
+    "coverDeck": "339 çocuk yoğun bakım ünitesinin kaynakları karşılaştırıldı. Personel ve protokol uygulamalarında büyük farklar var."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "İbero-Latin Amerika'da çocuk yoğun bakım",
+    "coverDeck": "339 çocuk yoğun bakım ünitesinin kaynakları karşılaştırıldı. Personel ve protokol uygulamalarında büyük farklar var."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "İbero-Latin Amerika'da çocuk yoğun bakım",
+    "coverDeck": "339 çocuk yoğun bakım ünitesinin kaynakları karşılaştırıldı. Personel ve protokol uygulamalarında büyük farklar var."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Pediatrik Fabry migalastat çalışması",
+    "coverDeck": "2 ila 12 yaş arası hastalarda 12 aylık açık etiketli çalışma. Tedavi sonuçları değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Pediatrik Fabry migalastat çalışması",
+    "coverDeck": "2 ila 12 yaş arası hastalarda 12 aylık açık etiketli çalışma. Tedavi sonuçları değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Pediatrik Fabry migalastat çalışması",
+    "coverDeck": "2 ila 12 yaş arası hastalarda 12 aylık açık etiketli çalışma. Tedavi sonuçları değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Pediatrik Fabry migalastat çalışması",
+    "coverDeck": "2 ila 12 yaş arası hastalarda 12 aylık açık etiketli çalışma. Tedavi sonuçları değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Pediatrik Fabry migalastat çalışması",
+    "coverDeck": "2 ila 12 yaş arası hastalarda 12 aylık açık etiketli çalışma. Tedavi sonuçları değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Pediatrik Fabry migalastat çalışması",
+    "coverDeck": "2 ila 12 yaş arası hastalarda 12 aylık açık etiketli çalışma. Tedavi sonuçları değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derleme, saç nakli ve yüz cerrahisi sonrası 66 olguyu inceledi. Nedensellik kurulmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derleme, saç nakli ve yüz cerrahisi sonrası 66 olguyu inceledi. Nedensellik kurulmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    3
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derleme, saç nakli ve yüz cerrahisi sonrası 66 olguyu inceledi. Nedensellik kurulmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derleme, saç nakli ve yüz cerrahisi sonrası 66 olguyu inceledi. Nedensellik kurulmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derleme, saç nakli ve yüz cerrahisi sonrası 66 olguyu inceledi. Nedensellik kurulmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Saç nakli sonrası liken planopilaris",
+    "coverDeck": "Sistematik derleme, saç nakli ve yüz cerrahisi sonrası 66 olguyu inceledi. Nedensellik kurulmadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Saç nakli ve yüz cerrahisi sonrası LPP",
+    "coverDeck": "Sistematik derleme, iki cerrahi grupta toplam 66 olguyu inceledi. Nedensel ilişki henüz kurulamadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Saç nakli ve yüz cerrahisi sonrası LPP",
+    "coverDeck": "Sistematik derleme, iki cerrahi grupta toplam 66 olguyu inceledi. Nedensel ilişki henüz kurulamadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Saç nakli ve yüz cerrahisi sonrası LPP",
+    "coverDeck": "Sistematik derleme, iki cerrahi grupta toplam 66 olguyu inceledi. Nedensel ilişki henüz kurulamadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Saç nakli ve yüz cerrahisi sonrası LPP",
+    "coverDeck": "Sistematik derleme, iki cerrahi grupta toplam 66 olguyu inceledi. Nedensel ilişki henüz kurulamadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Saç nakli ve yüz cerrahisi sonrası LPP",
+    "coverDeck": "Sistematik derleme, iki cerrahi grupta toplam 66 olguyu inceledi. Nedensel ilişki henüz kurulamadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Saç nakli ve yüz cerrahisi sonrası LPP",
+    "coverDeck": "Sistematik derleme, iki cerrahi grupta toplam 66 olguyu inceledi. Nedensel ilişki henüz kurulamadı."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesinde dupilumab çalışması",
+    "coverDeck": "Hastaneye yatış sonrası ağır KOAH hastalarında plasebo kontrollü Faz 4 araştırma. Tedavi sonucu değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesinde dupilumab çalışması",
+    "coverDeck": "Hastaneye yatış sonrası ağır KOAH hastalarında plasebo kontrollü Faz 4 araştırma. Tedavi sonucu değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesinde dupilumab çalışması",
+    "coverDeck": "Hastaneye yatış sonrası ağır KOAH hastalarında plasebo kontrollü Faz 4 araştırma. Tedavi sonucu değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (16 kelime); bu konumda en çok 14 kelime → en az 2 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesinde dupilumab çalışması",
+    "coverDeck": "Hastaneye yatış sonrası ağır KOAH hastalarında plasebo kontrollü Faz 4 araştırma. Tedavi sonucu değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesinde dupilumab çalışması",
+    "coverDeck": "Hastaneye yatış sonrası ağır KOAH hastalarında plasebo kontrollü Faz 4 araştırma. Tedavi sonucu değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "KOAH alevlenmesinde dupilumab çalışması",
+    "coverDeck": "Hastaneye yatış sonrası ağır KOAH hastalarında plasebo kontrollü Faz 4 araştırma. Tedavi sonucu değil, çalışma duyurusu."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında bilimsel toplantı düzenliyor. Doktorlar davetli."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında bilimsel toplantı düzenliyor. Doktorlar davetli."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında bilimsel toplantı düzenliyor. Doktorlar davetli."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (14 kelime); bu konumda en çok 13 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında bilimsel toplantı düzenliyor. Doktorlar davetli."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında bilimsel toplantı düzenliyor. Doktorlar davetli."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında bilimsel toplantı düzenliyor. Doktorlar davetli."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Muayenehane verimliliği ve tükenmişlik",
+    "coverDeck": "Verimli bulunan muayenehanelerde doktorlar daha az tükenmişlik bildirdi. Çalışma saati tek belirleyici değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Muayenehane verimliliği ve tükenmişlik",
+    "coverDeck": "Verimli bulunan muayenehanelerde doktorlar daha az tükenmişlik bildirdi. Çalışma saati tek belirleyici değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Muayenehane verimliliği ve tükenmişlik",
+    "coverDeck": "Verimli bulunan muayenehanelerde doktorlar daha az tükenmişlik bildirdi. Çalışma saati tek belirleyici değil."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 3. konumda kapakta açıklamanın üstüne biniyor (4 kelime); bu konumda en çok 3 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    19,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Muayenehane verimliliği ve tükenmişlik",
+    "coverDeck": "Verimli bulunan muayenehanelerde doktorlar daha az tükenmişlik bildirdi. Çalışma saati tek belirleyici değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Muayenehane verimliliği ve tükenmişlik",
+    "coverDeck": "Verimli bulunan muayenehanelerde doktorlar daha az tükenmişlik bildirdi. Çalışma saati tek belirleyici değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Muayenehane verimliliği ve tükenmişlik",
+    "coverDeck": "Verimli bulunan muayenehanelerde doktorlar daha az tükenmişlik bildirdi. Çalışma saati tek belirleyici değil."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    21,
+    4
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Çocuk yoğun bakım kaynakları",
+    "coverDeck": "İbero-Latin Amerika'da çocuk yoğun bakım ünitelerinin yapısı ve personel kaynakları inceleniyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Çocuk yoğun bakım kaynakları",
+    "coverDeck": "İbero-Latin Amerika'da çocuk yoğun bakım ünitelerinin yapısı ve personel kaynakları inceleniyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    4
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Çocuk yoğun bakım kaynakları",
+    "coverDeck": "İbero-Latin Amerika'da çocuk yoğun bakım ünitelerinin yapısı ve personel kaynakları inceleniyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Çocuk yoğun bakım kaynakları",
+    "coverDeck": "İbero-Latin Amerika'da çocuk yoğun bakım ünitelerinin yapısı ve personel kaynakları inceleniyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Çocuk yoğun bakım kaynakları",
+    "coverDeck": "İbero-Latin Amerika'da çocuk yoğun bakım ünitelerinin yapısı ve personel kaynakları inceleniyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Çocuk yoğun bakım kaynakları",
+    "coverDeck": "İbero-Latin Amerika'da çocuk yoğun bakım ünitelerinin yapısı ve personel kaynakları inceleniyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Yargıtay 4. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    1
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Yargıtay 4. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    2
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Yargıtay 4. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    2
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Yargıtay 4. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Yargıtay 4. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Yargıtay 4. Hukuk Dairesi kararı",
+    "coverDeck": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Kısa başlık",
+    "coverDeck": "Mikrobiyolojikolarakdoğrulanmışkardiyovaskülerhastalıkbelirteçleri inceleniyor ve tartışılıyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Kısa başlık",
+    "coverDeck": "Mikrobiyolojikolarakdoğrulanmışkardiyovaskülerhastalıkbelirteçleri inceleniyor ve tartışılıyor."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 2. konumda kapaktaki kutuya sığmıyor (4 kelime); bu konumda en çok 0 kelime → en az 4 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    1
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Kısa başlık",
+    "coverDeck": "Mikrobiyolojikolarakdoğrulanmışkardiyovaskülerhastalıkbelirteçleri inceleniyor ve tartışılıyor."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 3. konumda kapaktaki kutuya sığmıyor (4 kelime); bu konumda en çok 0 kelime → en az 4 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    1
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Kısa başlık",
+    "coverDeck": "Mikrobiyolojikolarakdoğrulanmışkardiyovaskülerhastalıkbelirteçleri inceleniyor ve tartışılıyor."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 4. konumda kapaktaki kutuya sığmıyor (4 kelime); bu konumda en çok 0 kelime → en az 4 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    1
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Kısa başlık",
+    "coverDeck": "Mikrobiyolojikolarakdoğrulanmışkardiyovaskülerhastalıkbelirteçleri inceleniyor ve tartışılıyor."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 5. konumda kapaktaki kutuya sığmıyor (4 kelime); bu konumda en çok 0 kelime → en az 4 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    1
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Kısa başlık",
+    "coverDeck": "Mikrobiyolojikolarakdoğrulanmışkardiyovaskülerhastalıkbelirteçleri inceleniyor ve tartışılıyor."
+   },
+   "sonuc": [
+    false,
+    "coverDeck 6. konumda kapaktaki kutuya sığmıyor (4 kelime); bu konumda en çok 0 kelime → en az 4 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    1
+   ],
+   "aciklama": null
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Yapay zekâ 🤖 ve sağlık",
+    "coverDeck": "Doktrin incelemesi 🤖 yapay zekâyı sağlık hukuku açısından ele alıyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    1
+   ],
+   "aciklama": [
+    21,
+    1
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Yapay zekâ 🤖 ve sağlık",
+    "coverDeck": "Doktrin incelemesi 🤖 yapay zekâyı sağlık hukuku açısından ele alıyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    3
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Yapay zekâ 🤖 ve sağlık",
+    "coverDeck": "Doktrin incelemesi 🤖 yapay zekâyı sağlık hukuku açısından ele alıyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    2
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Yapay zekâ 🤖 ve sağlık",
+    "coverDeck": "Doktrin incelemesi 🤖 yapay zekâyı sağlık hukuku açısından ele alıyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Yapay zekâ 🤖 ve sağlık",
+    "coverDeck": "Doktrin incelemesi 🤖 yapay zekâyı sağlık hukuku açısından ele alıyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Yapay zekâ 🤖 ve sağlık",
+    "coverDeck": "Doktrin incelemesi 🤖 yapay zekâyı sağlık hukuku açısından ele alıyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, serviks kanseri farkındalık ayında bilimsel toplantı düzenliyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, serviks kanseri farkındalık ayında bilimsel toplantı düzenliyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    22,
+    3
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, serviks kanseri farkındalık ayında bilimsel toplantı düzenliyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    20,
+    3
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, serviks kanseri farkındalık ayında bilimsel toplantı düzenliyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, serviks kanseri farkındalık ayında bilimsel toplantı düzenliyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık toplantısı",
+    "coverDeck": "TJOD Ankara Çankaya Şubesi, serviks kanseri farkındalık ayında bilimsel toplantı düzenliyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    2
+   ],
+   "aciklama": [
+    21,
+    3
+   ]
+  },
+  {
+   "konum": 1,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık ayı bilimsel toplantısı Ankara",
+    "coverDeck": "Kısa açıklama metni burada yer alıyor ve sığıyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    42,
+    2
+   ],
+   "aciklama": [
+    21,
+    1
+   ]
+  },
+  {
+   "konum": 2,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık ayı bilimsel toplantısı Ankara",
+    "coverDeck": "Kısa açıklama metni burada yer alıyor ve sığıyor."
+   },
+   "sonuc": [
+    true,
+    ""
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    22,
+    2
+   ]
+  },
+  {
+   "konum": 3,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık ayı bilimsel toplantısı Ankara",
+    "coverDeck": "Kısa açıklama metni burada yer alıyor ve sığıyor."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 3. konumda kapakta açıklamanın üstüne biniyor (7 kelime); bu konumda en çok 5 kelime → en az 2 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    3
+   ],
+   "aciklama": [
+    20,
+    2
+   ]
+  },
+  {
+   "konum": 4,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık ayı bilimsel toplantısı Ankara",
+    "coverDeck": "Kısa açıklama metni burada yer alıyor ve sığıyor."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 4. konumda kapakta açıklamanın üstüne biniyor (7 kelime); bu konumda en çok 6 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    4
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 5,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık ayı bilimsel toplantısı Ankara",
+    "coverDeck": "Kısa açıklama metni burada yer alıyor ve sığıyor."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 5. konumda kapakta açıklamanın üstüne biniyor (7 kelime); bu konumda en çok 6 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    4
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  },
+  {
+   "konum": 6,
+   "taslak": {
+    "coverTitle": "Serviks kanseri farkındalık ayı bilimsel toplantısı Ankara",
+    "coverDeck": "Kısa açıklama metni burada yer alıyor ve sığıyor."
+   },
+   "sonuc": [
+    false,
+    "coverTitle 6. konumda kapakta açıklamanın üstüne biniyor (7 kelime); bu konumda en çok 6 kelime → en az 1 kelime çıkar"
+   ],
+   "baslik": [
+    30,
+    4
+   ],
+   "aciklama": [
+    21,
+    2
+   ]
+  }
+ ]
+}

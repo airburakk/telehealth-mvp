@@ -15,9 +15,11 @@ sys.path.insert(0, str(HERE))
 import kapilar  # noqa: E402
 import ictihat  # noqa: E402
 import kaynak  # noqa: E402
+import kapak_sigma  # noqa: E402
 
 KOK = HERE.parents[3]
 HEDEF = KOK / 'tests' / 'unit' / 'karusel-kapilar-eslik.json'
+KAPAK_HEDEF = KOK / 'tests' / 'unit' / 'karusel-kapak-sigma-eslik.json'
 
 E = {'coverTitle': 'Yapay zekâ ve sağlık hukuku', 'coverDeck': 'Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.',
      'detailTitle': 'Yapay zekâ sağlık hukuku kapsamında değerlendirildi',
@@ -122,6 +124,20 @@ def ictihat_vakalari():
     return out
 
 
+def kapak_vakalari():
+    """Kapak sığma kapısı (2026-11-26): derlemdeki her metin × 6 konum → kapak_sigma.py sonucu + yerleşim; TS aynısını vermeli."""
+    ornekler = json.loads((HERE / 'kapak_sigma_ornekler.json').read_text(encoding='utf-8'))['ornekler']
+    out = []
+    for o in ornekler:
+        e = {'coverTitle': o['coverTitle'], 'coverDeck': o['coverDeck']}
+        for k in range(1, 7):
+            bk, ak = kapak_sigma.KONUMLAR[k - 1]
+            out.append({'konum': k, 'taslak': e, 'sonuc': list(kapak_sigma.kapak_sigma(e, k)),
+                        'baslik': kapak_sigma.yerlesim(e['coverTitle'], bk, True),
+                        'aciklama': kapak_sigma.yerlesim(e['coverDeck'], ak, False)})
+    return out
+
+
 def main():
     ic = ictihat_vakalari()
     ICTIHAT_HEDEF.write_text(json.dumps({'kaynak': 'infra/kart/karusel/editoryal/ictihat.py (eslik_uret.py ile üretildi)',
@@ -151,6 +167,16 @@ def main():
                                  'istemler': istemler, 'vakalar': out},
                                 ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     print(f'{len(out)} vaka → {HEDEF.relative_to(KOK)}')
+    kv = kapak_vakalari()
+    # Ret geri bildirimi uçtan uca: kapı listesinin sonuna kapak_sigma eklenir, kapi_sorunlari onu "- kapak_sigma: …" yazar.
+    tam = dict(E, coverDeck='TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında bilimsel toplantı '
+                            'düzenliyor. Doktorlar davetli.')
+    oge = {'streamLabel': 'Sektörel', 'url': 'https://x'}
+    geri = {str(k): uret.kapi_sorunlari(kapilar.check(tam, oge, 'x', k), tam) for k in (3, 4)}
+    KAPAK_HEDEF.write_text(json.dumps({'kaynak': 'infra/kart/karusel/editoryal/kapak_sigma.py (eslik_uret.py ile üretildi)',
+                                       'geriBildirim': {'taslak': tam, 'konumlar': geri}, 'vakalar': kv},
+                                      ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+    print(f'{len(kv)} kapak vakası → {KAPAK_HEDEF.relative_to(KOK)}')
 
 
 if __name__ == '__main__':

@@ -129,6 +129,17 @@ class Cizim(unittest.TestCase):
             bolge = image.crop((72, 1178, 1008, 1248)).convert('L')
             self.assertLess(min(bolge.getdata()), 200)
 
+    def test_alt_baslikli_uzun_dergi_adi_kisa_adla_yazilir(self):
+        """26.11 provası: 98 karakterlik PubMed dergi adı kaynak satırına sığmıyordu → kart düşüyordu."""
+        im = Image.new('RGB', (1080, 1350), 'white')
+        s = render.kaynak_adi(im, 'Dermatologic surgery : official publication for American Society for Dermatologic Surgery [et al.]')
+        self.assertEqual(s['text'], 'Dermatologic surgery')
+        self.assertEqual(render.kaynak_adi(im, 'Europe PMC')['text'], 'Europe PMC')
+
+    def test_ayiricisiz_sigmayan_ad_yine_duser(self):
+        with self.assertRaises(ValueError):
+            render.kaynak_adi(Image.new('RGB', (1080, 1350), 'white'), 'Çok uzun kurum adı ' * 6)
+
     def test_en_uzun_kunye_sigar(self):
         uzun = {'title': 'Yargıtay 12. Ceza Dairesi · E. 2024/123456, K. 2025/654321'}
         im = Image.new('RGB', (1080, 1350), 'white')

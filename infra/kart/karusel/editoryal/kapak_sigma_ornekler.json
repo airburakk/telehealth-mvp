@@ -1,0 +1,160 @@
+{
+ "not": "Kapak sığma kapısının sınama derlemi (2026-11-26): gerçek KURU taslakları (23.11 · 25.11 zamanlanmış koşular + 24.11 sahte Salı provası; 22.11 elle koşusunun arşivi mojibake olduğu için ALINMADI) + sentetik uç vakalar. test_kapak_sigma.py gerçek kapak çizicisiyle karşılaştırır; eslik_uret.py TS eşlik fikstürünü buradan üretir.",
+ "ornekler": [
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Sezaryende bacak sarılması",
+   "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyonu azalttı. Randomize klinik çalışma sonucu, 168 gebe."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Sezaryende bacak sarılması",
+   "coverDeck": "Elektif sezaryende profilaktik noradrenalinle birlikte hipotansiyon insidansı azaldı. Randomize klinik çalışma, 168 gebe."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Sezaryende bacak sarılması",
+   "coverDeck": "Noradrenalin infüzyonuna eklenen bacak sarılması, hipotansiyon insidansını düşürdü. Randomize klinik çalışma, 168 gebe."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Postpartum dönemde ruh sağlığı ihtiyacı",
+   "coverDeck": "16 eyaletteki bir ankette doğum sonrası kadınların %32'si ruh sağlığı bakımına ihtiyaç duyduğunu bildirdi. Başlıca engeller ekonomik ve yapısal."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Doğum sonrası ruh sağlığı bakımı",
+   "coverDeck": "16 eyaletteki ankette doğum sonrası kadınların %32'si bakıma ihtiyaç duyduğunu bildirdi. Başlıca engeller lojistik."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Bağışıklık hücreleri dokuda görüntülendi",
+   "coverDeck": "Yeni görüntüleme yöntemi, antikor üreten hücre gruplarının doku içindeki yerini gösteriyor. Bulgular fare çalışmasından."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "BT rehberli biyopsi robotu",
+   "coverDeck": "Uzman doktor becerilerinden öğrenen paylaşımlı kontrol yöntemi incelendi. Domuz deneyleri ve fantom çalışmasında doğrulandı."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Pediatrik acilde hemşire deneyimleri",
+   "coverDeck": "Hemşirelerin pediatrik acil araç deneyimleri nitel yöntemle incelendi. Bulgular akademik bir çalışma özeti olarak sunuluyor."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+   "coverDeck": "Makale, cinsiyet gelişim bozukluklarında dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam",
+   "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri inceliyor. Metin bir kaynak incelemesi."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+   "coverDeck": "Makale, dinî normların ardındaki etik ilkeleri ele alıyor. Akademik bir doktrin yazısı."
+  },
+  {
+   "kaynak": "kuru-23.11",
+   "coverTitle": "Cinsiyet gelişim bozukluklarında İslam hukuku",
+   "coverDeck": "Dinî normların ardındaki etik ilkeler ele alınıyor. Akademik bir doktrin yazısı."
+  },
+  {
+   "kaynak": "kuru-25.11",
+   "coverTitle": "Saç nakli sonrası liken planopilaris",
+   "coverDeck": "Sistematik derlemede 66 hasta incelendi. Yüz ve saçlı deri cerrahisi ile ilişki olabilir, nedensellik kanıtlanmadı."
+  },
+  {
+   "kaynak": "kuru-25.11",
+   "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+   "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırması. Bu bir araştırma duyurusu, sonuç değil."
+  },
+  {
+   "kaynak": "kuru-25.11",
+   "coverTitle": "KOAH alevlenmesi sonrası dupilumab çalışması",
+   "coverDeck": "Hastaneye yatan KOAH hastalarında dupilumab ile plasebo karşılaştırılıyor. Bu bir araştırma duyurusu, sonuç değil."
+  },
+  {
+   "kaynak": "kuru-25.11",
+   "coverTitle": "Serviks kanseri farkındalık toplantısı",
+   "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında toplantı düzenliyor. HPV, aşılama, tarama ve tedavi ele alınacak."
+  },
+  {
+   "kaynak": "kuru-25.11",
+   "coverTitle": "Serviks kanseri farkındalık toplantısı",
+   "coverDeck": "TJOD Ankara Çankaya Şubesi bilimsel toplantı düzenliyor. HPV, aşılama ve tarama konuşulacak."
+  },
+  {
+   "kaynak": "kuru-25.11",
+   "coverTitle": "Doktor tükenmişliği ve verimlilik",
+   "coverDeck": "Algılanan verimli çalışma ortamı, daha az tükenmişlikle ilişkili bulundu. Çalışma saatinden bağımsız sonuç."
+  },
+  {
+   "kaynak": "kuru-25.11",
+   "coverTitle": "İbero-Latin Amerika'da çocuk yoğun bakım",
+   "coverDeck": "339 çocuk yoğun bakım ünitesinin kaynakları karşılaştırıldı. Personel ve protokol uygulamalarında büyük farklar var."
+  },
+  {
+   "kaynak": "kuru-25.11",
+   "coverTitle": "Pediatrik Fabry migalastat çalışması",
+   "coverDeck": "2 ila 12 yaş arası hastalarda 12 aylık açık etiketli çalışma. Tedavi sonuçları değil, çalışma duyurusu."
+  },
+  {
+   "kaynak": "prova-24.11",
+   "coverTitle": "Saç nakli sonrası liken planopilaris",
+   "coverDeck": "Sistematik derleme, saç nakli ve yüz cerrahisi sonrası 66 olguyu inceledi. Nedensellik kurulmadı."
+  },
+  {
+   "kaynak": "prova-24.11",
+   "coverTitle": "Saç nakli ve yüz cerrahisi sonrası LPP",
+   "coverDeck": "Sistematik derleme, iki cerrahi grupta toplam 66 olguyu inceledi. Nedensel ilişki henüz kurulamadı."
+  },
+  {
+   "kaynak": "prova-24.11",
+   "coverTitle": "KOAH alevlenmesinde dupilumab çalışması",
+   "coverDeck": "Hastaneye yatış sonrası ağır KOAH hastalarında plasebo kontrollü Faz 4 araştırma. Tedavi sonucu değil, çalışma duyurusu."
+  },
+  {
+   "kaynak": "prova-24.11",
+   "coverTitle": "Serviks kanseri farkındalık toplantısı",
+   "coverDeck": "TJOD Ankara Çankaya Şubesi, Serviks Kanseri Farkındalık Ayı kapsamında bilimsel toplantı düzenliyor. Doktorlar davetli."
+  },
+  {
+   "kaynak": "prova-24.11",
+   "coverTitle": "Muayenehane verimliliği ve tükenmişlik",
+   "coverDeck": "Verimli bulunan muayenehanelerde doktorlar daha az tükenmişlik bildirdi. Çalışma saati tek belirleyici değil."
+  },
+  {
+   "kaynak": "prova-24.11",
+   "coverTitle": "Çocuk yoğun bakım kaynakları",
+   "coverDeck": "İbero-Latin Amerika'da çocuk yoğun bakım ünitelerinin yapısı ve personel kaynakları inceleniyor."
+  },
+  {
+   "kaynak": "prova-24.11",
+   "coverTitle": "Yargıtay 4. Hukuk Dairesi kararı",
+   "coverDeck": "Konu: Malpraktis, Yanlış tedavi/tanı, Tazminat."
+  },
+  {
+   "kaynak": "sentetik: sütundan geniş tek sözcük",
+   "coverTitle": "Kısa başlık",
+   "coverDeck": "Mikrobiyolojikolarakdoğrulanmışkardiyovaskülerhastalıkbelirteçleri inceleniyor ve tartışılıyor."
+  },
+  {
+   "kaynak": "sentetik: tabloda olmayan karakter (emoji)",
+   "coverTitle": "Yapay zekâ 🤖 ve sağlık",
+   "coverDeck": "Doktrin incelemesi 🤖 yapay zekâyı sağlık hukuku açısından ele alıyor."
+  },
+  {
+   "kaynak": "sentetik: bölünmez boşluk",
+   "coverTitle": "Serviks kanseri farkındalık toplantısı",
+   "coverDeck": "TJOD Ankara Çankaya Şubesi, serviks kanseri farkındalık ayında bilimsel toplantı düzenliyor."
+  },
+  {
+   "kaynak": "sentetik: 3. konumda 3 satırlık başlık",
+   "coverTitle": "Serviks kanseri farkındalık ayı bilimsel toplantısı Ankara",
+   "coverDeck": "Kısa açıklama metni burada yer alıyor ve sığıyor."
+  }
+ ]
+}
