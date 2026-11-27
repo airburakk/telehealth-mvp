@@ -10,7 +10,9 @@ import unicodedata
 
 from kapak_sigma import kapak_sigma
 
-LIMITS = {'coverTitle': 44, 'coverDeck': 125, 'detailTitle': 72, 'detailSummary': 270}
+# coverTitle 44 → 52 (27.11): kapak_sigma (26.11) başlığın kapaktaki kutusuna sığmasını gerçek ölçümle denetliyor; 44 dar
+# bir vekildi (23.11 öğe 6: 45 karakterlik altı kelimelik başlık dört denemede de kısalmadı, gün KALDI).
+LIMITS = {'coverTitle': 52, 'coverDeck': 125, 'detailTitle': 72, 'detailSummary': 270}
 MIN_LEN = {'coverTitle': 12, 'coverDeck': 30, 'detailTitle': 20, 'detailSummary': 90}
 
 # Doctorium'un kendi iddiası olarak YASAK; kaynak metinde geçiyorsa haber cümlesinde serbest (👤 15.11 Karar 3).
@@ -64,7 +66,11 @@ def check(e: dict, item: dict, src: str, konum: int | None = None) -> list[tuple
     # 3) temkin kapısı
     # Terim SÖZCÜK BAŞINDA aranır (sonu açık: "farelerde", "hücrelerde" yakalanır). Düz alt dize araması
     # 16.11'de doktrin kaynakçasındaki "Fırat Üniversitesi"ni 'rat ' (sıçan) sanıp temkin cümlesi istemişti.
-    preclinical = any(re.search(r'(?<!\w)' + re.escape(p.strip()) + (r'\b' if p.endswith(' ') else ''), fs) for p in PRECLINICAL)
+    # 27.11: "in vitro fertilization" (tüp bebek) bir klinik tedavinin adıdır, laboratuvar bulgusu değil → aramadan önce
+    # çıkarılır (27.11 öğe 4: IVF protokol makalesi "klinik öncesi" sanıldı, dört denemede temkin istendi, gün KALDI).
+    fs_pre = re.sub(r'in vitro fertili\w*', ' ', fs)
+    preclinical = any(re.search(r'(?<!\w)' + re.escape(p.strip()) + (r'\b' if p.endswith(' ') else ''), fs_pre)
+                      for p in PRECLINICAL)
     trial = item.get('streamLabel') in TRIAL_STREAMS
     need = preclinical or trial
     has = any(c in _fold(e['detailSummary']) for c in CAUTION)

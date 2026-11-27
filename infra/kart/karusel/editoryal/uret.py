@@ -100,11 +100,29 @@ KISALTMA_YOLU = ('- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa bi
                  '(hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme.')
 
 
+def yasak_sozcuk_satiri(d: str, e: dict) -> str:
+    """Yasak sözcük reddi: hangi alanda geçtiği + tırnak içindeki özgün adların da kapsandığı söylenir.
+
+    26.11 öğe 3: etkinliğin özgün adı "Hekimlerin Hukuki Sorumluluğu" idi; model yalnız "- yasak_sozcuk: hekim" görünce
+    başlıkları düzeltti ama özetteki tırnaklı adı dört denemede de korudu (özgün adı değiştirmemeye çalışıyordu), gün KALDI.
+    """
+    sozcukler = [w for w in d.split(', ') if w]
+    alanlar = [k for k in kapilar.LIMITS if any(w in kapilar._fold(e[k]) for w in sozcukler)]
+    satir = (f'- yasak_sozcuk: {d} (geçtiği alan: {", ".join(alanlar) or "?"}). Bu sözcük tırnak içindeki özgün başlık, '
+             'etkinlik veya kurum adı dahil HİÇBİR yerde geçemez; o adı tırnaksız, kendi sözlerinle anlat.')
+    if 'hekim' in sozcukler:
+        satir += ' "hekim" yerine "doktor" yaz (ör. "doktorların hukuki sorumluluğu konulu toplantı").'
+    return satir
+
+
 def kapi_sorunlari(gates, e: dict) -> list[str]:
     """Başarısız deterministik kapılar → modele gidecek ret satırları. Uzunlukta alan başına sayı + hedef + fark verilir."""
     out, uzun = [], False
     for a, ok, d in gates:
         if ok:
+            continue
+        if a == 'yasak_sozcuk':
+            out.append(yasak_sozcuk_satiri(d, e))
             continue
         if a != 'uzunluk':
             out.append(f'- {a}: {d}')

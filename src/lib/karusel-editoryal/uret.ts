@@ -11,7 +11,7 @@
 import { createHash } from "node:crypto";
 import type Anthropic from "@anthropic-ai/sdk";
 import { modelParams } from "@/lib/ai-model";
-import { ALANLAR, check, cpLen, LIMITS, MIN_LEN, type KapiSonucu, type Taslak } from "./kapilar";
+import { ALANLAR, check, cpLen, fold, LIMITS, MIN_LEN, type KapiSonucu, type Taslak } from "./kapilar";
 import { collect, edisyonMetni, sourceText, type EdisyonOgesi, type Getir } from "./kaynak";
 import { ictihatMi, ictihatTaslagi } from "./ictihat";
 import ornekVerisi from "./ornekler.json";
@@ -140,12 +140,30 @@ export const KISALTMA_YOLU =
   "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını " +
   "(hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme.";
 
+/**
+ * Yasak sözcük reddi: geçtiği alan + tırnak içindeki özgün adların da kapsandığı (uret.py yasak_sozcuk_satiri ile birebir).
+ * 26.11 öğe 3: özgün etkinlik adı "Hekimlerin Hukuki Sorumluluğu"ydu; model yalnız "- yasak_sozcuk: hekim" görünce
+ * özetteki tırnaklı adı dört denemede de korudu, gün KALDI. 🔴 "hekim" burada VERİDİR (yasak sözcük adı).
+ */
+export function yasakSozcukSatiri(d: string, e: Taslak): string {
+  const sozcukler = d.split(", ").filter(Boolean);
+  const alanlar = ALANLAR.filter((k) => sozcukler.some((w) => fold(e[k]).includes(w)));
+  let satir = `- yasak_sozcuk: ${d} (geçtiği alan: ${alanlar.join(", ") || "?"}). Bu sözcük tırnak içindeki özgün başlık, ` +
+    "etkinlik veya kurum adı dahil HİÇBİR yerde geçemez; o adı tırnaksız, kendi sözlerinle anlat.";
+  if (sozcukler.includes("hekim")) satir += ' "hekim" yerine "doktor" yaz (ör. "doktorların hukuki sorumluluğu konulu toplantı").';
+  return satir;
+}
+
 /** Başarısız deterministik kapılar → modele gidecek ret satırları (uret.py kapi_sorunlari ile birebir; eşlik fikstürü kilitler). */
 export function kapiSorunlari(gates: KapiSonucu[], e: Taslak): string[] {
   const out: string[] = [];
   let uzun = false;
   for (const [a, ok, d] of gates) {
     if (ok) continue;
+    if (a === "yasak_sozcuk") {
+      out.push(yasakSozcukSatiri(d, e));
+      continue;
+    }
     if (a !== "uzunluk") {
       out.push(`- ${a}: ${d}`);
       continue;

@@ -17,7 +17,9 @@ export type KapiItem = { streamLabel?: string; url?: string | null };
 export type KapiSonucu = [ad: string, gecti: boolean, ayrinti: string];
 
 export const ALANLAR = ["coverTitle", "coverDeck", "detailTitle", "detailSummary"] as const;
-export const LIMITS: Record<keyof Taslak, number> = { coverTitle: 44, coverDeck: 125, detailTitle: 72, detailSummary: 270 };
+// coverTitle 44 → 52 (27.11, kapilar.py ile aynı): kapak_sigma başlığın kutusuna sığmasını gerçek ölçümle denetliyor; 44 dar
+// bir vekildi (23.11 öğe 6: 45 karakterlik başlık dört denemede de kısalmadı, gün KALDI).
+export const LIMITS: Record<keyof Taslak, number> = { coverTitle: 52, coverDeck: 125, detailTitle: 72, detailSummary: 270 };
 export const MIN_LEN: Record<keyof Taslak, number> = { coverTitle: 12, coverDeck: 30, detailTitle: 20, detailSummary: 90 };
 
 // Doctorium'un kendi iddiası olarak YASAK; kaynak metinde geçiyorsa haber cümlesinde serbest (👤 15.11 Karar 3).
@@ -59,6 +61,7 @@ function numbers(s: string): string[] {
 
 const numForms = (n: string) => [n, n.replace(/,/g, "."), n.replace(/\./g, ",")];
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const IVF_RE = new RegExp(`in vitro fertili${W}*`, "gu");
 const PRECLINICAL_RE = PRECLINICAL.map((p) => new RegExp(NOT_BEFORE + escapeRe(p.trim()) + (p.endsWith(" ") ? NOT_AFTER : ""), "u"));
 
 export function check(e: Taslak, item: KapiItem, src: string, konum?: number): KapiSonucu[] {
@@ -79,7 +82,9 @@ export function check(e: Taslak, item: KapiItem, src: string, konum?: number): K
   out.push(["sayilar", missing.length === 0, missing.length ? "kaynakta yok: " + missing.join(", ") : ""]);
 
   // 3) temkin kapısı — terim SÖZCÜK BAŞINDA aranır ("Fırat" ≠ "rat ").
-  const preclinical = PRECLINICAL_RE.some((re) => re.test(fs));
+  // 27.11 (kapilar.py ile aynı): "in vitro fertilization" (tüp bebek) klinik tedavinin adıdır, laboratuvar bulgusu değil.
+  const fsPre = fs.replace(IVF_RE, " ");
+  const preclinical = PRECLINICAL_RE.some((re) => re.test(fsPre));
   const trial = TRIAL_STREAMS.includes(item.streamLabel ?? "");
   const need = preclinical || trial;
   const has = CAUTION.some((c) => fold(e.detailSummary).includes(c));

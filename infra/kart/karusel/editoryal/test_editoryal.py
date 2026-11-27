@@ -28,6 +28,12 @@ def kapi(e, src, akis='Sektörel'):
 
 
 class Kapilar(unittest.TestCase):
+    def test_tup_bebek_klinik_oncesi_sayilmaz(self):   # 27.11 öğe 4: IVF protokolü "klinik öncesi" sanılmıştı
+        temkin = lambda src: dict((a, ok) for a, ok, _ in kapilar.check(E, {'streamLabel': 'Akademik'}, src))['temkin']
+        self.assertTrue(temkin('Coping during in vitro fertilization (IVF): protocol. In Vitro Fertilisation burden.'))
+        self.assertFalse(temkin('In vitro fertilization outcomes and granulosa cells.'))
+        self.assertFalse(temkin('An in vitro assay of embryo culture media.'))
+
     def test_temkin_sozcuk_siniri(self):   # 16.11: kaynakçadaki "Fırat Üniversitesi" 'rat ' sanılıyordu
         self.assertTrue(kapi(E, 'Fırat Üniversitesi Doğu Araştırmaları Dergisi (2007).', 'Arşivden Doktrin')['temkin'])
         for s in ('Bulgu farelerde gözlendi.', 'Treated rat model.', 'Kanser hücrelerinde etki.', 'Study in mice.'):
@@ -80,8 +86,10 @@ class GeriBildirim(unittest.TestCase):
         self.assertEqual(s[-1], uret.KISALTMA_YOLU)
 
     def test_kapak_basligi_kelime_hedefiyle_kisaltilir(self):
-        s = self.sorun(dict(E, coverTitle='İleri böbrek kanserinde yeni tedavi çalışması'))
-        self.assertIn('- uzunluk: coverTitle 45 karakter (6 kelime); sınır 44 karakter. En çok 5 kelime yaz → en az 1 kelime çıkar.', s)
+        # 27.11: sınır 44 → 52; 45 karakter artık geçer (kapak_sigma ölçer), kelime yolu 53+ karakterde sürer.
+        self.assertEqual(self.sorun(dict(E, coverTitle='İleri böbrek kanserinde yeni tedavi çalışması')), [])
+        s = self.sorun(dict(E, coverTitle='İleri evre böbrek kanserinde yeni tedavi araştırmaları'))
+        self.assertIn('- uzunluk: coverTitle 54 karakter (7 kelime); sınır 52 karakter. En çok 5 kelime yaz → en az 2 kelime çıkar.', s)
         self.assertEqual(s[-1], uret.KISALTMA_YOLU)
 
     def test_kisa_alan_uzatma_ister_kisaltma_yolu_eklenmez(self):
@@ -99,7 +107,17 @@ class GeriBildirim(unittest.TestCase):
 
     def test_uzunluk_disi_kapi_ayni_bicimde_kalir(self):
         s = self.sorun(dict(E, coverDeck='Mucize bir yaklaşım sağlık hukukunda ele alınıyor, deniyor.'))
-        self.assertEqual(s, ['- yasak_sozcuk: mucize'])
+        self.assertEqual(len(s), 1)
+        self.assertTrue(s[0].startswith('- yasak_sozcuk: mucize (geçtiği alan: coverDeck). Bu sözcük tırnak içindeki'), s[0])
+        self.assertNotIn('doktor', s[0])
+
+    def test_yasak_hekim_tirnakli_ad_alani_ve_doktor_onerisi(self):
+        # 26.11 öğe 3: tırnaklı özgün etkinlik adı dört denemede de korunmuştu.
+        s = self.sorun(dict(E, detailSummary='Tıp fakültesi, “Hekimlerin Hukuki Sorumluluğu” konulu bilimsel toplantı '
+                                             'düzenliyor. Toplantıda doktorların hukuki sorumlulukları ele alınacak.'))
+        self.assertEqual(len(s), 1)
+        self.assertIn('(geçtiği alan: detailSummary)', s[0])
+        self.assertIn('"hekim" yerine "doktor" yaz', s[0])
 
 
 class SahteIstemci:
