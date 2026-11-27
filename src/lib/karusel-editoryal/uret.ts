@@ -350,7 +350,7 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
     if (ictihatMi(item)) {
       const src = edisyonMetni(item);
       const e = ictihatTaslagi(item);
-      const gates = check(e, item, src);
+      const gates = check(e, item, src, n);
       const ok = gates.every(([, g]) => g);
       rows.push({
         n, itemId: item.id ?? null, sourceUrl: item.url, streamLabel: item.streamLabel, kaynakOkundu: false, kaynakHatasi: null,
@@ -383,7 +383,7 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
         geri = "Yanıt alınamadı; kurallara uyarak yeniden yaz.";
         continue;
       }
-      let gates = check(e, item, src);
+      let gates = check(e, item, src, n);
       const kayit = (g: KapiSonucu[]) => g.map(([ad, gecti, ayrinti]) => ({ ad, gecti, ayrinti }));
       let kisaltma: Kisaltma | undefined;
       const alanlar = kisaltilacakAlanlar(gates, e);
@@ -394,7 +394,7 @@ export async function calistir(edGirdi: unknown, o: CalistirSecenek): Promise<{ 
           const yeni: Taslak = { ...e };
           for (const a of alanlar) yeni[a] = k[a];
           e = yeni;
-          gates = check(e, item, src);
+          gates = check(e, item, src, n);
         } catch (exc) {
           kisaltma.hata = kisa(exc, 200);
         }

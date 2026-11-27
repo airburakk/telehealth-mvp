@@ -252,7 +252,7 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
         if ictihat.ictihat_mi(item):
             src = kaynak.edisyon_metni(item)
             e = ictihat.ictihat_taslagi(item)
-            gates = kapilar.check(e, item, src)
+            gates = kapilar.check(e, item, src, n)
             ok = all(g for _, g, _ in gates)
             rows.append({'n': n, 'itemId': item.get('id'), 'sourceUrl': item.get('url'), 'streamLabel': item['streamLabel'],
                          'kaynakOkundu': False, 'kaynakHatasi': None, 'sonuc': 'GECTI' if ok else 'KALDI',
@@ -277,7 +277,7 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
                 log.append({'deneme': deneme, 'hata': str(exc)[:300]})
                 geri = 'Yanıt alınamadı; kurallara uyarak yeniden yaz.'
                 continue
-            gates = kapilar.check(e, item, src)
+            gates = kapilar.check(e, item, src, n)
             kayit = lambda g: [{'ad': a, 'gecti': ok, 'ayrinti': d} for a, ok, d in g]  # noqa: E731
             kis = None
             alanlar = kisaltilacak_alanlar(gates, e)
@@ -286,7 +286,7 @@ def calistir(girdi: Path, cikti: Path, client, model: str) -> dict:
                 try:
                     k = parse(SYSTEM_KISALT, kisaltma_mesaji(e, alanlar), Kisaltma).model_dump()
                     e = {**e, **{a: k[a] for a in alanlar}}
-                    gates = kapilar.check(e, item, src)
+                    gates = kapilar.check(e, item, src, n)
                 except Exception as exc:  # noqa: BLE001
                     kis['hata'] = str(exc)[:200]
             rec = {'deneme': deneme, 'taslak': e, 'kapilar': kayit(gates)}

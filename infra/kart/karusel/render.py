@@ -79,6 +79,21 @@ def kunye(it: dict) -> str:
     return f"{m.group(0) if m else it['title'].strip()} · Yargıtay karar arama sistemi"
 
 
+def kaynak_adi(image, ad: str) -> dict:
+    """Kaynak adı satırı (2026-11-26). PubMed/Europe PMC dergi adı alt başlıkla gelebilir ("Dermatologic surgery : official
+    publication for American Society for Dermatologic Surgery [et al.]" — 98 karakter, satıra sığmadı → kart düştü). Tam ad
+    sığmazsa " : " ÖNCESİ (derginin kendi adı) yazılır: yeni metin üretilmez, ortadan kırpılmaz. Ayırıcı yoksa ya da kısa ad
+    da sığmazsa çizici eskisi gibi düşer (fail-closed)."""
+    kutu = (72, 1132, 936, 30)
+    try:
+        return dr._draw_text(image, ad, kutu, 22, 20, field='sourceName', fill=dr.MUTED)
+    except ValueError:
+        kisa = ad.split(' : ')[0].strip()
+        if not kisa or kisa == ad.strip():
+            raise
+        return dr._draw_text(image, kisa, kutu, 22, 20, field='sourceName', fill=dr.MUTED)
+
+
 def load(girdi: Path):
     ed = json.loads((girdi / 'edition.json').read_bytes())
     day = ed.get('day')
@@ -130,7 +145,7 @@ def detail(payload, girdi, index, it, e):
     image.paste(art, (72, top))
     stats.append(dr._draw_text(image, CAPTION, (72, 1046, 936, 24), 16, field='caption', fill=dr.MUTED))
     stats.append(dr._draw_text(image, 'KAYNAK', (72, 1082, 936, 44), 18, 17, field='sourceContext', fill=dr.MUTED, bold=True))
-    stats.append(dr._draw_text(image, it['sourceName'], (72, 1132, 936, 30), 22, 20, field='sourceName', fill=dr.MUTED))
+    stats.append(kaynak_adi(image, it['sourceName']))
     if it.get('url'):
         stats.append(dr._draw_text(image, it['url'], (72, 1178, 936, 70), 20, 18, field='sourceUrl', fill=dr.MUTED, url=True))
     else:

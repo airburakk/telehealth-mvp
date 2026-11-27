@@ -10,6 +10,8 @@
 //     "rat" sözcük başı bulunur = 16.11 hatası geri gelir). Bu yüzden W = [\p{L}\p{N}_] bakışları kullanılır.
 //   · Python `len()` kod noktası sayar; JS `.length` UTF-16 birimi → `[...s].length`.
 
+import { kapakSigma } from "./kapak-sigma";
+
 export type Taslak = { coverTitle: string; coverDeck: string; detailTitle: string; detailSummary: string };
 export type KapiItem = { streamLabel?: string; url?: string | null };
 export type KapiSonucu = [ad: string, gecti: boolean, ayrinti: string];
@@ -59,7 +61,7 @@ const numForms = (n: string) => [n, n.replace(/,/g, "."), n.replace(/\./g, ",")]
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const PRECLINICAL_RE = PRECLINICAL.map((p) => new RegExp(NOT_BEFORE + escapeRe(p.trim()) + (p.endsWith(" ") ? NOT_AFTER : ""), "u"));
 
-export function check(e: Taslak, item: KapiItem, src: string): KapiSonucu[] {
+export function check(e: Taslak, item: KapiItem, src: string, konum?: number): KapiSonucu[] {
   const out: KapiSonucu[] = [];
   const text = ALANLAR.map((k) => e[k]).join(" ");
   const ft = fold(text);
@@ -106,6 +108,9 @@ export function check(e: Taslak, item: KapiItem, src: string): KapiSonucu[] {
     const evalw = MEVZUAT_EVAL.filter((w) => ft.includes(w));
     out.push(["mevzuat_kunye", evalw.length === 0, evalw.join(", ")]);
   }
+
+  // 7) kapak sığması (2026-11-26) — kapaktaki KONUMUNUN kutusuna sığıyor mu (kapak-sigma.ts). Konum verilmezse koşmaz.
+  if (konum !== undefined) out.push(["kapak_sigma", ...kapakSigma(e, konum)]);
   return out;
 }
 
