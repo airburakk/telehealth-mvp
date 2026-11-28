@@ -8,9 +8,11 @@ import {
   approve,
   computeCandidates,
   listEventCandidates,
+  listOpportunityCandidates,
   markPublished,
   openSlot,
   pickEvents,
+  pickOpportunities,
   pickSource,
   previewPlan,
   restore,
@@ -23,6 +25,7 @@ import {
 // İçerik takvimi eylemleri (v6.328, 2026-10-06) — /admin/icerik-takvimi: yuva aç · aday üret · kaynak seç · taslak kaydet · onayla ·
 // onayı kaldır · atla · geri al · PNG önizleme · (v6.332) elle yayınlandı işaretle (`publish`) · hatalı yayını yeniden dene (`retry`).
 // (v6.346) Etkinlik radarı: `event-candidates` (yaklaşan etkinlikler, salt okuma) · `pick-events` (1–6 etkinlikten taslak).
+// (v6.349) Öğrenci köşesi: `opportunity-candidates` (onaylı Kariyer EDU fırsatları, salt okuma) · `pick-opportunities` (1–3 fırsattan taslak).
 // Tek uç, `action` alanı (admin/hukuki-ceviri deseni). `publish` yalnız ELLE işaretlemedir (manual:true) — otomasyonun yayın sonucu bu uca GELMEZ (Faz 3 ayrı, jetonlu uç).
 // Self-auth: yalnız ADMIN (proxy /admin'i korur ama /api'yi KORUMAZ — her uç kendi kapısı).
 // Durum kodları: 401 yetkisiz · 400 geçersiz istek · 404 yuva yok · 409 geçiş yasak/sürüm çakışması · 422 onay kapıları geçilmedi (gövdede `report`)
@@ -61,6 +64,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, ...(await listEventCandidates({ id })) });
       case "pick-events": // v6.346 Etkinlik radarı: 1–6 etkinlikten taslak
         return NextResponse.json({ ok: true, item: await pickEvents({ id, eventIds: b.eventIds, expectedVersion: version, ...actor }) });
+      case "opportunity-candidates": // v6.349 Öğrenci köşesi: onaylı Kariyer EDU fırsat adayları (salt okuma)
+        return NextResponse.json({ ok: true, ...(await listOpportunityCandidates({ id })) });
+      case "pick-opportunities": // v6.349 Öğrenci köşesi: 1–3 fırsattan taslak
+        return NextResponse.json({ ok: true, item: await pickOpportunities({ id, opportunityIds: b.opportunityIds, expectedVersion: version, ...actor }) });
       case "save": {
         const item = await saveDraft({
           id,

@@ -186,7 +186,8 @@ export function evaluateGates(input: GateInput): GateReport {
     let t = tl(own);
     // v6.346: Etkinlik radarında etkinliğin/düzenleyenin RESMÎ ADI veridir (CLAUDE.md terim kuralı istisnası) → taramadan önce metinden çıkarılır.
     // Yalnız seçilen etkinliklerin adları çıkar; editörün kendi yazdığı "hekim" yine yakalanır.
-    if (series.sourceKind === "etkinlik") for (const ad of input.sourceTexts) if (ad.trim()) t = t.split(tl(ad)).join(" ");
+    // v6.349: Öğrenci köşesinde fırsatın/düzenleyenin resmî adı da aynı istisnadan yararlanır (Karar masası'nda sourceTexts karar metnidir → istisna YOK).
+    if (series.sourceKind === "etkinlik" || series.sourceKind === "kariyer-edu") for (const ad of input.sourceTexts) if (ad.trim()) t = t.split(tl(ad)).join(" ");
     const found = FORBIDDEN.filter((f) => f.re.test(t)).map((f) => f.label);
     gates.push(result("ifade", found.length === 0, `kendi metninizde: ${found.join("; ")}.`));
   }
