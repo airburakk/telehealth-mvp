@@ -571,7 +571,7 @@
     ]
    ],
    "geriBildirim": [
-    "- yasak_sozcuk: mucize"
+    "- yasak_sozcuk: mucize (geçtiği alan: coverDeck). Bu sözcük tırnak içindeki özgün başlık, etkinlik veya kurum adı dahil HİÇBİR yerde geçemez; o adı tırnaksız, kendi sözlerinle anlat."
    ],
    "kisaltilacak": [],
    "kisaltmaMesaji": null
@@ -627,7 +627,7 @@
     ]
    ],
    "geriBildirim": [
-    "- yasak_sozcuk: akredit"
+    "- yasak_sozcuk: akredit (geçtiği alan: coverDeck). Bu sözcük tırnak içindeki özgün başlık, etkinlik veya kurum adı dahil HİÇBİR yerde geçemez; o adı tırnaksız, kendi sözlerinle anlat."
    ],
    "kisaltilacak": [],
    "kisaltmaMesaji": null
@@ -849,7 +849,7 @@
     ]
    ],
    "geriBildirim": [
-    "- yasak_sozcuk: hekim"
+    "- yasak_sozcuk: hekim (geçtiği alan: coverTitle). Bu sözcük tırnak içindeki özgün başlık, etkinlik veya kurum adı dahil HİÇBİR yerde geçemez; o adı tırnaksız, kendi sözlerinle anlat. \"hekim\" yerine \"doktor\" yaz (ör. \"doktorların hukuki sorumluluğu konulu toplantı\")."
    ],
    "kisaltilacak": [],
    "kisaltmaMesaji": null
@@ -1634,7 +1634,7 @@
     ]
    ],
    "geriBildirim": [
-    "- yasak_sozcuk: garanti"
+    "- yasak_sozcuk: garanti (geçtiği alan: coverDeck). Bu sözcük tırnak içindeki özgün başlık, etkinlik veya kurum adı dahil HİÇBİR yerde geçemez; o adı tırnaksız, kendi sözlerinle anlat."
    ],
    "kisaltilacak": [],
    "kisaltmaMesaji": null
@@ -1745,7 +1745,7 @@
    ],
    "geriBildirim": [
     "- uzunluk: coverDeck 141 karakter (18 kelime); sınır 125 karakter. En çok 12 kelime yaz → en az 6 kelime çıkar.",
-    "- yasak_sozcuk: akredit",
+    "- yasak_sozcuk: akredit (geçtiği alan: coverDeck). Bu sözcük tırnak içindeki özgün başlık, etkinlik veya kurum adı dahil HİÇBİR yerde geçemez; o adı tırnaksız, kendi sözlerinle anlat.",
     "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını (hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme."
    ],
    "kisaltilacak": [],
@@ -1887,8 +1887,116 @@
    "beklenen": [
     [
      "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ],
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
+  },
+  {
+   "ad": "covertitle-45-gecer",
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozuklukları ve İslam hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Arşivden Doktrin",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ],
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
+  },
+  {
+   "ad": "uzun-covertitle-53",
+   "taslak": {
+    "coverTitle": "Cinsiyet gelişim bozukluklarında İslam hukuku etiği ve",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
      false,
-     "coverTitle=45"
+     "coverTitle=54"
     ],
     [
      "sayilar",
@@ -1922,13 +2030,179 @@
     ]
    ],
    "geriBildirim": [
-    "- uzunluk: coverTitle 45 karakter (6 kelime); sınır 44 karakter. En çok 5 kelime yaz → en az 1 kelime çıkar.",
+    "- uzunluk: coverTitle 54 karakter (7 kelime); sınır 52 karakter. En çok 5 kelime yaz → en az 2 kelime çıkar.",
     "- Kısaltma yolu: uzun kurum ve çalışma adlarını kısa biçimde an; laboratuvar ölçüm ayrıntılarını (hücre hattı adı, IC50 gibi değerler) çıkar; tek ana fikir yaz. Kaynakta olmayan bilgi ekleme."
    ],
    "kisaltilacak": [
     "coverTitle"
    ],
-   "kisaltmaMesaji": "KISALTILACAK ALANLAR:\n- coverTitle: 45 karakter (6 kelime); sınır 44 karakter. En çok 4 kelime yaz.\n\nMETİN:\n- coverTitle: İleri böbrek kanserinde yeni tedavi çalışması\n- coverDeck: Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.\n- detailTitle: Yapay zekâ sağlık hukuku kapsamında değerlendirildi\n- detailSummary: Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   "kisaltmaMesaji": "KISALTILACAK ALANLAR:\n- coverTitle: 54 karakter (7 kelime); sınır 52 karakter. En çok 4 kelime yaz.\n\nMETİN:\n- coverTitle: Cinsiyet gelişim bozukluklarında İslam hukuku etiği ve\n- coverDeck: Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.\n- detailTitle: Yapay zekâ sağlık hukuku kapsamında değerlendirildi\n- detailSummary: Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+  },
+  {
+   "ad": "ivf-klinik-oncesi-degil",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Akademik",
+    "url": "https://x"
+   },
+   "src": "Coping during In Vitro Fertilization: protocol. In vitro fertilisation (IVF) is burdensome.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ],
+   "geriBildirim": [],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
+  },
+  {
+   "ad": "ivf-ve-hucre",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Doktrin incelemesi, yapay zekânın sağlık hukukunda doğurduğu sorumluluk sorularını ele alıyor. Makale, mevcut düzenlemelerin bu teknolojiye nasıl uygulanabileceğini tartışıyor."
+   },
+   "item": {
+    "streamLabel": "Akademik",
+    "url": "https://x"
+   },
+   "src": "In vitro fertilization outcomes and granulosa cells.",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     false,
+     "klinik öncesi bulgu; temkin cümlesi yok"
+    ],
+    [
+     "yasak_sozcuk",
+     true,
+     ""
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ],
+   "geriBildirim": [
+    "- temkin: klinik öncesi bulgu; temkin cümlesi yok"
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
+  },
+  {
+   "ad": "yasak-hekim-tirnak",
+   "taslak": {
+    "coverTitle": "Yapay zekâ ve sağlık hukuku",
+    "coverDeck": "Doktrin incelemesi yapay zekâyı sağlık hukuku açısından ele alıyor.",
+    "detailTitle": "Yapay zekâ sağlık hukuku kapsamında değerlendirildi",
+    "detailSummary": "Tıp fakültesi, “Hekimlerin Hukuki Sorumluluğu” konulu bilimsel toplantı düzenliyor. Toplantıda doktorların hukuki sorumlulukları ele alınacak."
+   },
+   "item": {
+    "streamLabel": "Sektörel",
+    "url": "https://x"
+   },
+   "src": "x",
+   "beklenen": [
+    [
+     "uzunluk",
+     true,
+     ""
+    ],
+    [
+     "sayilar",
+     true,
+     ""
+    ],
+    [
+     "temkin",
+     true,
+     ""
+    ],
+    [
+     "yasak_sozcuk",
+     false,
+     "hekim"
+    ],
+    [
+     "baglanti_yok",
+     true,
+     ""
+    ],
+    [
+     "ic_ses_yok",
+     true,
+     ""
+    ],
+    [
+     "kisi_adi_yok",
+     true,
+     ""
+    ]
+   ],
+   "geriBildirim": [
+    "- yasak_sozcuk: hekim (geçtiği alan: detailSummary). Bu sözcük tırnak içindeki özgün başlık, etkinlik veya kurum adı dahil HİÇBİR yerde geçemez; o adı tırnaksız, kendi sözlerinle anlat. \"hekim\" yerine \"doktor\" yaz (ör. \"doktorların hukuki sorumluluğu konulu toplantı\")."
+   ],
+   "kisaltilacak": [],
+   "kisaltmaMesaji": null
   },
   {
    "ad": "ornek-0",

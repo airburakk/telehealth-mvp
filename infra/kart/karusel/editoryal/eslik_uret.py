@@ -77,6 +77,18 @@ def vakalar():
     ekle('uzun-emoji', dict(E, detailTitle='🧪' * 73), 'x')
     # 19.11 gerçek koşu: 45 karakter / 6 kelime kapak başlığı → kelime yolundan geri bildirim.
     ekle('uzun-covertitle', dict(E, coverTitle='İleri böbrek kanserinde yeni tedavi çalışması'), 'x')
+    # 27.11 düzeltmeleri — bu haftanın KALDI günlerinden gerçek metinler.
+    # 23.11 öğe 6: 45 karakterlik başlık artık uzunluktan geçer (sığma kapak_sigma'nın işi); 53 karakter hâlâ düşer.
+    ekle('covertitle-45-gecer', dict(E, coverTitle='Cinsiyet gelişim bozuklukları ve İslam hukuku'), 'x', 'Arşivden Doktrin')
+    ekle('uzun-covertitle-53', dict(E, coverTitle='Cinsiyet gelişim bozukluklarında İslam hukuku etiği'
+                                                   ' ve'), 'x')
+    # 27.11 öğe 4: "in vitro fertilization" klinik öncesi SAYILMAZ; aynı kaynakta hücre geçerse yine sayılır.
+    ekle('ivf-klinik-oncesi-degil', E, 'Coping during In Vitro Fertilization: protocol. In vitro fertilisation (IVF) is burdensome.',
+         'Akademik')
+    ekle('ivf-ve-hucre', E, 'In vitro fertilization outcomes and granulosa cells.', 'Akademik')
+    # 26.11 öğe 3: tırnaklı özgün etkinlik adında yasak sözcük → geri bildirim alanı ve tırnak kuralını söyler.
+    ekle('yasak-hekim-tirnak', dict(E, detailSummary='Tıp fakültesi, “Hekimlerin Hukuki Sorumluluğu” konulu bilimsel toplantı '
+                                                     'düzenliyor. Toplantıda doktorların hukuki sorumlulukları ele alınacak.'), 'x')
 
     # Onaylı 14 Kasım biçem örnekleri — her biri kendi metniyle kaynak (kapılardan GEÇMELİ)
     ornek = json.loads((HERE / 'ornekler.json').read_text(encoding='utf-8'))['items']

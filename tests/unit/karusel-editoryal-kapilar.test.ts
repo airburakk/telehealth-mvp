@@ -30,8 +30,21 @@ describe("kapılar — Python eşliği", () => {
     expect(v.geriBildirim.at(-1)).toBe(KISALTMA_YOLU);
   });
   it("kapak başlığı aşımı da kelime cinsinden geri bildirim alır", () => {
-    const v = vakalar.find((x) => x.ad === "uzun-covertitle")!;
-    expect(v.geriBildirim[0]).toBe("- uzunluk: coverTitle 45 karakter (6 kelime); sınır 44 karakter. En çok 5 kelime yaz → en az 1 kelime çıkar.");
+    // 27.11: sınır 44 → 52 — 45 karakterlik başlık artık geçer (sığmayı kapak_sigma ölçer); aşım 53+ karakterde.
+    expect(vakalar.find((x) => x.ad === "uzun-covertitle")!.geriBildirim).toEqual([]);
+    const v = vakalar.find((x) => x.ad === "uzun-covertitle-53")!;
+    expect(v.geriBildirim[0]).toBe("- uzunluk: coverTitle 54 karakter (7 kelime); sınır 52 karakter. En çok 5 kelime yaz → en az 2 kelime çıkar.");
+  });
+  it("27.11: tüp bebek (in vitro fertilization) klinik öncesi sayılmaz; aynı kaynakta hücre geçerse sayılır", () => {
+    const temkin = (ad: string) => vakalar.find((x) => x.ad === ad)!.beklenen.find(([a]) => a === "temkin")![1];
+    expect(temkin("ivf-klinik-oncesi-degil")).toBe(true);
+    expect(temkin("ivf-ve-hucre")).toBe(false);
+  });
+  it("27.11: yasak sözcük geri bildirimi alanı ve tırnaklı adı söyler", () => {
+    const v = vakalar.find((x) => x.ad === "yasak-hekim-tirnak")!;
+    expect(v.geriBildirim[0]).toContain("(geçtiği alan: detailSummary)");
+    expect(v.geriBildirim[0]).toContain("tırnak içindeki özgün başlık");
+    expect(v.geriBildirim[0]).toContain('"hekim" yerine "doktor" yaz');
   });
   it("onaylı 14 Kasım metinleri kapılardan geçer", () => {
     for (const v of vakalar.filter((x) => x.ad.startsWith("ornek-"))) expect(passed(check(v.taslak, v.item, v.src)), v.ad).toBe(true);
